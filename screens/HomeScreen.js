@@ -4,7 +4,8 @@ import { RkButton } from 'react-native-ui-kitten';
 import { Icon } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import Swipeout from 'react-native-swipeout';
+// import Swipeout from 'react-native-swipeout';
+import CountdownCircle from 'react-native-countdown-circle'
 import Swipeable from 'react-native-swipeable';
 import {
   Image,
@@ -24,6 +25,7 @@ import {
   CheckBox,
   AsyncStorage,
   Animated,
+  DatePickerIOS,
 } from 'react-native';
 
 const Dimensions = require('Dimensions');
@@ -94,12 +96,23 @@ const RecoverBtn = ({onPress}) => (
   <Fab
       direction="up"
       containerStyle={{ }}
-      style={{ backgroundColor: 'rgba(22,22,22,0.53)' }}
+      style={{ backgroundColor: 'rgba(22,22,22,0)', width: 35, height: 35 }}
       position="bottomLeft"
       onPress={onPress}>
-      <Icon.MaterialIcons name={'restore'} />
+      <Icon.MaterialIcons style={{color: '#555'}} name={'restore'} />
   </Fab>
 )
+
+// const RmRecBtn = ({onPress}) => (
+//   <Fab
+//     direction="up"
+//     containerStyle={{ }}
+//     style={{ left: 60, backgroundColor: 'rgba(22,22,22,0.43)' }}
+//     position="bottomLeft"
+//     onPress={onPress}>
+//     <Icon.MaterialIcons name={'delete'} />
+//   </Fab>
+// )
 
 
 const AddBtn = ({onPress}) => (
@@ -159,7 +172,7 @@ class Popup extends React.Component {
           }}>
             <TextInput
               placeholder='Type it in'
-              maxLength={30}
+              maxLength={60}
               autoCorrect={false}
               name="text"
               underlineColorAndroid="#fff"
@@ -237,11 +250,11 @@ class Popup extends React.Component {
                     }}>
                   <Text
                     style={{ 
-                      top: -6,
-                      left: -24,
-                      color: this.state.text.length >= 30 ? '#c43131' : '#555',
+                      top: -8,
+                      left: -22,
+                      color: this.state.text.length >= 60 ? '#c43131' : '#555',
                       fontSize: 13,
-                    }}>{this.state.text.length}/30</Text>
+                    }}>{this.state.text.length}/60</Text>
                 </RkButton>
               </View>
           </View>
@@ -260,6 +273,8 @@ class ListItem extends React.Component {
       newText: '',
       editText: false,
       removed: false,
+      date: new Date(),
+      setDate: false,
     }    
     
     const rightButtons = [
@@ -310,6 +325,11 @@ class ListItem extends React.Component {
 
   _swpieHandler = async (a) => {
   
+  }
+
+  _onDateChange = (date) => {
+    this.setState({date: date});
+    // this.props.events.emit('date-picked', date);
   }
 
   // handleUserBeganScrollingParentView() {
@@ -395,6 +415,14 @@ class ListItem extends React.Component {
             { this.state.edit
               ? 
                 <View style={ styles.item }>
+  
+                  {/* <DatePickerIOS
+                    date={this.state.date}
+                    mode="time"
+                    timeZoneOffsetInMinutes={this.state.timeZoneOffsetInHours * 60}
+                    onDateChange={this._onDateChange}
+                    minuteInterval={10}
+                  />  */}
                   <RkButton style={ styles.edit }
                     onPress={() => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})}}>
                     <Icon.Ionicons
@@ -408,6 +436,12 @@ class ListItem extends React.Component {
                       name="ios-create-outline" />
                   </RkButton>
                   <RkButton style={ styles.edit }
+                    onPress={() => {this.setState({setDate: true})}}>
+                    <Icon.Ionicons
+                      style={[ styles.editBtn, {color: '#e8bb0b'} ]}
+                      name="ios-alarm-outline" />
+                  </RkButton>
+                  <RkButton style={ styles.edit }
                     onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.index)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn, {color: '#c43131'} ]}
@@ -419,7 +453,7 @@ class ListItem extends React.Component {
                 { this.state.editText ?
                   <TextInput
                     defaultValue={this.props.text}
-                    maxLength={30}
+                    maxLength={60}
                     autoCorrect={false}
                     name="newText"
                     underlineColorAndroid="#fff"
@@ -428,6 +462,9 @@ class ListItem extends React.Component {
                     style={{
                       top: -5,
                       marginLeft: 8,
+                      lineHeight: 23,
+                      paddingBottom: 5,
+                      paddingRight: 80,
                       fontSize: 16,
                       color: '#191919',
                       width: screenWidth - 45,
@@ -457,8 +494,7 @@ class ListItem extends React.Component {
                 <Text style={styles.time}>
                   { this._getSetDate() }
                 </Text>
-
-                { this.state.editText ?
+                 { this.state.editText ?
                   <View style={{flex: 1, flexDirection: 'row', left: -80}}>
                     <RkButton style={{width: 50, backgroundColor: 'transparent'}}
                       onPress={ async () => {await this.props.editItem(this.props.index, this.state.newText); this.setState({editText: false})} }>
@@ -567,6 +603,7 @@ export default class HomeScreen extends React.Component {
       }
       this.setState({dataSource: [newItem]});
     }
+    console.log(this.state.dataSource);
     await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
     LayoutAnimation.configureNext( ListItemAnimation );
     await this.setState({deleted: false});    
@@ -585,12 +622,14 @@ export default class HomeScreen extends React.Component {
   }
 
   _edit = async (i, text) => {
-    let d = await AsyncStorage.getItem('todos');
-    let n = await this.state.dataSource.findIndex(x => x.index === i);
-    LayoutAnimation.configureNext( ListItemAnimation );        
-    this.state.dataSource[n].text = await text;    
-    await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
-    await this.setState({updated: true});
+    if (text) {
+      let d = await AsyncStorage.getItem('todos');
+      let n = await this.state.dataSource.findIndex(x => x.index === i);
+      LayoutAnimation.configureNext( ListItemAnimation );        
+      this.state.dataSource[n].text = await text;    
+      await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
+      await this.setState({updated: true});
+    }
   }
 
   _archive = async (i) => {
@@ -653,8 +692,34 @@ export default class HomeScreen extends React.Component {
           add={this._addItem}
           change={this._onChange} />
         <AddBtn onPress={this._toogleModal} />
-        {this.state.deleted ? <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} /> :
-          this.state.dismissed ? <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} /> : null}
+        {this.state.deleted ? <View>
+          <View 
+            style={{ position: 'absolute', bottom: 20, left: 31}} >
+            <CountdownCircle
+            seconds={1}
+            radius={17}
+            borderWidth={2}
+            color="#999"
+            bgColor="#fff"
+            textStyle={{ fontSize: 1, color: '#fff' }}
+            onTimeElapsed={() => {this.setState({deleted: false})}}
+          />
+          </View>
+          <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} /></View> :
+          this.state.dismissed ? <View>
+            <View 
+              style={{ position: 'absolute', bottom: 20, left: 31}} >
+              <CountdownCircle
+              seconds={1}
+              radius={17}
+              borderWidth={2}
+              color="#999"
+              bgColor="#fff"
+              textStyle={{ fontSize: 1, color: '#fff' }}
+              onTimeElapsed={() => {this.setState({dismissed: false})}}
+            />
+          </View>
+          <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} /></View> : null}
       </View>
     );
   }
@@ -711,13 +776,19 @@ const styles = StyleSheet.create({
   },
   text: {
     top: -5,
+    lineHeight: 23,
+    paddingBottom: 5,
     marginLeft: 8,
+    maxWidth: screenWidth - 120,
     fontSize: 16,
     color: '#191919',
   },
   textDone: {
     top: -5,
+    lineHeight: 23,
+    paddingBottom: 5,
     marginLeft: 8,
+    maxWidth: screenWidth - 120,
     fontSize: 16,
     color: '#191919',
     textDecorationLine: 'line-through',
@@ -740,6 +811,7 @@ const styles = StyleSheet.create({
   edit: {
     backgroundColor: 'transparent',
     left: -20,
+    width: screenWidth / 4,
   },
   editBtn: {
     right: 0,
