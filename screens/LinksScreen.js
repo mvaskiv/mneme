@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
-import { RkButton } from 'react-native-ui-kitten';
-import Expo, { Icon, SQLite, Notifications, Permissions } from 'expo';
+import { RkButton, RkModalImg } from 'react-native-ui-kitten';
+import ImageViewer from 'react-native-image-zoom-viewer';
+import Expo, { Icon, SQLite, Notifications, Permissions, Camera } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import Swipeout from 'react-native-swipeout';
 import Swipeable from 'react-native-swipeable';
+// import Modal from 'react-native-modalbox';
 import CountdownCircle from 'react-native-countdown-circle'
 import {
   Image,
@@ -148,8 +150,18 @@ class Popup extends React.Component {
     this.state = {
       text: this.props.text ? this.props.text : '',
       header: this.props.caption ? this.props.caption : '',
+      img: [],
       dueDate: '',
+      updated: false,
     }
+  }
+
+  componentDidMount() {
+    this._getPictures();
+  }
+
+  componentDidUpdate() {
+    this.state.updated ? this.setState({updated: false}) : null;
   }
 
   _addDueDate(d) {
@@ -172,6 +184,27 @@ class Popup extends React.Component {
     // }
   }
 
+  _getPictures = async () => {
+    let id = await this.props.id;
+    if (id) {
+        db.transaction(tx => {
+          tx.executeSql(`select * from img where note = ?`, [id],
+            async (_, { rows: { _array } }) => {
+              if (_array) {
+                _array.map(async (pic) => {
+                  console.log(JSON.parse(pic.src));
+                  await this.state.img.push(JSON.parse(pic.src));
+                  LayoutAnimation.configureNext( ListItemAnimation );
+                  await this.setState({updated: true});
+                })
+              }
+            }
+        );
+     });
+    }
+    await this.setState({updated: true});
+  }
+
   _editNote = () => {
     if (this.state.header != this.props.caption || this.state.text != this.props.text) {
       db.transaction(tx => {
@@ -179,27 +212,65 @@ class Popup extends React.Component {
         );
       });
     }
-    this.setState
     this.setState({editText: false});
   }
+
+  _selectImage = async () => {
+    await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    let img = await Expo.ImagePicker.launchImageLibraryAsync();
+    if (img) {
+      await this.state.img.push(img);
+    }
+    this.setState({updated: true});
+  }
+
+  _callCamera = async () => {
+    await Permissions.askAsync(Permissions.CAMERA);
+    let img = await Expo.ImagePicker.launchCameraAsync();
+    if (img) {
+      await this.state.img.push(img);
+    }
+    this.setState({updated: true});
+  }
   
+  _upload = async () => {
+    if (this.state.text || this.state.header) {
+       this.props.add([this.state.header, this.state.text], this.state.dueDate, this.state.img);
+       this.setState({text: ''});
+       this.setState({img: []});
+    }
+  }
+
   render() {
+    let imageMap = this.state.img ? this.state.img.map((picture, i) => {
+      console.log('mapped', this.state.img[i]);
+      return <RkModalImg
+        style={{flexDirection: 'column', minWidth: screenWidth / 2.2}}
+        key={String(i)} source={this.state.img} index={i} />
+    }) : null;
+
+  // let imageMap = (
+  //   <Modal visible={true} transparent={true} >
+  //     <ImageViewer enableSwipeDown={true} imageUrls={this.state.img} />
+  //   </Modal>
+  // )    
+
     return (
       <Modal
         animationType="slide"
         transparent={true}
         visible={this.props.visible}
         onRequestClose={this.props.close}>
-        <TouchableOpacity style={{position: 'absolute', top: 0, height: 140, width: screenWidth, backgroundColor: 'rgba(255,255,255,0)'}} onPress={this._closePrompt} activeOpacity={1}></TouchableOpacity>
-          <View style={{
-            position: 'absolute',
+        <TouchableOpacity style={{position: 'absolute', top: 0, height: 140, width: screenWidth, backgroundColor: 'rgba(255,255,255,0)'}} onPress={this.props.hide ? this.props.hide : this.props.close} activeOpacity={1}></TouchableOpacity>
+          <ScrollView style={{
+            position: 'absolute', 
             bottom: 0,
             height: this.props.view ? screenHeight - 25 : screenHeight - 140,
             width: screenWidth,
             borderColor: '#ccc',
-            borderRadius: 11,
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
+            borderRadius: 0,
+            // borderBottomLeftRadius: 0,
+            // borderBottomRightRadius: 0,
             shadowColor: '#999',
             padding: 5,
             // shadowOffset: 2,
@@ -240,25 +311,63 @@ class Popup extends React.Component {
               onChangeText={(text) => {this.setState({text})}}
               blurOnSubmit={false}
               style={{fontSize: 16, padding: 11, paddingTop: 5, paddingRight: 50, paddingBottom: 20}}/>
-              
               { !this.props.view ?
-              <RkButton
-                style={styles.submitBtn}
-                onPress={async () => {
-                  await this.state.text ? this.props.add([this.state.header, this.state.text], this.state.dueDate) :
-                    this.state.header ? this.props.add([this.state.header, this.state.text], this.state.dueDate) : null;
-                    this.setState({text: ''});
-                }}
-                rkType='rounded'>
-                  <Text
+              <View style={{ flexDirection: 'column', position: 'absolute', right: 0, top: -3}} >
+                <RkButton
+                  style={styles.editBtnRow}
+                  onPress={this._upload}
+                  rkType='rounded'>
+                    <Text
+                      style={{
+                        position: 'absolute',
+                        color: '#4286f4',
+                        top:5,
+                        fontSize: 15,
+                        paddingRight: 5,
+                        fontWeight: '700'
+                      }}> Save </Text>
+                </RkButton>
+                <RkButton
+                  style={styles.editBtnRow}
+                  onPress={async () => this._selectImage()}
+                  rkType='rounded'>
+                  <Icon.Ionicons
                     style={{
                       position: 'absolute',
-                      color: '#c43131',
+                      color: '#4286f4',
                       top:5,
-                      fontSize: 15,
-                    }}> Save </Text>
-              </RkButton> :
-              this.state.editText ? 
+                      fontSize: 25,
+                    }}
+                    name="md-images" />
+                </RkButton>
+                <RkButton
+                  style={styles.editBtnRow}
+                  onPress={async () => this._callCamera()}
+                  rkType='rounded'>
+                  <Icon.Ionicons
+                    style={{
+                      position: 'absolute',
+                      color: '#4286f4',
+                      top:5,
+                      fontSize: 25,
+                    }}
+                    name="md-camera" />
+                </RkButton>
+                <RkButton
+                  style={styles.editBtnRow}
+                  onPress={async () => this._callCamera()}
+                  rkType='rounded'>
+                  <Icon.Ionicons
+                    style={{
+                      position: 'absolute',
+                      color: '#4286f4',
+                      top:5,
+                      fontSize: 25,
+                    }}
+                    name="md-mic" />
+                </RkButton>
+                </View> :
+              this.state.editText ?
                 <RkButton
                 style={styles.submitBtn}
                 onPress={async () => {
@@ -288,15 +397,21 @@ class Popup extends React.Component {
                       name="ios-close-circle-outline" />
                 </RkButton>
               }
-              { this.props.view && <View style={ styles.editNote }>
-                <RkButton style={ styles.editL }
+              
+            { this.state.img && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', marginBottom: 65, justifyContent: 'flex-start' }}>
+              { imageMap }
+            </View> }
+          </ScrollView>
+          { this.props.view && <View style={{position: 'absolute', bottom: 0, height: 48, backgroundColor: 'rgba(255,255,255,0.9)', width: screenWidth}}>
+            <View style={ styles.editNote }>
+              <RkButton style={ styles.editL }
                 onPress={async () => {await this.setState({editText: true}); this.noteTextIn.focus()}}>
                 <Icon.Ionicons
                   style={[ styles.editBtn, {color: '#4286f4'} ]}
                   name="ios-create-outline" />
               </RkButton>
               <Text style={ styles.noteCreated }>
-                Created {this.props.created} 
+                Created {this.props.created}
               </Text>
               <RkButton style={ styles.editR }
                 onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
@@ -304,8 +419,8 @@ class Popup extends React.Component {
                   style={[ styles.editBtn, {color: '#c43131'} ]}
                   name="ios-trash-outline" />
               </RkButton>
+              </View>
             </View>}
-          </View>
       </Modal>
     );
   }
@@ -354,11 +469,27 @@ class NoteItem extends React.Component {
     this.props.update()
   }
 
+  
+
   render() {
     let creationDate = this._getSetDate();
+    // let options = {
+    //   caption: this.props.header,
+    //   text: this.props.text,
+    //   view: true,
+    //   id: this.props.id,
+    //   created: creationDate,
+    //   updated: null,
+    //   delete: this.props.delete,
+    //   hide: this._hideNote,
+    //   close: this._toogleModal,
+    //   change: this._onChange,
+    //   today: this.props.today,
+    // }
     return (
       <TouchableWithoutFeedback
         onPress={() => this.setState({view: true})}
+        // onPress={() => this.props.viewNote(options)}
         onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
         {
           this.state.edit ? 
@@ -406,7 +537,6 @@ class NoteItem extends React.Component {
               updated={null}
               delete={this.props.delete}
               hide={this._hideNote}
-              close={this._toogleModal}
               change={this._onChange} />}
           </View>
         }
@@ -431,12 +561,13 @@ export default class Notes extends React.Component {
   };
 
   _bootstrapAsync = async () => {
-    db.transaction(tx => {
-      tx.executeSql(
-        // `drop table notes;`
-        `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, completed int, archive int);`
-      );
-    });
+    // db.transaction(tx => {
+    //   tx.executeSql(
+    //     // `drop table notes; drop table img;`
+    //     // `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, completed int, archive int);
+    //     `create table if not exists img (id integer primary key not null, src text, note int);`
+    //   );
+    // });
     this._getUpdate();
   }
 
@@ -450,13 +581,14 @@ export default class Notes extends React.Component {
     this._getUpdate();
   }
 
-  _addItem = async (i, due) => {
+  _addItem = async (i, due, img) => {
     let date = await new Date();
-    // await this.setState({newItem: i});
+    let thisID = 0;
+  
     await this._toogleModal();
-    db.transaction(tx => {
-        tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, completed, archive) values
-          (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`, [
+    await db.transaction(async tx => {
+        await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, completed, archive) values
+          (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
             i[0],
             i[1],
             date.getHours(),
@@ -467,11 +599,24 @@ export default class Notes extends React.Component {
             due === '' ? null :
               due === 'tomorrow' ? date.getDay() + 1 :
                 due === 'today' ? date.getDay() : 7
-          ]
+          ], async (_, res) => {
+            thisID = await res['insertId'];
+          }
         );
       }
     );
-    this._getUpdate();
+    await db.transaction(async tx => {
+      if (img) {
+        img.map((pic, i) => {
+          tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
+            async (_, res) => {
+              console.log(res);
+            }
+          );
+        });
+      }
+    });
+    await this._getUpdate();
     LayoutAnimation.configureNext( ListItemAnimation );
     await this.setState({deleted: false});    
     await this.setState({updated: true});
@@ -499,6 +644,10 @@ export default class Notes extends React.Component {
     if (img) {
       this.setState({img: img});
     }
+  }
+
+  _viewNote = (options) => {
+    this.props.navigation.navigate('Note', options);
   }
 
   // _done = async (i) => {
@@ -540,12 +689,13 @@ export default class Notes extends React.Component {
           keyExtractor={item => item.id.toString()}
           extraData={this._getUpdate}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          renderItem={({ item }) => <NoteItem {...item} delete={this._delete} update={this._getUpdate} today={today} done={this._done} />}
+          renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} />}
           />
           <Image source={this.state.img} />
         <Popup visible={this.state.modal}
           close={this._toogleModal}
           add={this._addItem}
+          addImg={this._selectImage}
           change={this._onChange} />
         <AddBtn onPress={this._toogleModal} />
         {/* <TestBtn onPress={this._selectImage} /> */}
@@ -641,21 +791,31 @@ const styles = StyleSheet.create({
   editR: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 5,
-    right: -25,
+    bottom: 0,
+    right: -35,
   },
   editL: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 5,
-    left: -25,
+    bottom: 0,
+    left: -35,
   },
   editNote: {
     position: 'absolute',
     flexDirection: 'row',
     width: screenWidth,
     bottom: 5,
-    backgroundColor: 'transparent',
+ 
+    zIndex: 3,
+  },
+  editBtnRow: {
+    width: 40,
+    padding: 0,
+    marginTop: 15,
+    height: 30,
+    backgroundColor: '#fff',
+    top: 0,
+    right: 11,
   },
   noteCreated: {
     fontSize: 12,
@@ -663,7 +823,7 @@ const styles = StyleSheet.create({
     color: '#777',
     marginLeft: 'auto',
     marginRight: 'auto',
-    bottom: 23,
+    bottom: 19,
   },
   editBtn: {
     right: 0,

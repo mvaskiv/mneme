@@ -1,15 +1,66 @@
 import React from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
-import { AppLoading, Asset, Font, Icon } from 'expo';
+import { Platform, StatusBar, StyleSheet, View, AsyncStorage } from 'react-native';
+import Expo, { AppLoading, Asset, Font, Icon, Permissions, Fingerprint, SQLite } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
 
+const db = SQLite.openDatabase('mneme.db');
+
 export default class App extends React.Component {
-  state = {
-    isLoadingComplete: false,
-  };
+  constructor() {
+    super();
+    this.state = {
+      isLoadingComplete: false,
+      lock: false,
+      authorised: false,
+    }
+    this._bootstrapAsync();
+  }
+
+  _bootstrapAsync = async () => {
+    await db.transaction(tx => {
+      tx.executeSql(
+        `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, completed int, archive int);`
+      );
+    });
+    await db.transaction(tx => {
+      tx.executeSql(
+        `create table if not exists img (id integer primary key not null, src text, note int);`
+      );
+    });
+    await AsyncStorage.getItem('biometry')
+      .then((res) => {
+        if (res && res === '1') {
+          console.log('biometry: ' + res);
+          this._biometrics();
+          this.setState({lock: true});
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+    })
+  }
+
+  _biometrics = async () => {
+    // let navigate = this.props.navigation;
+    if (Expo.Fingerprint.isEnrolledAsync() && !this.state.authorised) {
+    Expo.Fingerprint.authenticateAsync()
+        .then(async (res) => {
+            if (res.success) {
+              console.log(res);
+                await this.setState({ authorised: true });
+                // this.props.navigation.navigate('App');
+            }
+        })
+    }
+}
+
+  // async componentWillMount() {
+  //   console.log(this.state.authorised);
+  //   this.state.lock ?  : null;
+  // }
 
   render() {
-    if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen) {
+    if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen || this.state.lock ? !this.state.authorised : 0) {
       return (
         <AppLoading
           startAsync={this._loadResourcesAsync}
@@ -21,7 +72,7 @@ export default class App extends React.Component {
       return (
         <View style={styles.container}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-          <AppNavigator />
+          <AppNavigator auth={this.state.authorised} />
         </View>
       );
     }

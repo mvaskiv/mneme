@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import { LayoutAnimation, AlertIOS } from 'react-native';
+import { LayoutAnimation } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
 import { Icon } from 'expo';
 import { Fab } from 'native-base';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import {SettingsDividerShort, SettingsDividerLong, SettingsEditText, SettingsCategoryHeader, SettingsSwitch, SettingsPicker} from 'react-native-settings-components';
+import { MaterialIcons, SimpleLineIcons } from '@expo/vector-icons';
+import Swipeout from 'react-native-swipeout';
 import Swipeable from 'react-native-swipeable';
 import {
   Image,
@@ -244,12 +244,11 @@ class ArchiveItem extends React.Component {
   }
 }
 
-export default class Settings extends React.Component {
+export default class Archive extends React.Component {
   constructor() {
     super();
     this.state = {
       modal: false,
-      biometry: false,
       newItem: '',
       dataSource: [],
       refreshing: false,
@@ -261,101 +260,78 @@ export default class Settings extends React.Component {
   };
 
   _bootstrapAsync = async () => {
-    AsyncStorage.getItem('biometry')
-      .then((res) => {
-        this.setState({biometry: res === '1' ? true : false});
-      })
+    const items = await AsyncStorage.getItem('todos');
+    if (items) {
+      await this.setState({dataSource: JSON.parse(items)});
+    }
   }
 
-  _biometrySet = async (i) => {
-    this.setState({biometry: i});
-    if (i) {
-      AsyncStorage.setItem('biometry', '1');
-      AlertIOS.alert(
-        'Touch Id Enabled',
-        'Will take effect on next launch.'
-       );
-    } else {
-      AsyncStorage.setItem('biometry', '0');
-      AlertIOS.alert(
-        'Touch Id Disabled'
-       );
-    }
-    
-    console.log(i);
+  _delete = async (i) => {
+    let d = await AsyncStorage.getItem('todos');
+    let n = await this.state.dataSource.findIndex(x => x.index === i);
+    LayoutAnimation.configureNext( ListItemAnimation );        
+    await this.state.dataSource.splice(n, 1);
+    await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
+    await this.setState({deleted: JSON.parse(d)});
+    await this.setState({updated: true});
+  }
+
+  _done = async (i) => {
+    let date = await new Date();
+    let d = await AsyncStorage.getItem('todos');
+    let n = await this.state.dataSource.findIndex(x => x.index === i);
+    LayoutAnimation.configureNext( ListItemAnimation );        
+    this.state.dataSource[n].completed = !this.state.dataSource[n].completed;
+    this.state.dataSource[n].archive = !this.state.dataSource[n].archive;
+    await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
+    await this.setState({updated: true});
+  }
+
+  _recover = async () => {
+    let n = await this.state.deleted;
+    LayoutAnimation.configureNext( ListItemAnimation );        
+    await this.setState({dataSource: n});
+    await AsyncStorage.setItem('todos', JSON.stringify(n));
+    await this.setState({deleted: false});
+    await this.setState({updated: true});
+  }
+
+  _update = async () => {
+    await this.setState({updated: true});
+    await this._bootstrapAsync();
+    await this.setState({updated: false});
   }
 
   render() {
+    let today = new Date();
+
     return (
-      <ScrollView style={{flex: 1}}>
-        <SettingsCategoryHeader title={'History'} />
-          <SettingsDividerLong android={false}/>
-            <TouchableOpacity
-              style={{
-                height: 48,
-                backgroundColor: '#fff',
-              }}
-              onPress={() => this.props.navigation.navigate('History')}>
-              <Text style={ styles.settingsText }>History</Text>
-              <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
-                name="angle-right" />
-            </TouchableOpacity>
-          <SettingsDividerShort/>
-            <TouchableOpacity
-              style={{
-                height: 48,
-                backgroundColor: '#fff',
-              }}
-              onPress={() => null}>
-              <Text style={ styles.settingsText }>Completed</Text>
-              <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
-                name="angle-right" />
-            </TouchableOpacity>
-          <SettingsCategoryHeader title={'Preferences'} />
-            <SettingsDividerLong android={false}/>
-              <SettingsPicker
-                title="Default reminder time"
-                dialogDescription={'If not specified otherwise.'}
-                possibleValues={[
-                    {label: '9 am', value: '9:00'},
-                    {label: '10 am', value: '10:00'},
-                    {label: '11 am', value: '11:00'},
-                    {label: 'Noon', value: '12:00'}
-                ]}
-                negativeButtonTitle={'Cancel'}
-                modalButtonsTitleNegativeStyle={{fontWeight: '400', color: '#444'}}
-                // buttonRightTitle={'Save'}
-                positiveButtonTitle={'Save'}
-                modalButtonsTitlePositiveStyle={{right: -10}}
-                onSaveValue={value => {
-                    console.log('reminder time:', value);
-                    this.setState({
-                        gender: value
-                    });
-                }}
-                value={this.state.gender}
-                styleModalButtonsText={{color: '#c43131', fontWeight: '400'}}                
-              />
-          <SettingsCategoryHeader title={'Privacy'} />
-            <SettingsDividerLong android={false}/>
-              <SettingsSwitch
-                title={'Allow Push Notifications'}
-                onSaveValue={(value) => {
-                    console.log('allow push notifications:', value);
-                    this.setState({
-                        allowPushNotifications: value
-                    });
-                }}
-                value={this.state.allowPushNotifications}
-              />
-            <SettingsDividerShort/>
-              <SettingsSwitch
-                title={'Enable Touch ID / Face ID'}
-                onSaveValue={(value) => this._biometrySet(value)}
-                value={this.state.biometry}
-              />
-      </ScrollView>
- 
+      <View style={styles.container}>
+        <View style={styles.navbar} >
+          {/* <Text style={{position: 'absolute', marginLeft: 'auto', marginRight: 'auto'}}>
+            History
+          </Text> */}
+          <RkButton
+            onPress={() => this.props.navigation.navigate('Main')}
+            style={{backgroundColor: '#fff', }}>
+            <Icon.SimpleLineIcons
+              style={ styles.backIcon }
+              name="arrow-left" /><Text style={{fontSize: 16, color: '#444', lineHeight: 31, left: -10}}>Back</Text>
+          </RkButton>
+          
+        </View>
+        <FlatList
+          refreshing={this.state.refreshing}
+          onRefresh={this._update}
+          data={this.state.dataSource}
+          style={ styles.container }
+          keyExtractor={item => item.index}
+          // extraData={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+          onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+          renderItem={({ item }) => <ArchiveItem {...item} delete={this._delete} today={today} done={this._done} />}
+          />
+        {this.state.deleted && <RecoverBtn onPress={this._recover} />}
+      </View>
     );
   }
 }
@@ -363,7 +339,26 @@ export default class Settings extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    top: 0,
+    paddingTop: 35,
     backgroundColor: '#fff',
+
+  },
+  navbar: {
+    position: 'absolute',
+    top: 24,
+    width: screenWidth,
+    zIndex: 3,
+    borderBottomWidth: 1,
+    backgroundColor: '#fff',
+    borderBottomColor: '#eee',
+  },
+  backIcon: {
+    position: 'absolute',
+    top: 15,
+    left: 12,
+    color: '#555',
+    fontSize: 16,
   },
   addBtn: {
     width: 56,
@@ -442,11 +437,6 @@ const styles = StyleSheet.create({
     right: 17,
     fontSize: 14,
     color: '#555',
-  },
-  settingsText:{
-    fontSize: 16,
-    lineHeight: 48,
-    paddingLeft: 16,
   },
   developmentModeText: {
     marginBottom: 20,

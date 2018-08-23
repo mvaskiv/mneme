@@ -394,7 +394,7 @@ class ListItem extends React.Component {
         <Swipeable
           onRef={ref => this.swipeable = ref}
           style={{
-            left: this.state.removed ? 400 : 0,
+            left: this.state.swipeOpen ? this.state.removed ? 400 : 150 : 0,
           }}
           leftButtons={leftContent}
           leftButtonWidth={0}
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     right: 0,
-    fontSize: 30,
+    fontSize: 27,
     color: '#555'
   },
   editTextBtn: {
