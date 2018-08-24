@@ -394,7 +394,7 @@ class ListItem extends React.Component {
         <Swipeable
           onRef={ref => this.swipeable = ref}
           style={{
-            left: this.state.swipeOpen ? this.state.removed ? 400 : 150 : 0,
+            left: this.state.swipeOpen ? this.state.removed ? 400 : 0 : 0,
           }}
           leftButtons={leftContent}
           leftButtonWidth={0}

@@ -312,7 +312,7 @@ class Popup extends React.Component {
               blurOnSubmit={false}
               style={{fontSize: 16, padding: 11, paddingTop: 5, paddingRight: 50, paddingBottom: 20}}/>
               { !this.props.view ?
-              <View style={{ flexDirection: 'column', position: 'absolute', right: 0, top: -3}} >
+              <View style={{ flexDirection: 'column', position: 'absolute', right: 0, top: -8}} >
                 <RkButton
                   style={styles.editBtnRow}
                   onPress={this._upload}
