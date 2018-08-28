@@ -229,9 +229,9 @@ export default class Note extends React.Component {
     this.data = this.props.navigation.state.params;
     this._bootstrapAsync();
   }
-  static navigationOptions = {
-    header: null,
-  };
+  // static navigationOptions = {
+  //   header: null,
+  // };
 
   _bootstrapAsync = async () => {
     this._getUpdate();
@@ -394,28 +394,25 @@ export default class Note extends React.Component {
     let imageMap = this.state.img ? this.state.img.map((picture, i) => {
         console.log('mapped', this.state.img[i]);
         return <RkModalImg
-          
           // resizeMethod='scale'
-          style={{flexDirection: 'column', maxWidth: screenWidth / 2.4}}
+          style={{flexDirection: 'column', maxWidth: screenWidth / 3.2}}
           key={String(i)} source={this.state.img} index={i} />
       }) : null;
 
     return (
         <View style={{
             position: 'absolute',
-            bottom: 0,
-            height: this.data.view ? screenHeight - 25 : screenHeight - 140,
+            top: 0,
+            height: this.data.view ? screenHeight - 55 : screenHeight - 140,
             width: screenWidth,
-            borderColor: '#ccc',
-            borderRadius: 0,
             // borderBottomLeftRadius: 0,
             // borderBottomRightRadius: 0,
-            shadowColor: '#999',
+            // shadowColor: '#999',
             padding: 5,
             // shadowOffset: 2,
-            shadowOpacity: 0.2,
-            shadowRadius: 5,
-            borderWidth: 1,
+            // shadowOpacity: 0.2,
+            // shadowRadius: 5,
+            // borderWidth: 1,
             backgroundColor: '#fff'
           }}>
             <TextInput
@@ -525,20 +522,7 @@ export default class Note extends React.Component {
                       fontSize: 15,
                     }}> Save </Text>
                 </RkButton> :
-                <RkButton
-                  style={styles.submitBtn}
-                  onPress={this.data.hide}
-                  rkType='rounded'>
-                    <Icon.Ionicons
-                      style={{
-                        position: 'absolute',
-                        color: '#4286f4',
-                        top:5,
-                        left: 15,
-                        fontSize: 25,
-                      }}
-                      name="ios-close-circle-outline" />
-                </RkButton>
+                null
               }
               { this.data.view && <View style={ styles.editNote }>
                 <RkButton style={ styles.editL }
@@ -547,20 +531,20 @@ export default class Note extends React.Component {
                   style={[ styles.editBtn, {color: '#4286f4'} ]}
                   name="ios-create-outline" />
               </RkButton>
-            <Text style={ styles.noteCreated }>
-            Created {this.data.created}
-            </Text>
-            <RkButton style={ styles.editR }
-            onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.data.delete(this.data.id)}}>
-            <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#c43131'} ]}
-                name="ios-trash-outline" />
-            </RkButton>
-        </View>}
-        { this.state.img && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+              <Text style={ styles.noteCreated }>
+              Created {this.data.created}
+              </Text>
+              <RkButton style={ styles.editR }
+              onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.data.delete(this.data.id)}}>
+              <Icon.Ionicons
+                  style={[ styles.editBtn, {color: '#c43131'} ]}
+                  name="ios-trash-outline" />
+              </RkButton>
+          </View>}
+          { this.state.img && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
             { imageMap }
         </View> }
-        </View>
+      </View>
     );
   }
 }
@@ -651,20 +635,20 @@ const styles = StyleSheet.create({
   editR: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 5,
-    right: -30,
+    bottom: 0,
+    right: -35,
   },
   editL: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 5,
-    left: -30,
+    bottom: 0,
+    left: -35,
   },
   editNote: {
     position: 'absolute',
     flexDirection: 'row',
     width: screenWidth,
-    bottom: 5,
+    bottom: 15,
     backgroundColor: 'transparent',
   },
   editBtnRow: {
@@ -682,7 +666,7 @@ const styles = StyleSheet.create({
     color: '#777',
     marginLeft: 'auto',
     marginRight: 'auto',
-    bottom: 23,
+    bottom: 28,
   },
   editBtn: {
     right: 0,

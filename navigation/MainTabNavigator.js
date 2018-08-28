@@ -68,18 +68,18 @@ export default createMaterialTopTabNavigator({
   tabBarOptions: {
     style: {
       paddingTop: Expo.Constants.statusBarHeight,
-      backgroundColor: '#fff',
+      backgroundColor: '#c43131',
       // display: 'none',
     },
     labelStyle: {
-      fontWeight: 'bold'
+      // fontWeight: 'bold'
     },
     indicatorStyle: {
       backgroundColor: '#c43131',
       height: 1,
     },
-    inactiveTintColor: '#333',
-    activeTintColor: '#c43131',
+    inactiveTintColor: '#000',
+    activeTintColor: '#fff',
   },
   swipeEnabled: true,
   animationEnabled: true,

@@ -256,7 +256,7 @@ export default class Archive extends React.Component {
     this._bootstrapAsync();
   }
   static navigationOptions = {
-    header: null,
+    title: 'History',
   };
 
   _bootstrapAsync = async () => {
@@ -307,19 +307,7 @@ export default class Archive extends React.Component {
 
     return (
       <View style={styles.container}>
-        <View style={styles.navbar} >
-          {/* <Text style={{position: 'absolute', marginLeft: 'auto', marginRight: 'auto'}}>
-            History
-          </Text> */}
-          <RkButton
-            onPress={() => this.props.navigation.navigate('Main')}
-            style={{backgroundColor: '#fff', }}>
-            <Icon.SimpleLineIcons
-              style={ styles.backIcon }
-              name="arrow-left" /><Text style={{fontSize: 16, color: '#444', lineHeight: 31, left: -10}}>Back</Text>
-          </RkButton>
-          
-        </View>
+        
         <FlatList
           refreshing={this.state.refreshing}
           onRefresh={this._update}
@@ -340,7 +328,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     top: 0,
-    paddingTop: 35,
+    paddingTop: 0,
     backgroundColor: '#fff',
 
   },

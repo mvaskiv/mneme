@@ -1,26 +1,117 @@
 import React from 'react';
-import { createSwitchNavigator, createMaterialTopTabNavigator, createStackNavigator } from 'react-navigation';
+import {TouchableHighlight, Text} from 'react-native';
+import { Icon } from 'expo';
+import { MaterialIcons, SimpleLineIcons, Ionicons } from '@expo/vector-icons';
+import { createSwitchNavigator, createMaterialTopTabNavigator, createStackNavigator, NavigationActions } from 'react-navigation';
 
 import MainTabNavigator from './MainTabNavigator';
+import Todos from '../screens/HomeScreen';
+import NotesList from '../screens/LinksScreen';
 import AuthStack from '../screens/authScreen';
 import History from '../screens/History';
+import Menu from '../screens/Menu';
 import NoteView from '../screens/NoteView';
+import Settings from '../screens/SettingsScreen';
 
-export default createStackNavigator({
-  // You could add another route here for authentication.
-  // Read more at https://reactnavigation.org/docs/en/auth-flow.html
-  // Main: AuthStack,
-  Main: {
-    screen: MainTabNavigator,
-    navigationOptions:{tabBarVisible: false}
+const NotesStack = createStackNavigator({
+  Notes: {
+    screen: NotesList,
+    navigationOptions:{
+      // header: null,
+      headerStyle: {
+        borderBottomWidth: 0,
+        backgroundColor: '#fff',
+      },
+      title: 'All Notes',
+      
+    }
   },
-  History: History,
-  Note: NoteView,
+  Note: {
+    screen: NoteView,
+    navigationOptions: {
+      headerStyle: {
+        borderBottomWidth: 0,
+        backgroundColor: '#fff',
+      },
+    }
+  }
 },
 {
-  headerMode: 'none',
+  headerMode: 'float',
+  headerTransitionPreset: 'uikit',
   navigationOptions: {
-      headerVisible: false,
+    gestureResponseDistance: {
+      horizontal: 10,
+    },
+    headerTintColor: '#c43131',
+    headerStyle: {
+      backgroundColor: '#fff',
+    }
   },
-  tabBarVisible: false
+});
+
+export default createStackNavigator({
+  Menu: {
+    screen: Menu,
+    navigationOptions: {
+      headerLeft: <Text style={{ color: '#c43131', fontWeight: 'bold', fontSize: 28, paddingHorizontal: 12, paddingTop: 12 }}>Folders</Text>,
+      // headerRight: <SettingsBtn />,
+      headerBackTitle: null,
+      headerTintColor: '#c43131',
+      headerStyle: {
+        // height: 57,
+        borderBottomWidth: 0,        
+        backgroundColor: '#fff'
+      },
+    }
+  },
+  todos: {
+    screen: Todos,
+    navigationOptions:{
+      headerTintColor: '#c43131',
+      headerStyle: {
+        borderBottomWidth: 0,
+        backgroundColor: '#fff',
+      },
+      title: 'Tasks',
+    }
+  },
+  notes: {
+    screen: NotesStack,
+    navigationOptions: {
+      header: null,
+    }
+  },
+    // navigationOptions:{
+    //   title: '',
+    //   headerTintColor: '#c43131',
+    //   headerStyle: {
+    //     backgroundColor: '#fff'
+    //   }
+      // path: 
+    
+  History: {
+    screen: History,
+  },
+  Settings: {
+    screen: Settings,
+    title: 'Settings',
+    navigationOptions: {
+      headerBackTitle: null,
+    }
+  }
+},
+{
+  // initialRouteName: 'Notes',
+  headerMode: 'screen',
+  // headerTransitionPreset: 'uikit',
+  navigationOptions: {
+    gestureResponseDistance: {
+      horizontal: 10,
+    },
+    headerTintColor: '#fff',
+    headerStyle: {
+      backgroundColor: '#c43131',
+    }
+  },
 })

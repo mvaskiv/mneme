@@ -257,7 +257,7 @@ export default class Settings extends React.Component {
     this._bootstrapAsync();
   }
   static navigationOptions = {
-    header: null,
+    title: 'Settings'
   };
 
   _bootstrapAsync = async () => {

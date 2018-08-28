@@ -396,6 +396,9 @@ class ListItem extends React.Component {
           style={{
             left: this.state.swipeOpen ? this.state.removed ? 400 : 0 : 0,
           }}
+          swipeStartMinDistance={40}
+          onSwipeStart={() => this.props.swiping(1)}
+          onSwipeRelease={() => this.props.swiping(0)}
           leftButtons={leftContent}
           leftButtonWidth={0}
           leftActionActivationDistance={100}
@@ -404,7 +407,7 @@ class ListItem extends React.Component {
           onLeftActionRelease={async () => {
             await LayoutAnimation.configureNext(SwipeItemAnimation);
             await setTimeout(() => this.setState({removed: true}), 0);
-            await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
+            // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
             await setTimeout(() => this.props.done(this.props.index), 0);
             await setTimeout(() => this.setState({removed: false}), 150);
             await setTimeout(() => this.setState({swipeOpen: false}), 400);
@@ -524,6 +527,28 @@ class ListItem extends React.Component {
   }
 }
 
+const MoreBtn = (props) => (
+  <Icon.Ionicons
+    onPress={() => props.nav.navigate('Settings')}
+    style={{
+      color: '#c43131',
+      fontSize: 22,
+      paddingHorizontal: 15,
+    }}
+    name='ios-more' />
+)
+
+const MenuBtn = (props) => (  
+  <Icon.Ionicons
+    onPress={() => props.nav.goBack(null)}
+    style={{
+      color: '#c43131',
+      fontSize: 22,
+      paddingHorizontal: 15,
+    }}
+    name='ios-menu' />
+)
+
 export default class HomeScreen extends React.Component {
   constructor() {
     super();
@@ -532,11 +557,15 @@ export default class HomeScreen extends React.Component {
       newItem: '',
       dataSource: [],
       refreshing: false,
+      isSwiping: false,
     };
     this._bootstrapAsync();
   }
-  static navigationOptions = {
-    header: null,
+  static navigationOptions = ({ navigation }) => {
+    return {
+      headerRight: <MoreBtn nav={navigation} />,
+      headerLeft: <MenuBtn nav={navigation} />,
+    }
   };
 
   _bootstrapAsync = async () => {
@@ -672,12 +701,21 @@ export default class HomeScreen extends React.Component {
     await this.setState({updated: false});
   }
 
+  _swipeHandler = (i) => {
+    if (i === 1) {
+      this.setState({isSwiping: true});
+    } else if (i === 0) {
+      this.setState({isSwiping: false});
+    }
+  }
+
   render() {
     let today = new Date();
 
     return (
       <View style={styles.container}>
         <FlatList
+          scrollEnabled={!this.state.isSwiping}      
           refreshing={this.state.refreshing}
           onRefresh={this._update}
           data={this.state.dataSource}
@@ -685,7 +723,7 @@ export default class HomeScreen extends React.Component {
           keyExtractor={item => item.index}
           // extraData={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} />}
+          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} />}
           />
         <Popup visible={this.state.modal}
           close={this._toogleModal}

@@ -218,7 +218,9 @@ class Popup extends React.Component {
   _selectImage = async () => {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);
     let img = await Expo.ImagePicker.launchImageLibraryAsync();
-    if (img) {
+    console.log(img);
+    if (!img.cancelled) {
+      
       await this.state.img.push(img);
     }
     this.setState({updated: true});
@@ -227,7 +229,7 @@ class Popup extends React.Component {
   _callCamera = async () => {
     await Permissions.askAsync(Permissions.CAMERA);
     let img = await Expo.ImagePicker.launchCameraAsync();
-    if (img) {
+    if (!img.cancelled) {
       await this.state.img.push(img);
     }
     this.setState({updated: true});
@@ -243,9 +245,9 @@ class Popup extends React.Component {
 
   render() {
     let imageMap = this.state.img ? this.state.img.map((picture, i) => {
-      console.log('mapped', this.state.img[i]);
+      // console.log('mapped', this.state.img[i]);
       return <RkModalImg
-        style={{flexDirection: 'column', minWidth: screenWidth / 2.2}}
+        style={{flexDirection: 'column', maxWidth: screenWidth / 2.3}}
         key={String(i)} source={this.state.img} index={i} />
     }) : null;
 
@@ -433,6 +435,7 @@ class NoteItem extends React.Component {
       swipeOpen: false,
       removed: false,
       edit: false,
+      removed: false,
       view: false,
     }
     const rightButtons = [
@@ -469,28 +472,122 @@ class NoteItem extends React.Component {
     this.props.update()
   }
 
-  
+  _swipeActivation = async (i) => {
+    await LayoutAnimation.configureNext( SwipeItemAnimation );
+    if (i === 1) {
+      this.setState({swipeOpen: true});
+    } else if (i === 0) {
+      this.setState({swipeOpen: false});
+    }
+  }
 
   render() {
     let creationDate = this._getSetDate();
-    // let options = {
-    //   caption: this.props.header,
-    //   text: this.props.text,
-    //   view: true,
-    //   id: this.props.id,
-    //   created: creationDate,
-    //   updated: null,
-    //   delete: this.props.delete,
-    //   hide: this._hideNote,
-    //   close: this._toogleModal,
-    //   change: this._onChange,
-    //   today: this.props.today,
-    // }
+    let options = {
+      caption: this.props.header,
+      text: this.props.text,
+      view: true,
+      id: this.props.id,
+      created: creationDate,
+      updated: null,
+      delete: this.props.delete,
+      hide: this._hideNote,
+      close: this._toogleModal,
+      change: this._onChange,
+      today: this.props.today,
+    }
+
+    const leftContent = [
+      <TouchableHighlight
+        style={{
+        flex: 1,
+        right: this.state.swipeOpen ? -20 : 0,
+        padding: 15,
+        backgroundColor: this.state.removed ? '#c43131' : '#edb41a',
+        }}
+        underlayColor={ '#edb41a' }
+        onPress={() => {null}}
+        >
+      <Icon.Ionicons
+          style={{
+            position: 'absolute',
+            left: 32,
+            top: 20,
+            color: '#fff',
+            fontSize: 25,
+          }}
+        name='ios-archive' />
+      </TouchableHighlight>,
+      <TouchableHighlight
+        style={{
+        flex: 1,
+        right: this.state.swipeOpen ? this.state.removed ? 410 : 140 : 0,
+        padding: 15,
+        backgroundColor: '#c43131',
+        }}
+        underlayColor={'#c43131'}
+        onPress={() => {null}}
+        >
+       <Icon.Ionicons
+          style={{
+            position: 'absolute',
+            left: 34,
+            top: 20,
+            color: '#fff',
+            fontSize: 25,
+           }}
+        name='ios-trash' />
+      </TouchableHighlight>,
+      
+      // ,
+      // <TouchableHighlight
+      //   style={{
+      //   flex: 1,
+      //   right: 0,
+      //   padding: 15,
+      //   backgroundColor: this.state.swipeOpen ? '#c43131' : '#fff',
+      //   }}
+      //   underlayColor={ this.state.swipeOpen ? '#c43131' : '#fff' }
+      //   onPress={() => {null}}
+      //   >
+      // <Icon.Ionicons
+      //     style={{
+      //       position: 'absolute',
+      //       left: 34,
+      //       top: 20,
+      //       color:  this.state.swipeOpen ? '#fff' : '#c43131',
+      //       fontSize: 25,
+      //     }}
+      //   name='ios-trash' />
+      // </TouchableHighlight>
+    ];
+
     return (
-      <TouchableWithoutFeedback
-        onPress={() => this.setState({view: true})}
-        // onPress={() => this.props.viewNote(options)}
-        onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
+      <Swipeable
+        onRef={ref => this.swipeable = ref}
+        swipeStartMinDistance={40}
+        onSwipeStart={() => this.props.swiping(1)}
+        onSwipeRelease={() => this.props.swiping(0)}
+        rightButtons={leftContent}
+        rightButtonWidth={80}
+        rightActionActivationDistance={230}
+        onRightActionActivate={ () => this._swipeActivation(1) }
+        onRightActionDeactivate={ () => this._swipeActivation(0) }
+        onRightActionRelease={async () => {
+          // await LayoutAnimation.configureNext(SwipeItemAnimation);
+          await setTimeout(() => this.setState({removed: true}), 0);
+          // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
+          await setTimeout(() => this.props.delete(this.props.id), 0);
+          // await setTimeout(() => this.setState({removed: false}), 150);
+          // await setTimeout(() => this.setState({swipeOpen: false}), 400);
+        }}
+        >
+      <TouchableHighlight
+        underlayColor={'rgba(29, 29, 29, 0.3)'}
+        // onPress={() => this.setState({view: true})}
+        onPress={() => this.props.viewNote(options)}
+        // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
+        >
         {
           this.state.edit ? 
           <View style={ styles.item }>
@@ -540,10 +637,33 @@ class NoteItem extends React.Component {
               change={this._onChange} />}
           </View>
         }
-      </TouchableWithoutFeedback>
+      </TouchableHighlight>
+      </Swipeable>
     );
   }
 }
+
+const MoreBtn = (props) => (
+  <Icon.Ionicons
+    onPress={() => props.nav.navigate('Settings')}
+    style={{
+      color: '#c43131',
+      fontSize: 22,
+      paddingHorizontal: 15,
+    }}
+    name='ios-more' />
+)
+
+const MenuBtn = (props) => (  
+  <Icon.Ionicons
+    onPress={() => props.nav.goBack(null)}
+    style={{
+      color: '#c43131',
+      fontSize: 22,
+      paddingHorizontal: 15,
+    }}
+    name='ios-menu' />
+)
 
 export default class Notes extends React.Component {
   constructor() {
@@ -553,11 +673,15 @@ export default class Notes extends React.Component {
       newItem: '',
       dataSource: null,
       refreshing: false,
+      isSwiping: false,
     };
     this._bootstrapAsync();
   }
-  static navigationOptions = {
-    header: null,
+  static navigationOptions = ({ navigation }) => {
+    return {
+      headerRight: <MoreBtn nav={navigation} />,
+      headerLeft: <MenuBtn nav={navigation} />,
+    }
   };
 
   _bootstrapAsync = async () => {
@@ -676,28 +800,57 @@ export default class Notes extends React.Component {
   //   await this.setState({updated: false});
   // }
 
+
+  _swipeHandler = (i) => {
+    if (i === 1) {
+      this.setState({isSwiping: true});
+    } else if (i === 0) {
+      this.setState({isSwiping: false});
+    }
+  }
+
   render() {
     let today = new Date();
 
     return (
       <View style={styles.container}>
         <FlatList
+          scrollEnabled={!this.state.isSwiping}
           refreshing={this.state.refreshing}
           onRefresh={this._update}
+          ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
           data={this.state.dataSource}
-          style={ styles.container }
+          style={ styles.listContainer }
           keyExtractor={item => item.id.toString()}
           extraData={this._getUpdate}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} />}
+          renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
           />
-          <Image source={this.state.img} />
+          {/* <Image source={this.state.img} /> */}
         <Popup visible={this.state.modal}
           close={this._toogleModal}
           add={this._addItem}
           addImg={this._selectImage}
           change={this._onChange} />
-        <AddBtn onPress={this._toogleModal} />
+        <View style={ styles.editNote }>
+            <RkButton style={ styles.editL }
+              onPress={this._toogleModal} >
+              <Icon.Ionicons
+                style={[ styles.editBtn, {color: '#4286f4'} ]}
+                name="ios-create-outline" />
+            </RkButton>
+            {/* <Text style={ styles.noteCreated }>
+            Created 
+            </Text> */}
+            <RkButton style={ styles.editR }
+            onPress={() => null}>
+            <Icon.Ionicons
+                style={[ styles.editBtn, {color: '#4286f4'} ]}
+                name="ios-archive-outline" />
+            </RkButton>
+        </View>
+
+        {/* <AddBtn onPress={this._toogleModal} /> */}
         {/* <TestBtn onPress={this._selectImage} /> */}
         {this.state.deleted && <RecoverBtn onPress={this._recover} />}
       </View>
@@ -707,6 +860,10 @@ export default class Notes extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  listContainer: {
     flex: 1,
     backgroundColor: '#fff',
   },
@@ -770,6 +927,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#555',
   },
+
+  editNote: {
+    position: 'absolute',
+    flexDirection: 'row',
+    width: screenWidth,
+    bottom: 0,
+    height: 45,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
   time: {
     position: 'absolute',
     top: 12,
@@ -791,23 +957,16 @@ const styles = StyleSheet.create({
   editR: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 0,
+    bottom: 5,
     right: -35,
   },
   editL: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 0,
+    bottom: 5,
     left: -35,
   },
-  editNote: {
-    position: 'absolute',
-    flexDirection: 'row',
-    width: screenWidth,
-    bottom: 5,
- 
-    zIndex: 3,
-  },
+
   editBtnRow: {
     width: 40,
     padding: 0,

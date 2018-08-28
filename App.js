@@ -16,6 +16,10 @@ export default class App extends React.Component {
     this._bootstrapAsync();
   }
 
+  // componentDidMount() {
+  
+  // }
+
   _bootstrapAsync = async () => {
     await db.transaction(tx => {
       tx.executeSql(
