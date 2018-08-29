@@ -527,16 +527,30 @@ class ListItem extends React.Component {
   }
 }
 
-const MoreBtn = (props) => (
-  <Icon.Ionicons
-    onPress={() => props.nav.navigate('Settings')}
-    style={{
-      color: '#c43131',
-      fontSize: 22,
-      paddingHorizontal: 15,
-    }}
-    name='ios-more' />
-)
+class MoreBtn extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      popup: false,
+    }
+  }
+
+  render() {
+    return (
+    <View>
+      {this.state.popup && <PopUpTop />}
+      <Icon.Ionicons
+        onPress={async () => {await LayoutAnimation.configureNext(ListItemAnimation); this.setState({popup: !this.state.popup})}}
+        style={{
+          color: '#c43131',
+          fontSize: 22,
+          paddingHorizontal: 15,
+        }}
+        name='ios-more' />
+      </View>
+    );
+  }
+}
 
 const MenuBtn = (props) => (  
   <Icon.Ionicons
@@ -548,6 +562,20 @@ const MenuBtn = (props) => (
     }}
     name='ios-menu' />
 )
+
+const PopUpTop = (props) => {
+  return (
+    <View style={ styles.PopUpTop }>
+      <TouchableHighlight style={ styles.PopUpBtn } underlayColor={'rgba(245,245,245,0.7)'} onPress={() => {null}}>
+        <Text style={ styles.PopUpText }>Mark Multiple</Text>
+      </TouchableHighlight>
+      <View style={ styles.separator } />
+      <TouchableHighlight style={ styles.PopUpBtn } underlayColor={'rgba(245,245,245,0.7)'} onPress={() => {null}}>
+        <Text style={ styles.PopUpText }>Do smth else</Text>
+      </TouchableHighlight>
+    </View>
+  );
+}
 
 export default class HomeScreen extends React.Component {
   constructor() {
@@ -714,6 +742,7 @@ export default class HomeScreen extends React.Component {
 
     return (
       <View style={styles.container}>
+        
         <FlatList
           scrollEnabled={!this.state.isSwiping}      
           refreshing={this.state.refreshing}
@@ -859,6 +888,38 @@ const styles = StyleSheet.create({
   editTextBtn: {
     top: 0,
     fontSize: 30,
+  },
+  PopUpTop: {
+    position: 'absolute',
+    top: 24,
+    right: 12,
+    width: 120,
+    height: 64,
+    borderColor: '#eee',
+    padding: 5,
+    shadowColor: '#555',
+    shadowOffset: {bottom: 5},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    borderWidth: 1,
+    borderRadius: 20,
+    borderTopRightRadius: 0,
+    backgroundColor: '#fefefe',
+    zIndex: 5,
+  },
+  PopUpText: {
+    color: '#444',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  PopUpBtn: {
+    height: 27,
+    borderRadius: 20,
+  },
+  separator: {
+    top: -2,
+    backgroundColor: '#bbb',
+    height: 0.6,
   },
   developmentModeText: {
     marginBottom: 20,

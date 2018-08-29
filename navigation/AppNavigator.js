@@ -11,13 +11,14 @@ import AuthStack from '../screens/authScreen';
 import History from '../screens/History';
 import Menu from '../screens/Menu';
 import NoteView from '../screens/NoteView';
+import NewNote from '../screens/NewNote';
 import Settings from '../screens/SettingsScreen';
 
 const NotesStack = createStackNavigator({
   Notes: {
     screen: NotesList,
     navigationOptions:{
-      // header: null,
+      // headerBackTitle: null,
       headerStyle: {
         borderBottomWidth: 0,
         backgroundColor: '#fff',
@@ -34,11 +35,20 @@ const NotesStack = createStackNavigator({
         backgroundColor: '#fff',
       },
     }
+  },
+  NewNote: {
+    screen: NewNote,
+    navigationOptions: {
+      headerStyle: {
+        borderBottomWidth: 0,
+        backgroundColor: '#fff',
+      },
+    }
   }
 },
 {
   headerMode: 'float',
-  headerTransitionPreset: 'uikit',
+  // headerTransitionPreset: 'uikit',
   navigationOptions: {
     gestureResponseDistance: {
       horizontal: 10,
@@ -109,9 +119,9 @@ export default createStackNavigator({
     gestureResponseDistance: {
       horizontal: 10,
     },
-    headerTintColor: '#fff',
+    headerTintColor: '#c43131',
     headerStyle: {
-      backgroundColor: '#c43131',
+      backgroundColor: '#fff',
     }
   },
 })

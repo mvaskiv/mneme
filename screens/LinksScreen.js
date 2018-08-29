@@ -259,26 +259,26 @@ class Popup extends React.Component {
 
     return (
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={this.props.visible}
         onRequestClose={this.props.close}>
-        <TouchableOpacity style={{position: 'absolute', top: 0, height: 140, width: screenWidth, backgroundColor: 'rgba(255,255,255,0)'}} onPress={this.props.hide ? this.props.hide : this.props.close} activeOpacity={1}></TouchableOpacity>
+        <TouchableOpacity style={{position: 'absolute', top: 0, height: 140, width: screenWidth, backgroundColor: 'rgba(29,29,29,0)'}} onPress={this.props.hide ? this.props.hide : this.props.close} activeOpacity={1}></TouchableOpacity>
           <ScrollView style={{
             position: 'absolute', 
             bottom: 0,
-            height: this.props.view ? screenHeight - 25 : screenHeight - 140,
+            height: this.props.view ? screenHeight - 25 : screenHeight - 60,
             width: screenWidth,
-            borderColor: '#ccc',
-            borderRadius: 0,
+            // borderColor: '#ccc',
+            // borderRadius: 0,
             // borderBottomLeftRadius: 0,
             // borderBottomRightRadius: 0,
-            shadowColor: '#999',
+            // shadowColor: '#999',
             padding: 5,
             // shadowOffset: 2,
-            shadowOpacity: 0.2,
-            shadowRadius: 5,
-            borderWidth: 1,
+            // shadowOpacity: 0.2,
+            // shadowRadius: 5,
+            // borderWidth: 1,
             backgroundColor: '#fff'
           }}>
             <TextInput
@@ -399,7 +399,6 @@ class Popup extends React.Component {
                       name="ios-close-circle-outline" />
                 </RkButton>
               }
-              
             { this.state.img && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', marginBottom: 65, justifyContent: 'flex-start' }}>
               { imageMap }
             </View> }
@@ -495,6 +494,7 @@ class NoteItem extends React.Component {
       close: this._toogleModal,
       change: this._onChange,
       today: this.props.today,
+      update: this.props.update,
     }
 
     const leftContent = [
@@ -526,7 +526,7 @@ class NoteItem extends React.Component {
         backgroundColor: '#c43131',
         }}
         underlayColor={'#c43131'}
-        onPress={() => {null}}
+        onPress={() => {this.props.delete(this.props.id)}}
         >
        <Icon.Ionicons
           style={{
@@ -537,29 +537,7 @@ class NoteItem extends React.Component {
             fontSize: 25,
            }}
         name='ios-trash' />
-      </TouchableHighlight>,
-      
-      // ,
-      // <TouchableHighlight
-      //   style={{
-      //   flex: 1,
-      //   right: 0,
-      //   padding: 15,
-      //   backgroundColor: this.state.swipeOpen ? '#c43131' : '#fff',
-      //   }}
-      //   underlayColor={ this.state.swipeOpen ? '#c43131' : '#fff' }
-      //   onPress={() => {null}}
-      //   >
-      // <Icon.Ionicons
-      //     style={{
-      //       position: 'absolute',
-      //       left: 34,
-      //       top: 20,
-      //       color:  this.state.swipeOpen ? '#fff' : '#c43131',
-      //       fontSize: 25,
-      //     }}
-      //   name='ios-trash' />
-      // </TouchableHighlight>
+      </TouchableHighlight>
     ];
 
     return (
@@ -700,6 +678,10 @@ export default class Notes extends React.Component {
   //   Notifications.scheduleLocalNotificationAsync(localNoti, schedulingOptions);
   // }
 
+  componentWillUnmount() {
+    this.props.navigation.state.params.update();
+  }
+
   _toogleModal = async => {
     this.setState({modal: !this.state.modal});
     this._getUpdate();
@@ -748,7 +730,7 @@ export default class Notes extends React.Component {
 
   _getUpdate = () => {
     db.transaction(tx => {
-        tx.executeSql(`select * from notes;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+        tx.executeSql(`select * from notes order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
       );
     });
   }
@@ -814,7 +796,7 @@ export default class Notes extends React.Component {
 
     return (
       <View style={styles.container}>
-        <FlatList
+       <FlatList
           scrollEnabled={!this.state.isSwiping}
           refreshing={this.state.refreshing}
           onRefresh={this._update}
@@ -825,7 +807,7 @@ export default class Notes extends React.Component {
           extraData={this._getUpdate}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
-          />
+        /> 
           {/* <Image source={this.state.img} /> */}
         <Popup visible={this.state.modal}
           close={this._toogleModal}
@@ -834,9 +816,9 @@ export default class Notes extends React.Component {
           change={this._onChange} />
         <View style={ styles.editNote }>
             <RkButton style={ styles.editL }
-              onPress={this._toogleModal} >
+              onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate})} >
               <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#4286f4'} ]}
+                style={[ styles.editBtn, {color: '#c43131'} ]}
                 name="ios-create-outline" />
             </RkButton>
             {/* <Text style={ styles.noteCreated }>
@@ -845,7 +827,7 @@ export default class Notes extends React.Component {
             <RkButton style={ styles.editR }
             onPress={() => null}>
             <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#4286f4'} ]}
+                style={[ styles.editBtn, {color: '#c43131'} ]}
                 name="ios-archive-outline" />
             </RkButton>
         </View>

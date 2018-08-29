@@ -287,7 +287,7 @@ export default class Settings extends React.Component {
 
   render() {
     return (
-      <ScrollView style={{flex: 1}}>
+      <ScrollView style={{flex: 1, backgroundColor: 'rgb(240,240,240)'}}>
         <SettingsCategoryHeader title={'History'} />
           <SettingsDividerLong android={false}/>
             <TouchableOpacity

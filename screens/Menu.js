@@ -86,7 +86,7 @@ class MenuItem extends React.Component {
     if (this.props.caption === 'Add') {
         return (
             <TouchableHighlight
-                style={[ styles.menuBtn , {backgroundColor: '#efefef'}]}
+                style={[ styles.menuBtn , {backgroundColor: '#efefef'}, this.props.size && { width: (screenWidth / 3) - 20, height: (screenWidth / 3) - 20 }]}
                 underlayColor={'rgba(29, 29, 29, 0.11)'}
                 onPress={() => this.props.navigation.navigate(this.props.route)}>
                 <Icon.Ionicons
@@ -97,9 +97,9 @@ class MenuItem extends React.Component {
     } else {
         return (
             <TouchableHighlight
-                style={ styles.menuBtn }
+                style={[ styles.menuBtn, this.props.size && { width: (screenWidth / 3) - 20, height: (screenWidth / 3) - 20 }]}
                 underlayColor={'rgba(29, 29, 29, 0.1)'}
-                onPress={() => this.props.navigation.navigate(this.props.route)}>
+                onPress={() => this.props.navigation.navigate(this.props.route, {update: this._getCount})}>
                 <View>
                     <Text
                         style={ styles.folderHeader }>
@@ -109,9 +109,9 @@ class MenuItem extends React.Component {
                         style={ styles.lastModif }>
                         {this._getSetDate()}
                     </Text>
-                    <Icon.SimpleLineIcons
+                    {!this.props.size && <Icon.SimpleLineIcons
                         style={ styles.enterIcon }
-                        name="arrow-right" />
+                      name="arrow-right" /> }
                 </View>
             </TouchableHighlight>
         );
@@ -156,20 +156,51 @@ export default class Menu extends React.Component {
     let today = new Date();
 
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={{justifyContent: 'flex-start', flexDirection:'row', flexWrap: 'wrap', width: screenWidth * 2 }}>
         {/* <Image style={{position: 'absolute', top: 0, height: screenHeight, opacity: 0.2, flex: 1}} source={require('../assets/images/paper.jpg')} /> */}
-        <MenuItem
-            navigation={this.props.navigation}
-            caption={"To Do's"}
-            route={'todos'} />
-        <MenuItem
-            navigation={this.props.navigation}
-            caption={"Notes"}
-            route={'notes'} />    
-        <MenuItem
-            navigation={this.props.navigation}
-            caption={"Add"}
-            route={'Add'} />
+        {/* {this.state.preferences.today && 
+          <MenuItem
+              navigation={this.props.navigation}
+              caption={"Today"}
+              route={'today'} />
+        } */}
+          <View style={{width: screenWidth}}>
+            <MenuItem
+              navigation={this.props.navigation}
+              caption={"To Do's"}
+              route={'todos'} />
+            <MenuItem
+              navigation={this.props.navigation}
+              caption={"Notes"}
+              route={'notes'} />    
+            <MenuItem
+              navigation={this.props.navigation}
+              caption={"Add"}
+              route={'Add'} />
+          </View>
+
+          <View style={{width: screenWidth, flexDirection: 'row', flexWrap: 'wrap'}}>
+            <MenuItem
+                navigation={this.props.navigation}
+                caption={"Media"}
+                route={'Add'}
+                size={'half'} />
+            <MenuItem
+                navigation={this.props.navigation}
+                caption={"Docs"}
+                route={'Add'}
+                size={'half'} />
+            <MenuItem
+                navigation={this.props.navigation}
+                caption={"Trash"}
+                route={'Add'}
+                size={'half'} />
+            <MenuItem
+                navigation={this.props.navigation}
+                caption={"Add"}
+                route={'Add'}
+                size={'half'} />
+          </View>
       </ScrollView>
     );
   }
@@ -177,7 +208,7 @@ export default class Menu extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1,   
     top: 0,
     // paddingTop: 60,
     backgroundColor: '#fff',
@@ -209,9 +240,11 @@ const styles = StyleSheet.create({
     color: '#292929'
   },
   addIcon: {
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      fontSize: 55,
-      color: '#777',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    fontSize: 55,
+    color: '#777',
+    marginTop: 'auto',
+    marginBottom: 'auto'
   }
 });
