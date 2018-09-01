@@ -110,110 +110,6 @@ const FadeItemAnimation = {
   },
 };
 
-// class NoteItem extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       swipeOpen: false,
-//       removed: false,
-//       edit: false,
-//       view: false,
-//     }
-//     const rightButtons = [
-//       <TouchableHighlight><Text>Button 1</Text></TouchableHighlight>,
-//       <TouchableHighlight><Text>Button 2</Text></TouchableHighlight>
-//     ];
-//   }
-
-//   _getSetDate = () => {
-//     if (this.data.today.getDay() == this.props.day && this.props.today.getMonth() == this.props.month) {
-//       let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-//       let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-//       return 'Today at ' + hr + ':' + min;
-//     } else if (this.props.today.getDay() - 1 == this.props.day && this.props.today.getMonth() == this.props.month) {
-//       let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-//       let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-//       return 'Yesterday at ' + hr + ':' + min;
-//     } else {
-//       let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-//       let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-//       let day = this.props.date < 10 ? '0' + this.props.date : this.props.date;
-//       let month = this.props.month < 10 ? '0' + this.props.month : this.props.month;
-//       return day + '/' + month + ' at ' + hr + ':' + min;
-//     }
-//   } 
-
-//   // _toogleModal = async => {
-//   //   this.setState({view: !this.state.view});
-    
-//   // }
-
-//   _hideNote = () => {
-//     this.setState({view: false});
-//     this.props.update()
-//   }
-
-//   render() {
-//     let creationDate = this._getSetDate();
-//     return (
-//       <TouchableWithoutFeedback
-//         onPress={() => this.setState({view: true})}
-//         onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
-//         {
-//           this.state.edit ? 
-//           <View style={ styles.item }>
-//             <RkButton style={ styles.edit }
-//               onPress={() => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})}}>
-//               <Icon.Ionicons
-//                 style={ styles.editBtn }
-//                 name="ios-arrow-dropleft-outline" />
-//             </RkButton>
-//             <RkButton style={ styles.edit }
-//               onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
-//               <Icon.Ionicons
-//                 style={[ styles.editBtn, {color: '#4286f4'} ]}
-//                 name="ios-create-outline" />
-//             </RkButton>
-//             <RkButton style={ styles.edit }
-//               onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
-//               <Icon.Ionicons
-//                 style={[ styles.editBtn, {color: '#c43131'} ]}
-//                 name="ios-trash-outline" />
-//             </RkButton>
-//           </View>
-//         :
-//           <View style={ styles.item }>
-//             <Text
-//               numberOfLines={1}
-//               style={ styles.header }>
-//               { this.props.header ? this.props.header : this.props.text }
-//             </Text>
-//             <Text
-//               numberOfLines={3}
-//               style={ this.props.text ? styles.text : styles.textDone }>
-//               { this.props.text ? this.props.text : 'No additional data' }
-//             </Text>
-//             <Text style={styles.time}>
-//               { creationDate }
-//             </Text>
-//             {this.state.view && <Popup
-//               caption={this.props.header}
-//               text={this.props.text}  
-//               view={true}
-//               id={this.props.id}
-//               created={creationDate}
-//               updated={null}
-//               delete={this.props.delete}
-//               hide={this._hideNote}
-//               close={this._toogleModal}
-//               change={this._onChange} />}
-//           </View>
-//         }
-//       </TouchableWithoutFeedback>
-//     );
-//   }
-// }
-
 const AttachmentRow = (props) => {
   return (
       <View
@@ -365,7 +261,7 @@ export default class Note extends React.Component {
   
     await this._toogleModal();
     await db.transaction(async tx => {
-        await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, completed, archive) values
+        await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, deleted, archive) values
           (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
             i[0],
             i[1],
@@ -498,83 +394,7 @@ export default class Note extends React.Component {
               onChangeText={(text) => {this.setState({text})}}
               blurOnSubmit={false}
               style={{fontSize: 16, padding: 11, paddingTop: 5, paddingRight: 50, paddingBottom: 20}}/>
-              { !this.data.view ?
-              <View style={{ flexDirection: 'column', position: 'absolute', right: 0, top: -3}} >
-                <RkButton
-                  style={styles.editBtnRow}
-                  onPress={async () => {
-                    await this.state.text ? this.data.add([this.state.header, this.state.text], this.state.dueDate, this.state.img) :
-                      this.state.header ? this.data.add([this.state.header, this.state.text], this.state.dueDate, this.state.img) : null;
-                      this.setState({text: ''});
-                  }}
-                  rkType='rounded'>
-                    <Text
-                      style={{
-                        position: 'absolute',
-                        color: '#4286f4',
-                        top:5,
-                        fontSize: 15,
-                        paddingRight: 5,
-                        fontWeight: '700'
-                      }}> Save </Text>
-                </RkButton>
-                <RkButton
-                  style={styles.editBtnRow}
-                  onPress={async () => this._selectImage()}
-                  rkType='rounded'>
-                  <Icon.Ionicons
-                    style={{
-                      position: 'absolute',
-                      color: '#4286f4',
-                      top:5,
-                      fontSize: 25,
-                    }}
-                    name="md-images" />
-                </RkButton>
-                <RkButton
-                  style={styles.editBtnRow}
-                  onPress={async () => this._callCamera()}
-                  rkType='rounded'>
-                  <Icon.Ionicons
-                    style={{
-                      position: 'absolute',
-                      color: '#4286f4',
-                      top:5,
-                      fontSize: 25,
-                    }}
-                    name="md-camera" />
-                </RkButton>
-                <RkButton
-                  style={styles.editBtnRow}
-                  onPress={async () => this._callCamera()}
-                  rkType='rounded'>
-                  <Icon.Ionicons
-                    style={{
-                      position: 'absolute',
-                      color: '#4286f4',
-                      top:5,
-                      fontSize: 25,
-                    }}
-                    name="md-mic" />
-                </RkButton>
-                </View> :
-              this.state.editText ?
-                <RkButton
-                style={styles.submitBtn}
-                onPress={async () => {
-                  this._editNote();
-                }}
-                rkType='rounded'>
-                  <Text
-                    style={{
-                      position: 'absolute',
-                      color: '#c43131',
-                      top:5,
-                      fontSize: 15,
-                    }}> Save </Text>
-                </RkButton> :
-                null
-              }
+              
               { this.data.view && <View style={ styles.editNote }>
                 <RkButton style={ styles.editL }
                 onPress={async () => {await this.setState({editText: true}); this.noteTextIn.focus()}}>

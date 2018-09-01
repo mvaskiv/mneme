@@ -48,7 +48,7 @@ const NotesStack = createStackNavigator({
 },
 {
   headerMode: 'float',
-  // headerTransitionPreset: 'uikit',
+  headerTransitionPreset: 'uikit',
   navigationOptions: {
     gestureResponseDistance: {
       horizontal: 10,

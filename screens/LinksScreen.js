@@ -649,7 +649,7 @@ export default class Notes extends React.Component {
     this.state = {
       modal: false,
       newItem: '',
-      dataSource: null,
+      dataSource: '',
       refreshing: false,
       isSwiping: false,
     };
@@ -670,7 +670,8 @@ export default class Notes extends React.Component {
     //     `create table if not exists img (id integer primary key not null, src text, note int);`
     //   );
     // });
-    this._getUpdate();
+    await this._getUpdate();
+   
   }
 
   // componentDidMount() {
@@ -687,46 +688,46 @@ export default class Notes extends React.Component {
     this._getUpdate();
   }
 
-  _addItem = async (i, due, img) => {
-    let date = await new Date();
-    let thisID = 0;
+  // _addItem = async (i, due, img) => {
+  //   let date = await new Date();
+  //   let thisID = 0;
   
-    await this._toogleModal();
-    await db.transaction(async tx => {
-        await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, completed, archive) values
-          (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
-            i[0],
-            i[1],
-            date.getHours(),
-            date.getMinutes(),
-            date.getDay(),
-            date.getDate(),
-            date.getMonth(),
-            due === '' ? null :
-              due === 'tomorrow' ? date.getDay() + 1 :
-                due === 'today' ? date.getDay() : 7
-          ], async (_, res) => {
-            thisID = await res['insertId'];
-          }
-        );
-      }
-    );
-    await db.transaction(async tx => {
-      if (img) {
-        img.map((pic, i) => {
-          tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
-            async (_, res) => {
-              console.log(res);
-            }
-          );
-        });
-      }
-    });
-    await this._getUpdate();
-    LayoutAnimation.configureNext( ListItemAnimation );
-    await this.setState({deleted: false});    
-    await this.setState({updated: true});
-  }
+  //   await this._toogleModal();
+  //   await db.transaction(async tx => {
+  //       await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, completed, archive) values
+  //         (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
+  //           i[0],
+  //           i[1],
+  //           date.getHours(),
+  //           date.getMinutes(),
+  //           date.getDay(),
+  //           date.getDate(),
+  //           date.getMonth(),
+  //           due === '' ? null :
+  //             due === 'tomorrow' ? date.getDay() + 1 :
+  //               due === 'today' ? date.getDay() : 7
+  //         ], async (_, res) => {
+  //           thisID = await res['insertId'];
+  //         }
+  //       );
+  //     }
+  //   );
+  //   await db.transaction(async tx => {
+  //     if (img) {
+  //       img.map((pic, i) => {
+  //         tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
+  //           async (_, res) => {
+  //             console.log(res);
+  //           }
+  //         );
+  //       });
+  //     }
+  //   });
+  //   await this._getUpdate();
+  //   LayoutAnimation.configureNext( ListItemAnimation );
+  //   await this.setState({deleted: false});    
+  //   await this.setState({updated: true});
+  // }
 
   _getUpdate = () => {
     db.transaction(tx => {
@@ -807,13 +808,26 @@ export default class Notes extends React.Component {
           extraData={this._getUpdate}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
-        /> 
+        />
+        {!this.state.dataSource[0] && 
+          <View
+            style={ styles.welcomeView }>
+            <Text
+              style={ styles.welcome }>
+              You can add a new note {'\n'} using the {' '}
+              <Icon.Ionicons
+                style={ {color: '#999', fontSize: 25 } }
+                name="ios-create-outline" />
+              {' '} button
+            </Text>
+          </View>
+        }
           {/* <Image source={this.state.img} /> */}
-        <Popup visible={this.state.modal}
+        {/* <Popup visible={this.state.modal}
           close={this._toogleModal}
           add={this._addItem}
           addImg={this._selectImage}
-          change={this._onChange} />
+          change={this._onChange} /> */}
         <View style={ styles.editNote }>
             <RkButton style={ styles.editL }
               onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate})} >
@@ -825,10 +839,10 @@ export default class Notes extends React.Component {
             Created 
             </Text> */}
             <RkButton style={ styles.editR }
-            onPress={() => null}>
-            <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#c43131'} ]}
-                name="ios-archive-outline" />
+              onPress={() => null}>
+              <Icon.Ionicons
+                  style={[ styles.editBtn, {color: '#c43131'} ]}
+                  name="ios-archive-outline" />
             </RkButton>
         </View>
 
@@ -975,4 +989,19 @@ const styles = StyleSheet.create({
     top: 0,
     fontSize: 30,
   },
+  welcomeView: {
+    position: 'absolute',
+    width: screenWidth,
+    // textAlign: 'center',
+    // height: 100,
+    top: 15
+  },
+  welcome: {
+    top: 0,
+    fontSize: 24,
+    textAlign: 'center',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    color: '#ccc'
+  }
 });

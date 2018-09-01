@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, StatusBar, StyleSheet, View, AsyncStorage } from 'react-native';
-import Expo, { AppLoading, Asset, Font, Icon, Permissions, Fingerprint, SQLite } from 'expo';
+import Expo, { AppLoading, Asset, Font, Icon, Permissions, SQLite } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
 
 const db = SQLite.openDatabase('mneme.db');
@@ -23,7 +23,8 @@ export default class App extends React.Component {
   _bootstrapAsync = async () => {
     await db.transaction(tx => {
       tx.executeSql(
-        `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, completed int, archive int);`
+        // `drop table folders;`
+        `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, deleted int default 0, archive int default 0);`
       );
     });
     await db.transaction(tx => {
@@ -31,6 +32,16 @@ export default class App extends React.Component {
         `create table if not exists img (id integer primary key not null, src text, note int);`
       );
     });
+    await db.transaction(tx => {
+      tx.executeSql(
+        `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
+      );
+    });
+    // await db.transaction(tx => {
+    //   tx.executeSql(
+    //     `insert into folders (name, type, route, size) values ("Bla", 0, "bla", 1);`
+    //   );
+    // });
     await AsyncStorage.getItem('biometry')
       .then((res) => {
         if (res && res === '1') {
@@ -64,7 +75,8 @@ export default class App extends React.Component {
   // }
 
   render() {
-    if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen || this.state.lock ? !this.state.authorised : 0) {
+    if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen 
+      || this.state.lock ? !this.state.authorised : 0) {
       return (
         <AppLoading
           startAsync={this._loadResourcesAsync}

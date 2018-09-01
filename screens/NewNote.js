@@ -248,35 +248,37 @@ export default class NewNote extends React.Component {
     let date = await new Date();
     let thisID = 0;
     // await this._toogleModal();
-    await db.transaction(async tx => {
-        await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, completed, archive) values
-          (?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
-            this.state.header,
-            this.state.text,
-            date.getHours(),
-            date.getMinutes(),
-            date.getDay(),
-            date.getDate(),
-            date.getMonth(),
-          ], async (_, res) => {
-            thisID = await res['insertId'];
-          }
-        );
-      }
-    );
-    await db.transaction(async tx => {
-      if (this.state.img) {
-        this.state.img.map((pic, i) => {
-          tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
-            async (_, res) => {
-              console.log(res);
+    if (this.state.header || this.state.text) {
+      await db.transaction(async tx => {
+          await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, deleted, archive) values
+            (?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
+              this.state.header,
+              this.state.text,
+              date.getHours(),
+              date.getMinutes(),
+              date.getDay(),
+              date.getDate(),
+              date.getMonth(),
+            ], async (_, res) => {
+              thisID = await res['insertId'];
             }
           );
-        });
-      }
-    });
-    // await this._getUpdate();
-    LayoutAnimation.configureNext( ListItemAnimation );
+        }
+      );
+      await db.transaction(async tx => {
+        if (this.state.img) {
+          this.state.img.map((pic, i) => {
+            tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
+              async (_, res) => {
+                console.log(res);
+              }
+            );
+          });
+        }
+      });
+      // await this._getUpdate();
+      LayoutAnimation.configureNext( ListItemAnimation );
+    }
     // await this.setState({deleted: false});    
     // await this.setState({updated: true});
   }
