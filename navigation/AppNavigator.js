@@ -14,11 +14,13 @@ import NoteView from '../screens/NoteView';
 import NewNote from '../screens/NewNote';
 import Settings from '../screens/SettingsScreen';
 
+
 const NotesStack = createStackNavigator({
   Notes: {
     screen: NotesList,
     navigationOptions:{
-      // headerBackTitle: null,
+      headerBackTitleVisible: true,
+      headerTruncatedBackTitle: 'All Notes',
       headerStyle: {
         borderBottomWidth: 0,
         backgroundColor: '#fff',
@@ -75,7 +77,7 @@ export default createStackNavigator({
       },
     }
   },
-  todos: {
+  tasks: {
     screen: Todos,
     navigationOptions:{
       headerTintColor: '#c43131',

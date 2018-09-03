@@ -2,13 +2,14 @@ import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
 import { RkButton, RkModalImg } from 'react-native-ui-kitten';
 import ImageViewer from 'react-native-image-zoom-viewer';
-import Expo, { Icon, SQLite, Notifications, Permissions, Camera } from 'expo';
+import Expo, { Icon, SQLite, Notifications, Permissions, Camera, BlurView } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import Swipeout from 'react-native-swipeout';
 import Swipeable from 'react-native-swipeable';
 // import Modal from 'react-native-modalbox';
-import CountdownCircle from 'react-native-countdown-circle'
+import CountdownCircle from 'react-native-countdown-circle';
+import SlideDownPanel from "react-native-slide-down-panel";
 import {
   Image,
   Platform,
@@ -643,6 +644,55 @@ const MenuBtn = (props) => (
     name='ios-menu' />
 )
 
+class MenuItem extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: '',
+    };
+    this._getCount();
+  }
+
+  _getCount = () => {
+    db.transaction(async tx => {
+        tx.executeSql(`select count(*) from ` + this.props.route + `;`, [],
+            (_, { rows: { _array } }) => {
+                this.setState({count: _array[0]['count(*)']})
+            }
+        );
+    });
+    db.transaction(async tx => {
+        tx.executeSql(`select * from ` + this.props.route + ` order by id desc limit 1;`, [],
+            (_, { rows: { _array } }) => {
+                this.setState({lastItem: _array[0]})
+            }
+        )
+    });
+  }
+
+  render() {
+    return (
+      
+        <TouchableHighlight
+          style={ styles.smallMenuBtn }
+          underlayColor={this.state.edit ? 'transparent' : 'rgba(169, 169, 169, 0.1)'}
+          onPress={() => this.props.navigation.navigate(this.props.route, {update: this._getCount})}>
+            <View>
+              <Text
+                  style={ styles.folderHeader }>
+                  {this.props.caption}
+              </Text>
+              <Text 
+                style={{color: '#888', fontSize: 14, fontWeight: 'normal', paddingBottom: 2, top: 12, marginLeft: 'auto', marginRight: 'auto',}}>
+                  { this.state.count > 0 ? this.state.count + this.state.count > 1 ? ' Items' : 'Item' : 'Empty' }
+              </Text>
+            </View>
+        </TouchableHighlight>
+    
+    );
+  }
+}
+
 export default class Notes extends React.Component {
   constructor() {
     super();
@@ -652,6 +702,7 @@ export default class Notes extends React.Component {
       dataSource: '',
       refreshing: false,
       isSwiping: false,
+      folders: false,
     };
     this._bootstrapAsync();
   }
@@ -757,33 +808,6 @@ export default class Notes extends React.Component {
     this.props.navigation.navigate('Note', options);
   }
 
-  // _done = async (i) => {
-  //   let date = await new Date();
-  //   let d = await AsyncStorage.getItem('todos');
-  //   let n = await this.state.dataSource.findIndex(x => x.index === i);
-  //   LayoutAnimation.configureNext( ListItemAnimation );        
-  //   this.state.dataSource[n].completed = !this.state.dataSource[n].completed;
-  //   this.state.dataSource[n].archive = !this.state.dataSource[n].archive;
-  //   await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
-  //   await this.setState({updated: true});
-  // }
-
-  // _recover = async () => {
-  //   let n = await this.state.deleted;
-  //   LayoutAnimation.configureNext( ListItemAnimation );        
-  //   await this.setState({dataSource: n});
-  //   await AsyncStorage.setItem('todos', JSON.stringify(n));
-  //   await this.setState({deleted: false});
-  //   await this.setState({updated: true});
-  // }
-
-  // _update = async () => {
-  //   await this.setState({updated: true});
-  //   await this._bootstrapAsync();
-  //   await this.setState({updated: false});
-  // }
-
-
   _swipeHandler = (i) => {
     if (i === 1) {
       this.setState({isSwiping: true});
@@ -792,63 +816,103 @@ export default class Notes extends React.Component {
     }
   }
 
+
+
   render() {
     let today = new Date();
 
     return (
-      <View style={styles.container}>
-       <FlatList
-          scrollEnabled={!this.state.isSwiping}
-          refreshing={this.state.refreshing}
-          onRefresh={this._update}
-          ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
-          data={this.state.dataSource}
-          style={ styles.listContainer }
-          keyExtractor={item => item.id.toString()}
-          extraData={this._getUpdate}
-          onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
-        />
-        {!this.state.dataSource[0] && 
-          <View
-            style={ styles.welcomeView }>
-            <Text
-              style={ styles.welcome }>
-              You can add a new note {'\n'} using the {' '}
-              <Icon.Ionicons
-                style={ {color: '#999', fontSize: 25 } }
-                name="ios-create-outline" />
-              {' '} button
-            </Text>
-          </View>
-        }
-          {/* <Image source={this.state.img} /> */}
-        {/* <Popup visible={this.state.modal}
-          close={this._toogleModal}
-          add={this._addItem}
-          addImg={this._selectImage}
-          change={this._onChange} /> */}
-        <View style={ styles.editNote }>
-            <RkButton style={ styles.editL }
-              onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate})} >
-              <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#c43131'} ]}
-                name="ios-create-outline" />
-            </RkButton>
-            {/* <Text style={ styles.noteCreated }>
-            Created 
-            </Text> */}
-            <RkButton style={ styles.editR }
-              onPress={() => null}>
-              <Icon.Ionicons
-                  style={[ styles.editBtn, {color: '#c43131'} ]}
-                  name="ios-archive-outline" />
-            </RkButton>
+      <View style={{flex: 1}}>
+        <View style={{position: 'absolute', bottom: 0, backgroundColor: '#eee', width: screenWidth, height: 90, flexDirection: 'row'}}>
+          <MenuItem
+              navigation={this.props.navigation}
+              caption={"Media"}
+              route={'Add'}/>
+          <MenuItem
+              navigation={this.props.navigation}
+              caption={"Docs"}
+              route={'Add'}/>
+          <MenuItem
+              navigation={this.props.navigation}
+              caption={"Trash"}
+              route={'Add'}/>
         </View>
+        <View style={[ styles.container, {
+          shadowOffset:{  width: 4,  height: 1,  },
+          shadowColor: '#494949',
+          // shadowRadius: 5,
+          shadowOpacity: 1.0,
+          bottom: this.state.folders ? 90 : 0 } ]}>
+            {this.state.folders && <TouchableOpacity style={{position: 'absolute', top: 0, height: screenHeight -60, width: screenWidth, zIndex: 99}} 
+            onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.setState({folders: false})}} />}
+        {/* <SlideDownPanel
+        handlerDefaultView={<Handler />}
+          >
+          <View
+              style={ styles.welcomeView }>
+              <Text
+                style={ styles.welcome }>
+                You can add a new note {'\n'} using the {' '}
+                <Icon.Ionicons
+                  style={ {color: '#999', fontSize: 25 } }
+                  name="ios-create-outline" />
+                {' '} button
+              </Text>
+            </View>
+          </SlideDownPanel> */}
+        <FlatList
+            scrollEnabled={!this.state.isSwiping}
+            // onRefresh={() => null}
+            // refreshing={false}
+            ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
+            data={this.state.dataSource}
+            style={ styles.listContainer }
+            keyExtractor={item => item.id.toString()}
+            extraData={this._getUpdate}
+            onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+            renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
+          />
+          {!this.state.dataSource[0] && 
+            <View
+              style={ styles.welcomeView }>
+              <Text
+                style={ styles.welcome }>
+                You can add a new note {'\n'} using the {' '}
+                <Icon.Ionicons
+                  style={ {color: '#999', fontSize: 25 } }
+                  name="ios-create-outline" />
+                {' '} button
+              </Text>
+            </View>
+          }
+            {/* <Image source={this.state.img} /> */}
+          {/* <Popup visible={this.state.modal}
+            close={this._toogleModal}
+            add={this._addItem}
+            addImg={this._selectImage}
+            change={this._onChange} /> */}
+          <View style={ styles.editNote }>
+              <RkButton style={ styles.editL }
+                onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate})} >
+                <Icon.Ionicons
+                  style={[ styles.editBtn, {color: '#c43131'} ]}
+                  name="ios-create-outline" />
+              </RkButton>
+              {/* <Text style={ styles.noteCreated }>
+              Created 
+              </Text> */}
+              <RkButton style={ styles.editR }
+                onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.setState({folders: !this.state.folders})}}>
+                <Icon.Ionicons
+                    style={[ styles.editBtn, {color: '#c43131'} ]}
+                    name="ios-archive-outline" />
+              </RkButton>
+          </View>
 
-        {/* <AddBtn onPress={this._toogleModal} /> */}
-        {/* <TestBtn onPress={this._selectImage} /> */}
-        {this.state.deleted && <RecoverBtn onPress={this._recover} />}
+          {/* <AddBtn onPress={this._toogleModal} /> */}
+          {/* <TestBtn onPress={this._selectImage} /> */}
+          {this.state.deleted && <RecoverBtn onPress={this._recover} />}
+        </View>
       </View>
     );
   }
@@ -1003,5 +1067,27 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
     marginRight: 'auto',
     color: '#ccc'
-  }
+  },
+  smallMenuBtn: {
+    width: screenWidth / 3,
+    padding: 14,
+    top: 0,
+    height: 90,
+    // shadowOffset:{  width: 1,  height: 1,  },
+    // shadowColor: '#ddd',
+    // shadowOpacity: 1.0,
+  },
+  folderHeader: {
+      color: '#444',
+      fontWeight: 'bold',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      fontSize: 21,
+  },
+  lastModif: {
+      paddingTop: 12,
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      color: '#777'
+  },
 });

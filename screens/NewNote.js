@@ -169,9 +169,9 @@ export default class NewNote extends React.Component {
       console.log(navigation)
       return {
         headerRight: navigation.state.params ? navigation.state.params.RightRow : null,
-        headerBackTitleStyle: {
-            color: '#fff'
-        }
+        // headerBackTitleStyle: {
+        //     color: '#fff'
+        // }
     }
   };
 

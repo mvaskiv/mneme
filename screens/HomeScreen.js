@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
-import { Icon } from 'expo';
+import { Icon, SQLite } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 // import Swipeout from 'react-native-swipeout';
@@ -27,6 +27,7 @@ import {
   Animated,
   DatePickerIOS,
 } from 'react-native';
+const db = SQLite.openDatabase('mneme.db');
 
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
@@ -347,7 +348,7 @@ class ListItem extends React.Component {
         backgroundColor: '#fff',
         }}
         underlayColor={ '#fff'}
-        onPress={() => {this.swipeable.recenter(); this.props.done(this.props.index)}}
+        onPress={() => {this.swipeable.recenter(); this.props.done(this.props.id)}}
         >
        <Icon.MaterialIcons
           style={{
@@ -365,7 +366,7 @@ class ListItem extends React.Component {
       //   backgroundColor: this.state.swipeOpen ? '#31a2ac' : '#890202',
       //   }}
       //   underlayColor={this.state.swipeOpen ? '#31a2ac' : '#890202'}
-      //   onPress={() => this.props.hide(this.props.index)}
+      //   onPress={() => this.props.hide(this.props.id)}
       //   >
       //   {!this.state.swipeOpen ? 
       //   <Icon.MaterialIcons
@@ -408,7 +409,7 @@ class ListItem extends React.Component {
             await LayoutAnimation.configureNext(SwipeItemAnimation);
             await setTimeout(() => this.setState({removed: true}), 0);
             // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
-            await setTimeout(() => this.props.done(this.props.index), 0);
+            await setTimeout(() => this.props.done(this.props.id), 0);
             await setTimeout(() => this.setState({removed: false}), 150);
             await setTimeout(() => this.setState({swipeOpen: false}), 400);
           }}
@@ -445,7 +446,7 @@ class ListItem extends React.Component {
                       name="ios-alarm-outline" />
                   </RkButton>
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.index)}}>
+                    onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn, {color: '#c43131'} ]}
                       name="ios-trash-outline" />
@@ -500,7 +501,7 @@ class ListItem extends React.Component {
                  { this.state.editText ?
                   <View style={{flex: 1, flexDirection: 'row', left: -80}}>
                     <RkButton style={{width: 50, backgroundColor: 'transparent'}}
-                      onPress={ async () => {await this.props.editItem(this.props.index, this.state.newText); this.setState({editText: false})} }>
+                      onPress={ async () => {await this.props.editItem(this.props.id, this.state.newText); this.setState({editText: false})} }>
                     <Icon.Ionicons
                       style={[ styles.editTextBtn, {color: '#2869d3'} ]}
                       name="ios-checkmark-circle-outline" />
@@ -597,131 +598,115 @@ export default class HomeScreen extends React.Component {
   };
 
   _bootstrapAsync = async () => {
-    // await AsyncStorage.clear();
-    const items = await AsyncStorage.getItem('todos');
-    if (items) {
-      await this.setState({dataSource: JSON.parse(items)});
-    }
+    await this._getUpdate();
+    console.log(this.state.dataSource)
   }
 
-  ComponentDidUpdate() {
-    // if (this.state.updated) {
-    //   this.setState({updated: false});
-    // }
+  componentWillUnmount() {
+    this.props.navigation.state.params.update();
   }
 
   _toogleModal = async => {
     this.setState({modal: !this.state.modal});
-    // let newItem = {
-    //   id: 3,
-    //   text: '1',
-    //   completed: false,
-    // };
-    // await this.state.dataSource.push(newItem);
-    
   }
 
-  _addItem = async (i, due) => {
-    let date = await new Date();
-    await this.setState({newItem: i});
+  _addItem = async (text, due) => {
     await this._toogleModal();
-    // console.warn(this.state.dataSource[2])
-    if (this.state.dataSource[0]) {
-      let n = this.state.dataSource.length;
-      let newItem = {
-        index: this.state.dataSource[n - 1].index + 1,
-        text: i,
-        hours: date.getHours(),
-        minutes: date.getMinutes(),
-        day: date.getDay(),
-        date: date.getDate(),
-        month: date.getMonth(),
-        due: due === '' ? null :
-          due === 'tomorrow' ? date.getDay() + 1 :
-            due === 'today' ? date.getDay() : 7,
-        completed: false,
-        archive: false,
+    let date = await new Date();
+    let thisID = 0;
+
+    await db.transaction(async tx => {
+        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, completed, archive) values
+          (?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
+            text,
+            date.getHours(),
+            date.getMinutes(),
+            date.getDay(),
+            date.getDate(),
+            date.getMonth(),
+            due === '' ? null :
+              due === 'tomorrow' ? date.getDay() + 1 :
+                due === 'today' ? date.getDay() : 7
+          ], async (_, res) => {
+            thisID = await res['insertId'];
+          }
+        );
       }
-      await this.state.dataSource.push(newItem);
-    } else {
-      let newItem = {
-        index: '0',
-        text: i,
-        hours: date.getHours(),
-        minutes: date.getMinutes(),
-        day: date.getDay(),
-        date: date.getDate(),
-        month: date.getMonth(),
-        due: due === '' ? null :
-          due === 'tomorrow' ? date.getDay() + 1 :
-            due === 'today' ? date.getDay() : 7,     
-        completed: false,
-        archive: false,
-      }
-      this.setState({dataSource: [newItem]});
-    }
-    console.log(this.state.dataSource);
-    await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
+    );
+    await this._getUpdate();
     LayoutAnimation.configureNext( ListItemAnimation );
     await this.setState({deleted: false});    
     await this.setState({updated: true});
   }
 
+  _getUpdate = () => {
+    db.transaction(tx => {
+        tx.executeSql(`select * from tasks where completed = 0 order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+      );
+    });
+  }
+
+  _delete = async (id) => {
+    db.transaction(tx => {
+      tx.executeSql(`delete from tasks where id = ?`, [id]);
+    });
+    LayoutAnimation.configureNext( SwipeItemAnimation );
+    this._getUpdate(); 
+    await this.setState({updated: true});
+    this.setState({editText: false});
+  }
+
   _done = async (i) => {
-    let d = await AsyncStorage.getItem('todos');   
-    let n = await this.state.dataSource.findIndex(x => x.index === i);
-    LayoutAnimation.configureNext( ListItemAnimation );        
-    this.state.dataSource[n].archive = !this.state.dataSource[n].archive;
-    this.state.dataSource[n].completed = !this.state.dataSource[n].completed;
-    await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
-    await this.setState({dismissed: i});
+    db.transaction(tx => {
+        tx.executeSql(`update tasks set completed = 1 where id = ?`,[i]
+      );
+    });
+    LayoutAnimation.configureNext( SwipeItemAnimation );
     await this.setState({updated: true});
   }
 
   _edit = async (i, text) => {
-    if (text) {
-      let d = await AsyncStorage.getItem('todos');
-      let n = await this.state.dataSource.findIndex(x => x.index === i);
-      LayoutAnimation.configureNext( ListItemAnimation );        
-      this.state.dataSource[n].text = await text;    
-      await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
-      await this.setState({updated: true});
-    }
-  }
-
-  _archive = async (i) => {
-    let n = await this.state.dataSource.findIndex(x => x.index === i);
-    LayoutAnimation.configureNext( ListItemAnimation );        
-    this.state.dataSource[n].archive = !this.state.dataSource[n].archive;
-    await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
+      db.transaction(tx => {
+        tx.executeSql(`update tasks set text = ? where id = ?`,[text, i]
+      );
+    });
+    LayoutAnimation.configureNext( SwipeItemAnimation );
     await this.setState({updated: true});
   }
 
-  _delete = async (i) => {
-    let d = await AsyncStorage.getItem('todos');
-    let n = await this.state.dataSource.findIndex(x => x.index === i);
-    LayoutAnimation.configureNext( ListItemAnimation );        
-    await this.state.dataSource.splice(n, 1);
-    await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
-    await this.setState({deleted: JSON.parse(d)});
-    await this.setState({updated: true});
-  }
+  // _archive = async (i) => {
+  //   let n = await this.state.dataSource.findIndex(x => x.index === i);
+  //   LayoutAnimation.configureNext( ListItemAnimation );        
+  //   this.state.dataSource[n].archive = !this.state.dataSource[n].archive;
+  //   await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
+  //   await this.setState({updated: true});
+  // }
 
-  _recover = async () => {
-    await this._done(this.state.dismissed);
-    await this.setState({dismissed: false});
-    await this.setState({deleted: false});
-  }
+  // _delete = async (i) => {
+  //   let d = await AsyncStorage.getItem('todos');
+  //   let n = await this.state.dataSource.findIndex(x => x.index === i);
+  //   LayoutAnimation.configureNext( ListItemAnimation );        
+  //   await this.state.dataSource.splice(n, 1);
+  //   await AsyncStorage.setItem('todos', JSON.stringify(this.state.dataSource));
+  //   await this.setState({deleted: JSON.parse(d)});
+  //   await this.setState({updated: true});
+  // }
 
-  _restore = async () => {
-    let n = await this.state.deleted;
-    await LayoutAnimation.configureNext( ListItemAnimation );        
-    await this.setState({dataSource: n});
-    await AsyncStorage.setItem('todos', JSON.stringify(n));
-    await this.setState({deleted: false});
-    await this.setState({dismissed: false});
-    await this.setState({updated: true});
-  }
+  // _recover = async () => {
+  //   await this._done(this.state.dismissed);
+  //   await this.setState({dismissed: false});
+  //   await this.setState({deleted: false});
+  // }
+
+  // _restore = async () => {
+  //   let n = await this.state.deleted;
+  //   await LayoutAnimation.configureNext( ListItemAnimation );        
+  //   await this.setState({dataSource: n});
+  //   await AsyncStorage.setItem('todos', JSON.stringify(n));
+  //   await this.setState({deleted: false});
+  //   await this.setState({dismissed: false});
+  //   await this.setState({updated: true});
+  // }
 
   _update = async () => {
     await this.setState({updated: true});
@@ -742,14 +727,14 @@ export default class HomeScreen extends React.Component {
 
     return (
       <View style={styles.container}>
-        
+       
         <FlatList
           scrollEnabled={!this.state.isSwiping}      
           refreshing={this.state.refreshing}
           onRefresh={this._update}
           data={this.state.dataSource}
           style={ styles.container }
-          keyExtractor={item => item.index}
+          keyExtractor={item => item.id.toString()}
           // extraData={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} />}

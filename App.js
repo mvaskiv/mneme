@@ -34,7 +34,8 @@ export default class App extends React.Component {
     });
     await db.transaction(tx => {
       tx.executeSql(
-        `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
+        // `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
+        `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, archive int default 0);`
       );
     });
     // await db.transaction(tx => {
