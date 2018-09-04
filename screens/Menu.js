@@ -539,19 +539,19 @@ class Today extends React.Component {
     return (
       <View style={{height: this.state.expanded ? 'auto' : 140, overflow: 'hidden'}}>
         <TouchableHighlight
-          style={[ styles.menuBtn, {height: 120, overflow: 'hidden'} ]}
-          underlayColor={'rgba(29, 29, 29, 0.1)'}
+          style={[ styles.todayView, {height: 120, overflow: 'hidden'} ]}
+          underlayColor={'rgba(255,255,255,0.2)'}
           onPress={this.state.dataSource[0] ? () => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({expanded: !this.state.expanded})} : null}>
           <View>
             <Text
-                style={[ styles.folderHeader, {fontSize: 29} ]}>
+                style={[ styles.folderHeader, {fontSize: 35} ]}>
                 Today
             </Text>
             {this.state.dataSource[0] && <Icon.SimpleLineIcons
               style={[ styles.enterIcon, { color: '#aaa', top: 75 } ]}
               name={this.state.expanded ? 'arrow-up' : "arrow-down"} />}
             <Text
-                style={[ styles.lastModif, {position: 'absolute', right: 35, top: -5, textAlign: 'right', lineHeight: 15, fontSize: 12} ] }>
+                style={[ styles.lastModif, {position: 'absolute', right: 35, top: 0, textAlign: 'right', lineHeight: 15, fontSize: 12} ] }>
                 
                 {this.state.weather ? this.state.weather.currently.summary + ' ' + Math.round(this.state.weather.currently.apparentTemperature) + '\u2103' : null}
             </Text>
@@ -560,7 +560,7 @@ class Today extends React.Component {
                 {!this.state.dataSource[0] ? 'No tasks for today' :
                   'Next: ' + this.state.dataSource[0].text}
             </Text>
-            {this.state.weatherIcon && <Image style={{position: 'absolute', top: 0, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } /> }
+            {this.state.weatherIcon && <Image style={{position: 'absolute', top: 5, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } /> }
           </View>
       </TouchableHighlight>
       <FlatList
@@ -789,7 +789,8 @@ export default class Menu extends React.Component {
 
   static navigationOptions = ({ navigation }) => {
     return {
-      headerRight: <SettingsBtn nav={navigation}  />
+      header: null
+      // headerRight: <SettingsBtn nav={navigation}  />
     }
   };
 
@@ -1057,5 +1058,16 @@ const styles = StyleSheet.create({
   },
   emptyToday: {
     color: '#777'
-  }
+  },
+  todayView: {
+    width: screenWidth - 10,
+    padding: 10,
+    top: 10,
+    marginTop: 15,
+    marginHorizontal: 5,
+    // borderWidth: 1,
+    // borderColor: '#eee',
+    // borderRadius: 10,
+    height: 85,
+  },
 });
