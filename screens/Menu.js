@@ -400,7 +400,8 @@ class Today extends React.Component {
       expanded: false,
       propOpen: this.props.open,
       dataSource: false,
-      spin: new Animated.Value(0),    
+      spin: new Animated.Value(0),
+      open: new Animated.Value(1),  
     };
     this._getTasks();
   }
@@ -425,6 +426,22 @@ class Today extends React.Component {
       easing: Easing.linear,
       useNativeDriver: true
     }).start(() => this._animationLoop());
+  }
+
+  _expandAnimation = (i) => {
+    Animated.timing(this.state.open, {
+      toValue: 10,
+      duration: 240,
+      easing: Easing.linear,
+      useNativeDriver: true
+    }).start(() => {
+      Animated.timing(this.state.open, {
+        toValue: 1,
+        duration: 100,
+        easing: Easing.linear,
+        useNativeDriver: true
+      }).start();
+    });
   }
 
   _viewNote = (options) => {
@@ -488,6 +505,7 @@ class Today extends React.Component {
     LayoutAnimation.configureNext(FadeItemAnimation);
     this.props.updateCounter._getCount();
     this.setState({expanded: !this.state.expanded});
+    this._expandAnimation(1);
   }
 
   render() {
@@ -497,8 +515,15 @@ class Today extends React.Component {
       outputRange: ['0deg', '360deg']
     });
 
+    // const open = this.state.open.interpolate({
+    //   inputRange: [1, 1.1, 1],
+    //   outputRange: [1, 1.1, 1],
+    //   extrapolate: 'clamp',
+    //   useNativeDriver: true,
+    // })
+
     return (
-      <View style={{top: 10,height: this.state.expanded ? 'auto' : 150, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
+      <Animated.View style={{top: 5, transform: [{translateY: this.state.open}], height: this.state.expanded ? 'auto' : 150, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
         <TouchableHighlight
           style={[ styles.todayView, {height: 120, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0)'} ]}
           underlayColor={'rgba(255,255,255,0.2)'}
@@ -542,7 +567,7 @@ class Today extends React.Component {
         onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
         renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._todayIDone} swiping={this._swipeHandler} />}
       />
-    </View>
+    </Animated.View>
     )
   }
 }
