@@ -390,12 +390,12 @@ class ListItem extends React.Component {
       
     ];
 
-    if (!this.props.archive) {
+    if (!this.props.completed) {
       return (
         <Swipeable
           onRef={ref => this.swipeable = ref}
           style={{
-            left: this.state.swipeOpen ? this.state.removed ? 400 : 0 : 0,
+            left: this.state.removed ? 700 : 0,
           }}
           swipeStartMinDistance={40}
           onSwipeStart={() => this.props.swiping(1)}
@@ -409,9 +409,8 @@ class ListItem extends React.Component {
             await LayoutAnimation.configureNext(SwipeItemAnimation);
             await setTimeout(() => this.setState({removed: true}), 0);
             // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
-            await setTimeout(() => this.props.done(this.props.id), 0);
-            await setTimeout(() => this.setState({removed: false}), 150);
-            await setTimeout(() => this.setState({swipeOpen: false}), 400);
+            await setTimeout(() => this.props.done(this.props.id), 300);
+            // await setTimeout(() => this.setState({removed: false}), 150);
           }}
           >
           <TouchableWithoutFeedback
@@ -603,6 +602,7 @@ export default class HomeScreen extends React.Component {
   }
 
   componentWillUnmount() {
+    this.props.navigation.state.params.updateToday();
     this.props.navigation.state.params.update();
   }
 
@@ -614,10 +614,9 @@ export default class HomeScreen extends React.Component {
     await this._toogleModal();
     let date = await new Date();
     let thisID = 0;
-
     await db.transaction(async tx => {
-        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, completed, archive) values
-          (?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
+        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due) values
+          (?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
             text,
             date.getHours(),
             date.getMinutes(),
@@ -650,8 +649,8 @@ export default class HomeScreen extends React.Component {
     db.transaction(tx => {
       tx.executeSql(`delete from tasks where id = ?`, [id]);
     });
+    await this._getUpdate();
     LayoutAnimation.configureNext( SwipeItemAnimation );
-    this._getUpdate(); 
     await this.setState({updated: true});
     this.setState({editText: false});
   }
@@ -661,6 +660,7 @@ export default class HomeScreen extends React.Component {
         tx.executeSql(`update tasks set completed = 1 where id = ?`,[i]
       );
     });
+    await this._getUpdate();
     LayoutAnimation.configureNext( SwipeItemAnimation );
     await this.setState({updated: true});
   }

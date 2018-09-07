@@ -24,7 +24,9 @@ import {
   AsyncStorage,
   LayoutAnimation,
   Animated,
+  Easing,
   AlertIOS,
+  RefreshControl
 } from 'react-native';
 import HomeScreen from './HomeScreen';
 
@@ -48,6 +50,22 @@ const FadeItemAnimation = {
     type: LayoutAnimation.Types.linear,
   },
 };
+
+const WeatherAnimation = {
+  duration: 335,
+  create: {
+    property: LayoutAnimation.Properties.scaleXY,
+    type: LayoutAnimation.Types.linear,
+  },
+  update: {
+    property: LayoutAnimation.Properties.scaleXY,
+    type: LayoutAnimation.Types.linear,
+  },
+  delete: {
+    property: LayoutAnimation.Properties.scaleXY,
+    type: LayoutAnimation.Types.linear,
+  },
+}
 // class SmallFolder extends React.Component {
 //   constructor(props) {
 //     super(props);
@@ -279,6 +297,7 @@ class NoteItem extends React.Component {
       edit: false,
       removed: false,
       view: false,
+      done: false,
     }
     const rightButtons = [
       <TouchableHighlight><Text>Button 1</Text></TouchableHighlight>,
@@ -325,118 +344,26 @@ class NoteItem extends React.Component {
 
   render() {
     let creationDate = this._getSetDate();
-    let options = {
-      caption: this.props.header,
-      text: this.props.text,
-      view: true,
-      id: this.props.id,
-      created: creationDate,
-      updated: null,
-      delete: this.props.delete,
-      hide: this._hideNote,
-      close: this._toogleModal,
-      change: this._onChange,
-      today: this.props.today,
-      update: this.props.update,
-    }
-
-    const leftContent = [
-      <TouchableHighlight
-        style={{
-        flex: 1,
-        right: this.state.swipeOpen ? -20 : 0,
-        padding: 15,
-        backgroundColor: this.state.removed ? '#c43131' : '#edb41a',
-        }}
-        underlayColor={ '#edb41a' }
-        onPress={() => {null}}
-        >
-      <Icon.Ionicons
-          style={{
-            position: 'absolute',
-            left: 32,
-            top: 20,
-            color: '#fff',
-            fontSize: 25,
-          }}
-        name='ios-archive' />
-      </TouchableHighlight>,
-      <TouchableHighlight
-        style={{
-        flex: 1,
-        right: this.state.swipeOpen ? this.state.removed ? 410 : 140 : 0,
-        padding: 15,
-        backgroundColor: '#c43131',
-        }}
-        underlayColor={'#c43131'}
-        onPress={() => {this.props.delete(this.props.id)}}
-        >
-       <Icon.Ionicons
-          style={{
-            position: 'absolute',
-            left: 34,
-            top: 20,
-            color: '#fff',
-            fontSize: 25,
-           }}
-        name='ios-trash' />
-      </TouchableHighlight>
-    ];
 
     return (
-      // <Swipeable
-      //   onRef={ref => this.swipeable = ref}
-      //   swipeStartMinDistance={40}
-      //   onSwipeStart={() => this.props.swiping(1)}
-      //   onSwipeRelease={() => this.props.swiping(0)}
-      //   rightButtons={leftContent}
-      //   rightButtonWidth={80}
-      //   rightActionActivationDistance={230}
-      //   onRightActionActivate={ () => this._swipeActivation(1) }
-      //   onRightActionDeactivate={ () => this._swipeActivation(0) }
-      //   onRightActionRelease={async () => {
-      //     // await LayoutAnimation.configureNext(SwipeItemAnimation);
-      //     await setTimeout(() => this.setState({removed: true}), 0);
-      //     // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
-      //     await setTimeout(() => this.props.delete(this.props.id), 0);
-      //     // await setTimeout(() => this.setState({removed: false}), 150);
-      //     // await setTimeout(() => this.setState({swipeOpen: false}), 400);
-      //   }}
-      //   >
       <TouchableWithoutFeedback
         underlayColor={'rgba(29, 29, 29, 0.3)'}
-        onPress={() => null}
+        onPress={() => this.props.done(this.props.id)}
         // onPress={() => this.props.viewNote(options)}
 
         // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
         >
-        {
-          this.state.edit ? 
           <View style={ styles.noteItem }>
-            <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})}}>
-              <Icon.Ionicons
-                style={ styles.editBtn }
-                name="ios-arrow-dropleft-outline" />
-            </RkButton>
-            <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
-              <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#4286f4'} ]}
-                name="ios-create-outline" />
-            </RkButton>
-            <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
-              <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#c43131'} ]}
-                name="ios-trash-outline" />
-            </RkButton>
-          </View>
-        :
-          <View style={ styles.noteItem }>
+            <Icon.Ionicons
+              onPress={() => {
+                this.props.done(this.state.done ? 0 : 1, this.props.id)
+                  .then(this.setState({done: !this.state.done}));
+              }}
+              style={styles.checkmark}
+              name={this.state.done ? "ios-checkmark-circle-outline" : "ios-radio-button-off"} />
             <Text
               numberOfLines={1}
-              style={ styles.header }>
+              style={ this.state.done ? styles.headerDone : styles.header }>
               { this.props.header ? this.props.header : this.props.text }
             </Text>
             {/* <Text
@@ -444,7 +371,7 @@ class NoteItem extends React.Component {
               style={ this.props.text ? styles.text : styles.textDone }>
               { this.props.text ? this.props.text : 'No additional data' }
             </Text> */}
-            <Text style={styles.time}>
+            <Text style={[styles.time]}>
               { creationDate }
             </Text>
             {this.state.view && <Popup
@@ -458,9 +385,7 @@ class NoteItem extends React.Component {
               hide={this._hideNote}
               change={this._onChange} />}
           </View>
-        }
       </TouchableWithoutFeedback>
-      // </Swipeable>
     );
   }
 }
@@ -473,7 +398,9 @@ class Today extends React.Component {
       weather: false,
       weatherIcon: false,
       expanded: false,
+      propOpen: this.props.open,
       dataSource: false,
+      spin: new Animated.Value(0),    
     };
     this._getTasks();
   }
@@ -482,8 +409,37 @@ class Today extends React.Component {
     this._getLocationAsync();
   }
 
+  componentDidMount() {
+    this._animationLoop();
+  }
+
+  componentWillReceiveProps() {
+    this._getTasks();
+  }
+
+  _animationLoop = () => {
+    this.state.spin.setValue(0);
+    Animated.timing(this.state.spin, {
+      toValue: 1,
+      duration: 1500,
+      easing: Easing.linear,
+      useNativeDriver: true
+    }).start(() => this._animationLoop());
+  }
+
   _viewNote = (options) => {
     this.props.navigation.navigate('Note', options);
+  }
+
+  _todayIDone = async (i, id) => {
+    return new Promise(
+      resolve => {
+        db.transaction(tx => {
+          tx.executeSql(`update tasks set completed = ? where id = ?`,[i, id]
+        );
+      });
+      resolve('yes');
+    });
   }
 
   _getLocationAsync = async () => {
@@ -505,24 +461,18 @@ class Today extends React.Component {
   _getWeather = async () => {
     await fetch('https://api.darksky.net/forecast/9356b07d5c4d535014e4593c241c3431/' + this.state.location.coords.latitude + ',' + this.state.location.coords.longitude + '?units=auto&exclude=minutely,hourly,daily,alerts,flags', {
       method: 'GET',
-      // headers: {
-      //   Accept: 'application/json',
-      //   'Content-Type': 'application/json',
-      // }
     })
     .then((response) => response.json())
     .then((res) =>
     {
       if (res) {
-        console.log(res);
         this.setState({weather: res});
-        this.setState({weatherIcon: weatherIcons[res.currently.icon]});
+        setTimeout(() => {LayoutAnimation.configureNext(WeatherAnimation); this.setState({weatherIcon: weatherIcons[res.currently.icon]})}, 500);
       }
     })
     .catch((error) => {
       console.error(error);
     });
-    console.log(this.state.weatherIcon);
   }
 
   _getTasks = () => {
@@ -533,16 +483,29 @@ class Today extends React.Component {
     });
   }
 
+  _expand = () => {
+    this._getTasks();
+    LayoutAnimation.configureNext(FadeItemAnimation);
+    this.props.updateCounter._getCount();
+    this.setState({expanded: !this.state.expanded});
+  }
+
   render() {
     let today = new Date();
+    const spin = this.state.spin.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg']
+    });
 
     return (
-      <View style={{height: this.state.expanded ? 'auto' : 140, overflow: 'hidden'}}>
+      <View style={{top: 10,height: this.state.expanded ? 'auto' : 150, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
         <TouchableHighlight
-          style={[ styles.todayView, {height: 120, overflow: 'hidden'} ]}
+          style={[ styles.todayView, {height: 120, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0)'} ]}
           underlayColor={'rgba(255,255,255,0.2)'}
-          onPress={this.state.dataSource[0] ? () => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({expanded: !this.state.expanded})} : null}>
-          <View>
+          onPress={this.state.dataSource[0] ? this._expand : null}>
+          <View style={{backgroundColor: 'rgba(255,255,255,0)',
+            // opacity: this.state.expanded ? 0.5 : 1
+            }}>
             <Text
                 style={[ styles.folderHeader, {fontSize: 35} ]}>
                 Today
@@ -560,7 +523,12 @@ class Today extends React.Component {
                 {!this.state.dataSource[0] ? 'No tasks for today' :
                   'Next: ' + this.state.dataSource[0].text}
             </Text>
-            {this.state.weatherIcon && <Image style={{position: 'absolute', top: 5, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } /> }
+            {this.state.weatherIcon 
+              ? <Image style={{position: 'absolute', top: 5, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } />
+              : <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 5, right: 0, height: 22, width: 22}}>
+                  <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
+                </Animated.View>
+            }
           </View>
       </TouchableHighlight>
       <FlatList
@@ -568,11 +536,11 @@ class Today extends React.Component {
         // onRefresh={() => null}
         // refreshing={false}
         data={this.state.dataSource}
-        style={ styles.listContainer }
+        style={[ styles.listContainer, {backgroundColor:'#fff'} ]}
         keyExtractor={item => item.id.toString()}
         extraData={this._getUpdate}
         onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-        renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
+        renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._todayIDone} swiping={this._swipeHandler} />}
       />
     </View>
     )
@@ -592,16 +560,18 @@ class MenuItem extends React.Component {
 
   _getCount = () => {
     let selection = this.props.route === 'tasks' ? ' where completed = 0;' : ';';
-
+    let route = this.props.route === 'tasks' ? 'tasks' : 'notes';
+    route = this.props.id ? "notes where folder = ?" : route;
+    console.log(this.props.id);
     db.transaction(async tx => {
-        tx.executeSql(`select count(*) from ` + this.props.route + selection, [],
+        tx.executeSql(`select count(*) from ` + route + selection, [this.props.id],
             (_, { rows: { _array } }) => {
                 this.setState({count: _array[0]['count(*)']})
             }
         );
     });
     db.transaction(async tx => {
-        tx.executeSql(`select * from ` + this.props.route + ` order by id desc limit 1;`, [],
+        tx.executeSql(`select * from ` + route + ` order by id desc limit 1;`, [this.props.id],
             (_, { rows: { _array } }) => {
                 this.setState({lastItem: _array[0]})
             }
@@ -656,8 +626,8 @@ class MenuItem extends React.Component {
           style: 'destructive',
           onPress: async () => {
             await db.transaction(tx => {
-              tx.executeSql(`delete from folders where name = ?`,[
-                  this.props.caption
+              tx.executeSql(`delete from folders where id = ?`,[
+                  this.props.id
                 ], () => this.props.update()
               );
             });
@@ -728,7 +698,7 @@ class MenuItem extends React.Component {
             onLongPress={this.props.custom ? () => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})} : () => null}
             style={[ this.props.small ? styles.smallMenuBtn : styles.menuBtn, this.state.edit && { width: screenWidth / 1.5 } ]}
             underlayColor={this.state.edit ? 'transparent' : 'rgba(29, 29, 29, 0.1)'}
-            onPress={this.state.edit ? () => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})} : () => this.props.navigation.navigate(this.props.route, {update: this._getCount})}>
+            onPress={this.state.edit ? () => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})} : () => this.props.route === 'tasks' ? this.props.navigation.navigate('tasks', {update: this._getCount, updateToday: this.props.updateToday}) : this.props.navigation.navigate('notes', {update: this._getCount, folder: this.props.id, caption: this.props.caption, updateToday: this.props.updateToday})}>
             { this.props.small
             ? 
               <View>
@@ -783,6 +753,11 @@ export default class Menu extends React.Component {
       newItem: '',
       dataSource: [],
       refreshing: false,
+      today: false,
+      refreshing: false,
+      synced: true,
+      todayUpd: false,
+      todayOpactity: new Animated.Value(0),
     };
     this._bootstrapAsync();
   }
@@ -795,101 +770,172 @@ export default class Menu extends React.Component {
   };
 
   _bootstrapAsync = async () => {
-    db.transaction(tx => {
-        tx.executeSql(`select * from folders;`,[], (_, { rows: { _array } }) => {this.setState({ dataSource: _array }); console.log(this.state.dataSource)}
-      );
+    return new Promise(
+      resolve => {
+          db.transaction(tx => {
+            tx.executeSql(`select * from folders;`,[], (_, { rows: { _array } }) => {this.setState({ dataSource: _array }); console.log(this.state.dataSource)}
+        );
+      });
+      resolve('yes');
     });
+    this.setState({updated: true});
   }
 
   _toogleModal = () => {
     this.setState({modal: !this.state.modal});
   }
 
+  // _handleScroll = (event) => {
+  //   if (event.nativeEvent.contentOffset.y > 0) {
+  //     this.setState({todayOpactity: 10 / event.nativeEvent.contentOffset.y})
+  //   } else {
+  //     this.setState({todayOpactity: 1});
+  //   }
+  // }
+
+  _onRefresh = () => {
+    LayoutAnimation.configureNext( FadeItemAnimation );
+    this.setState({refreshing: true});
+    this.setState({synced: false});
+    this._bootstrapAsync().then(() => {
+      setTimeout(() => this.setState({synced: true}), 2500);
+      setTimeout(() => this.setState({refreshing: false}), 4000);
+    });
+  }
+
+  _updateToday = () => {
+    this.setState({todayUpd: !this.state.todayUpd});
+  }
+
   render() {
     let today = new Date();
+    const todayOpactity = this.state.todayOpactity.interpolate({
+      inputRange: [20, 105],
+      outputRange: [1, 0],
+      extrapolate: 'clamp',
+      useNativeDriver: true,
+    });
+    const todayShift = this.state.todayOpactity.interpolate({
+      inputRange: [-250, -15, 30, 100],
+      outputRange: [15, 0, 0, 20],
+      extrapolate: 'clamp',
+      useNativeDriver: true,
+    });
+    const todayScale = this.state.todayOpactity.interpolate({
+      inputRange: [-250, -10, 10, 30],
+      outputRange: [0.9, 1, 1, 0.94],
+      extrapolate: 'clamp',
+      useNativeDriver: true,
+    });
+
 
     return (
-      <ScrollView style={styles.container} contentContainerStyle={{justifyContent: 'flex-start', flex: 1 }}>
-        {/* <Image style={{position: 'absolute', top: 0, height: screenHeight, opacity: 0.2, flex: 1}} source={require('../assets/images/paper.jpg')} /> */}
-        {/* {this.state.preferences.today && 
-          <MenuItem
-              navigation={this.props.navigation}
-              caption={"Today"}
-              route={'today'} />
-        } */}
-          <View style={{width: screenWidth}}>
-            <Today 
-              navigation={this.props.navigation} />
-            <MenuItem
-              navigation={this.props.navigation}
-              caption={"To Do's"}
-              route={'tasks'} />
-            <MenuItem
-              navigation={this.props.navigation}
-              caption={"Notes"}
-              route={'notes'} />
-            <FlatList
-              data={this.state.dataSource}
-              contentContainerStyle={{bottom: 5}}
-              keyExtractor={item => item.id.toString()}
-              extraData={this._getUpdate}
-              onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-              renderItem={({ item }) => <MenuItem
-                navigation={this.props.navigation}
-                caption={item.name}
-                route={item.route}
-                update={this._bootstrapAsync}
-                custom={ true } />} 
-              />
-            <MenuItem
-              navigation={this.props.navigation}
-              caption={"Add"}
-              route={'Add'}
-              update={this._bootstrapAsync}
-              _toogleModal={this._toogleModal} />
-          </View>
-
-          {/* <View style={{width: screenWidth, flexDirection: 'row', flexWrap: 'wrap'}}>
-            <MenuItem
-                navigation={this.props.navigation}
-                caption={"Media"}
-                route={'Add'}
-                small={true} />
-            <MenuItem
-                navigation={this.props.navigation}
-                caption={"Docs"}
-                route={'Add'}
-                small={true} />
-            <MenuItem
-                navigation={this.props.navigation}
-                caption={"Trash"}
-                route={'Add'}
-                small={true} /> */}
-              {/* <FlatList
-                data={this.state.dataSource}
-                contentContainerStyle={{bottom: 5}}
-                keyExtractor={item => item.id.toString()}
-                extraData={this._getUpdate}
-                onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-                renderItem={({ item }) => <MenuItem
+      <View style={{flex:1, backgroundColor:'#fff'}}>
+        <Animated.View style={{
+          transform: [{scale: todayScale}],
+          opacity: todayOpactity,
+          top: todayShift,
+          zIndex:1,
+          backgroundColor: '#fff',
+          }}>
+          <Today
+            update={this._updateToday}
+            navigation={this.props.navigation}
+            clickable={this.state.todayOpactity === 1 ? true : false}
+            updateCounter={this.todosBtn}
+            />
+        </Animated.View>
+          {/* <View style={{flex: 1, backgroundColor:'#fff', borderTopColor: '#ddd', borderTopWidth: 1 }}> */}
+            <ScrollView
+            // refreshControl={
+            //     <RefreshControl
+            //       tintColor={'#fff'}
+            //       titleColor={'#777'}
+            //       title={ this.state.refreshing ? !this.state.synced ? 'Sync in progress' : 'Up to Date' : 'Pull to refresh'}
+            //       refreshing={this.state.refreshing}
+            //       onRefresh={this._onRefresh}
+            //     />
+            //   }
+              style={{width: screenWidth, height: screenHeight - 150, zIndex:99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-start', backgroundColor:'transparent'}}>
+              <View style={{width: screenWidth, paddingBottom: 50, zIndex:99}}>
+                <MenuItem
+                  ref={(c) => this.todosBtn = c}
+                  updateToday={this._updateToday}
                   navigation={this.props.navigation}
-                  caption={item.name}
-                  route={item.route}
-                  small={true}
+                  caption={"To Do's"}
+                  route={'tasks'} />
+                <MenuItem
+                  navigation={this.props.navigation}
+                  updateToday={this._updateToday}
+                  caption={"Notes"}
+                  route={'notes'} />
+                <FlatList
+                  data={this.state.dataSource}
+                  scrollEnabled={false}
+                  contentContainerStyle={{bottom: 5}}
+                  keyExtractor={item => item.id.toString()}
+                  extraData={this._getUpdate}
+                  onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+                  renderItem={({ item }) => <MenuItem
+                    updateToday={this._updateToday}
+                    navigation={this.props.navigation}
+                    id={item.id}
+                    caption={item.name}
+                    route={item.route}
+                    update={this._bootstrapAsync}
+                    custom={ true } />} 
+                  />
+                <MenuItem
+                  navigation={this.props.navigation}
+                  caption={"Add"}
+                  route={'Add'}
                   update={this._bootstrapAsync}
-                  custom={ true } />} 
-              /> */}
-            {/* <MenuItem
-                navigation={this.props.navigation}
-                caption={"Add"}
-                route={'Add'}
-                update={this._bootstrapAsync}
-                small={true} />
-          </View> */}
-          {/* <Popup visible={this.state.modal}
-                close={this._toogleModal}
-                add={this._addItem} /> */}
-      </ScrollView>
+                  _toogleModal={this._toogleModal} />
+              </View>
+            </ScrollView>
+          {/* </View> */}
+      </View>
+          // /* <View style={{width: screenWidth, flexDirection: 'row', flexWrap: 'wrap'}}>
+          //   <MenuItem
+          //       navigation={this.props.navigation}
+          //       caption={"Media"}
+          //       route={'Add'}
+          //       small={true} />
+          //   <MenuItem
+          //       navigation={this.props.navigation}
+          //       caption={"Docs"}
+          //       route={'Add'}
+          //       small={true} />
+          //   <MenuItem
+          //       navigation={this.props.navigation}
+          //       caption={"Trash"}
+          //       route={'Add'}
+          //       small={true} /> */}
+          //     {/* <FlatList
+          //       data={this.state.dataSource}
+          //       contentContainerStyle={{bottom: 5}}
+          //       keyExtractor={item => item.id.toString()}
+          //       extraData={this._getUpdate}
+          //       onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+          //       renderItem={({ item }) => <MenuItem
+          //         navigation={this.props.navigation}
+          //         caption={item.name}
+          //         route={item.route}
+          //         small={true}
+          //         update={this._bootstrapAsync}
+          //         custom={ true } />} 
+          //     /> */}
+          //   {/* <MenuItem
+          //       navigation={this.props.navigation}
+          //       caption={"Add"}
+          //       route={'Add'}
+          //       update={this._bootstrapAsync}
+          //       small={true} />
+          // </View> */}
+          // {/* <Popup visible={this.state.modal}
+          //       close={this._toogleModal}
+          //       add={this._addItem} /> */}
+     
     );
   }
 }
@@ -908,7 +954,12 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginHorizontal: 10,
     borderWidth: 1,
-    borderColor: '#eee',
+    shadowColor: '#999',
+    shadowOffset: {bottom: 20},
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderColor: '#eaeaea',
     borderRadius: 10,
     height: 85,
   },
@@ -926,8 +977,9 @@ const styles = StyleSheet.create({
     height: (screenWidth / 3) - 18,
   },
   folderHeader: {
-      fontWeight: 'bold',
-      fontSize: 21,
+    color: '#c43131',
+    fontWeight: 'bold',
+    fontSize: 21,
   },
   lastModif: {
       paddingTop: 12,
@@ -998,9 +1050,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     marginTop: 15,
     marginHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 10,
+    // borderWidth: 1,
+    // borderColor: '#eee',
+    // borderRadius: 10,
     height: 'auto',
   },
   noteItem: {
@@ -1016,12 +1068,30 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    maxWidth: screenWidth - 130,
+    maxWidth: screenWidth - 170,
     top: 0,
-    left: 0,
-    fontWeight: "700",
+    left: 24,
+    fontWeight: "400",
     fontSize: 16,
     color: '#444',
+  },
+  headerDone: {
+    position: 'absolute',
+    maxWidth: screenWidth - 170,
+    top: 0,
+    left: 24,
+    fontWeight: "400",
+    fontSize: 16,
+    // color: '#444',
+    color: '#bbb',
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+  },
+  checkmark: {
+    position: 'absolute',
+    top: -3.9,
+    left: -8,
+    fontSize: 26,
   },
   // text: {
   //   marginTop: 10,
@@ -1052,7 +1122,7 @@ const styles = StyleSheet.create({
   time: {
     position: 'absolute',
     top: 2,
-    right: 0,
+    right: -5,
     fontSize: 12,
     color: '#555',
   },

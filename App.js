@@ -23,26 +23,23 @@ export default class App extends React.Component {
   _bootstrapAsync = async () => {
     await db.transaction(tx => {
       tx.executeSql(
-        // `drop table folders;`
-        `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, deleted int default 0, archive int default 0);`
-      );
-    });
-    await db.transaction(tx => {
-      tx.executeSql(
-        `create table if not exists img (id integer primary key not null, src text, note int);`
-      );
-    });
-    await db.transaction(tx => {
-      tx.executeSql(
-        // `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
         `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, archive int default 0);`
+        // `drop table notes;`
       );
     });
-    // await db.transaction(tx => {
-    //   tx.executeSql(
-    //     `insert into folders (name, type, route, size) values ("Bla", 0, "bla", 1);`
-    //   );
-    // });
+    db.transaction(tx => {
+      tx.executeSql(
+        // `drop table tasks;`
+        `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, folder int, deleted int default 0, archive int default 0);`
+        // `create table if not exists img (id integer primary key not null, src text, note int);`
+      );
+    });
+    db.transaction(tx => {
+      tx.executeSql(
+        // `drop table folders;`
+        `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
+      );
+    });
     await AsyncStorage.getItem('biometry')
       .then((res) => {
         if (res && res === '1') {

@@ -399,7 +399,7 @@ export default class Note extends React.Component {
                 <RkButton style={ styles.editL }
                 onPress={async () => {await this.setState({editText: true}); this.noteTextIn.focus()}}>
                 <Icon.Ionicons
-                  style={[ styles.editBtn, {color: '#4286f4'} ]}
+                  style={[ styles.editBtn, {color: '#c43131'} ]}
                   name="ios-create-outline" />
               </RkButton>
               <Text style={ styles.noteCreated }>

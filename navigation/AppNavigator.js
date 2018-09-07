@@ -18,16 +18,16 @@ import Settings from '../screens/SettingsScreen';
 const NotesStack = createStackNavigator({
   Notes: {
     screen: NotesList,
-    navigationOptions:{
+    navigationOptions: ({ navigation }) => ({
+      title: navigation.state.params.caption,
       headerBackTitleVisible: true,
       headerTruncatedBackTitle: 'All Notes',
       headerStyle: {
         borderBottomWidth: 0,
         backgroundColor: '#fff',
       },
-      title: 'All Notes',
-      
-    }
+    
+    }),
   },
   Note: {
     screen: NoteView,

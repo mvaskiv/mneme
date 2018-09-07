@@ -522,12 +522,14 @@ class NoteItem extends React.Component {
       <TouchableHighlight
         style={{
         flex: 1,
-        right: this.state.swipeOpen ? this.state.removed ? 410 : 140 : 0,
+        right: this.state.swipeOpen ? 120 : 0,
         padding: 15,
         backgroundColor: '#c43131',
         }}
         underlayColor={'#c43131'}
-        onPress={() => {this.props.delete(this.props.id)}}
+        onPress={async () => {await LayoutAnimation.configureNext(SwipeItemAnimation);
+          await setTimeout(() => this.setState({removed: true}), 0);
+          await setTimeout(() => this.props.delete(this.props.id), 400)}}
         >
        <Icon.Ionicons
           style={{
@@ -545,6 +547,7 @@ class NoteItem extends React.Component {
       <Swipeable
         onRef={ref => this.swipeable = ref}
         swipeStartMinDistance={40}
+        style={{right: this.state.removed ? this.state.swipeOpen ? screenWidth - 120 : screenWidth / 1.3 : 0}}
         onSwipeStart={() => this.props.swiping(1)}
         onSwipeRelease={() => this.props.swiping(0)}
         rightButtons={leftContent}
@@ -553,10 +556,10 @@ class NoteItem extends React.Component {
         onRightActionActivate={ () => this._swipeActivation(1) }
         onRightActionDeactivate={ () => this._swipeActivation(0) }
         onRightActionRelease={async () => {
-          // await LayoutAnimation.configureNext(SwipeItemAnimation);
+          await LayoutAnimation.configureNext(SwipeItemAnimation);
           await setTimeout(() => this.setState({removed: true}), 0);
           // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
-          await setTimeout(() => this.props.delete(this.props.id), 0);
+          await setTimeout(() => this.props.delete(this.props.id), 450);
           // await setTimeout(() => this.setState({removed: false}), 150);
           // await setTimeout(() => this.setState({swipeOpen: false}), 400);
         }}
@@ -694,8 +697,8 @@ class MenuItem extends React.Component {
 }
 
 export default class Notes extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       modal: false,
       newItem: '',
@@ -731,6 +734,7 @@ export default class Notes extends React.Component {
   // }
 
   componentWillUnmount() {
+    this.props.navigation.state.params.updateToday();
     this.props.navigation.state.params.update();
   }
 
@@ -781,10 +785,17 @@ export default class Notes extends React.Component {
   // }
 
   _getUpdate = () => {
-    db.transaction(tx => {
-        tx.executeSql(`select * from notes order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
-      );
-    });
+    if (this.props.navigation.state.params.folder) {
+      db.transaction(tx => {
+          tx.executeSql(`select * from notes where folder = ? order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+        );
+      });
+    } else {
+      db.transaction(tx => {
+          tx.executeSql(`select * from notes order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+        );
+      });
+    }
   }
 
   _delete = async (id) => {
@@ -893,7 +904,7 @@ export default class Notes extends React.Component {
             change={this._onChange} /> */}
           <View style={ styles.editNote }>
               <RkButton style={ styles.editL }
-                onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate})} >
+                onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate, folder: this.props.navigation.state.params.folder ? this.props.navigation.state.params.folder : 0})} >
                 <Icon.Ionicons
                   style={[ styles.editBtn, {color: '#c43131'} ]}
                   name="ios-create-outline" />

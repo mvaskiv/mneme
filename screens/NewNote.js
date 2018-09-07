@@ -166,7 +166,6 @@ export default class NewNote extends React.Component {
   }
 
   static navigationOptions = ({ navigation }) => {
-      console.log(navigation)
       return {
         headerRight: navigation.state.params ? navigation.state.params.RightRow : null,
         // headerBackTitleStyle: {
@@ -176,6 +175,7 @@ export default class NewNote extends React.Component {
   };
 
   _bootstrapAsync = async () => {
+    console.log(this.props.navigation.state.params.folder);
     this._getUpdate();
   }
 
@@ -250,8 +250,8 @@ export default class NewNote extends React.Component {
     // await this._toogleModal();
     if (this.state.header || this.state.text) {
       await db.transaction(async tx => {
-          await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, deleted, archive) values
-            (?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
+          await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, folder, deleted, archive) values
+            (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
               this.state.header,
               this.state.text,
               date.getHours(),
@@ -259,6 +259,7 @@ export default class NewNote extends React.Component {
               date.getDay(),
               date.getDate(),
               date.getMonth(),
+              this.props.navigation.state.params.folder
             ], async (_, res) => {
               thisID = await res['insertId'];
             }
@@ -347,7 +348,7 @@ export default class NewNote extends React.Component {
                 backgroundColor: '#fff'
             }}>
             <TextInput
-              placeholder='Caption'
+              placeholder={'Caption'}
               editable={ true }
               multiline={false}
               maxLength={30}
