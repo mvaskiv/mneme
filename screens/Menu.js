@@ -5,6 +5,7 @@ import { Fab } from 'native-base';
 import { MaterialIcons, SimpleLineIcons } from '@expo/vector-icons';
 import Swipeout from 'react-native-swipeout';
 import Swipeable from 'react-native-swipeable';
+import { WeekDay, Month, weatherIcons } from '../constants/Dates-Weather';
 import {
   Image,
   Platform,
@@ -63,6 +64,22 @@ const WeatherAnimation = {
   },
   delete: {
     property: LayoutAnimation.Properties.scaleXY,
+    type: LayoutAnimation.Types.linear,
+  },
+}
+
+const IntroAnimation = {
+  duration: 305,
+  create: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.linear,
+  },
+  update: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.linear,
+  },
+  delete: {
+    property: LayoutAnimation.Properties.opacity,
     type: LayoutAnimation.Types.linear,
   },
 }
@@ -269,25 +286,6 @@ const WeatherAnimation = {
 //   }
 // }
 
-const weatherIcons = {
-  "partly-cloudy-night": require("../assets/weather/partly-cloudy-night.png"),
-  "clear-night": require("../assets/weather/clear-night.png"),
-  "clear-day": require("../assets/weather/clear-day.png"),
-  "cloudy": require("../assets/weather/cloudy.png"),
-  "default": require("../assets/weather/default.png"),
-  "fog": require("../assets/weather/fog.png"),
-  "hail": require("../assets/weather/hail.png"),
-  "meteor-shower": require("../assets/weather/meteor-shower.png"),
-  "partly-cloudy-day": require("../assets/weather/partly-cloudy-day.png"),
-  "precip": require("../assets/weather/precip.png"),
-  "rain": require("../assets/weather/rain.png"),
-  "sleet": require("../assets/weather/sleet.png"),
-  "snow": require("../assets/weather/snow.png"),
-  "thunderstorm": require("../assets/weather/thunderstorm.png"),
-  "tornado": require("../assets/weather/tornado.png"),
-  "wind": require("../assets/weather/wind.png"),
-}
-
 class NoteItem extends React.Component {
   constructor(props) {
     super(props);
@@ -394,6 +392,7 @@ class Today extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      today: false,
       location: false,
       weather: false,
       weatherIcon: false,
@@ -408,6 +407,8 @@ class Today extends React.Component {
 
   componentWillMount() {
     this._getLocationAsync();
+    this._todayInit();
+    LayoutAnimation.configureNext(IntroAnimation);
   }
 
   componentDidMount() {
@@ -416,6 +417,15 @@ class Today extends React.Component {
 
   componentWillReceiveProps() {
     this._getTasks();
+  }
+
+  _todayInit = () => {
+    let today = new Date();
+
+    this.setState({today: {
+      'Day': WeekDay[today.getDay()],
+      'Date': Month[today.getMonth()].name + ' ' + today.getDate()
+    }});
   }
 
   _animationLoop = () => {
@@ -472,7 +482,6 @@ class Today extends React.Component {
       this.setState({ location });
       this._getWeather();
     })
-    console.log(this.state.location);
   };
 
   _getWeather = async () => {
@@ -505,7 +514,7 @@ class Today extends React.Component {
     LayoutAnimation.configureNext(FadeItemAnimation);
     this.props.updateCounter._getCount();
     this.setState({expanded: !this.state.expanded});
-    this._expandAnimation(1);
+    // this._expandAnimation(1);
   }
 
   render() {
@@ -523,7 +532,7 @@ class Today extends React.Component {
     // })
 
     return (
-      <Animated.View style={{top: 5, transform: [{translateY: this.state.open}], height: this.state.expanded ? 'auto' : 150, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
+      <View style={{top: 5, height: this.state.expanded ? 'auto' : 150, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
         <TouchableHighlight
           style={[ styles.todayView, {height: 120, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0)'} ]}
           underlayColor={'rgba(255,255,255,0.2)'}
@@ -533,8 +542,13 @@ class Today extends React.Component {
             }}>
             <Text
                 style={[ styles.folderHeader, {fontSize: 35} ]}>
-                Today
+                {this.state.today ? this.state.today['Day'] : 'Today'}
             </Text>
+            {this.state.today && 
+              <Text style={styles.monthNdate}>
+                {this.state.today['Date']}
+              </Text>
+            }
             {this.state.dataSource[0] && <Icon.SimpleLineIcons
               style={[ styles.enterIcon, { color: '#aaa', top: 75 } ]}
               name={this.state.expanded ? 'arrow-up' : "arrow-down"} />}
@@ -567,7 +581,7 @@ class Today extends React.Component {
         onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
         renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._todayIDone} swiping={this._swipeHandler} />}
       />
-    </Animated.View>
+    </View>
     )
   }
 }
@@ -587,7 +601,6 @@ class MenuItem extends React.Component {
     let selection = this.props.route === 'tasks' ? ' where completed = 0;' : ';';
     let route = this.props.route === 'tasks' ? 'tasks' : 'notes';
     route = this.props.id ? "notes where folder = ?" : route;
-    console.log(this.props.id);
     db.transaction(async tx => {
         tx.executeSql(`select count(*) from ` + route + selection, [this.props.id],
             (_, { rows: { _array } }) => {
@@ -798,7 +811,7 @@ export default class Menu extends React.Component {
     return new Promise(
       resolve => {
           db.transaction(tx => {
-            tx.executeSql(`select * from folders;`,[], (_, { rows: { _array } }) => {this.setState({ dataSource: _array }); console.log(this.state.dataSource)}
+            tx.executeSql(`select * from folders;`,[], (_, { rows: { _array } }) => {this.setState({ dataSource: _array })}
         );
       });
       resolve('yes');
@@ -1164,5 +1177,13 @@ const styles = StyleSheet.create({
     // borderColor: '#eee',
     // borderRadius: 10,
     height: 85,
+  },
+  monthNdate: {
+    // position: 'absolute',
+    // top: 47,
+    fontSize: 16,
+    // color: '#c43131',
+    fontWeight: '100',
+    opacity: 0.8
   },
 });

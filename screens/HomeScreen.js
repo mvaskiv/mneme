@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
-import { Icon, SQLite } from 'expo';
+import { Icon, SQLite, Notifications, Permissions } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 // import Swipeout from 'react-native-swipeout';
@@ -338,6 +338,27 @@ class ListItem extends React.Component {
   //   this.swipeable.recenter();
   // }
 
+  _fireNoti = () => {
+    Permissions.askAsync(Permissions.NOTIFICATIONS);
+    
+    let localNoti = {
+      title: 'Hello',
+      body: 'World',
+      ios: {
+        sound: true,
+      },
+    };
+
+    let time = (new Date()).getTime() + 10000;
+
+    let schedulingOptions = {
+      time: time,
+    };
+
+    Expo.Notifications.presentLocalNotificationAsync(localNoti);
+    Expo.Notifications.scheduleLocalNotificationAsync(localNoti, schedulingOptions);
+  }
+
   render() {
     const leftContent = [
       <TouchableHighlight
@@ -439,7 +460,7 @@ class ListItem extends React.Component {
                       name="ios-create-outline" />
                   </RkButton>
                   <RkButton style={ styles.edit }
-                    onPress={() => {this.setState({setDate: true})}}>
+                    onPress={() => this._fireNoti()}>
                     <Icon.Ionicons
                       style={[ styles.editBtn, {color: '#e8bb0b'} ]}
                       name="ios-alarm-outline" />

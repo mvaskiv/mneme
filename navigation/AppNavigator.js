@@ -13,6 +13,34 @@ import Menu from '../screens/Menu';
 import NoteView from '../screens/NoteView';
 import NewNote from '../screens/NewNote';
 import Settings from '../screens/SettingsScreen';
+import Subfolder from '../screens/SubfolderScreen';
+
+
+// const SubfolderStack = createStackNavigator({
+//   Subfolder: {
+//     screen: Subfolder,
+//     navigationOptions: {
+//       headerStyle: {
+//         borderBottomWidth: 0,
+//         backgroundColor: '#fff',
+//       },
+//     },
+//   },
+// },
+// {
+//   headerMode: 'float',
+//   mode: 'modal',
+//   headerTransitionPreset: 'uikit',
+//   navigationOptions: {
+//     gestureResponseDistance: {
+//       horizontal: 10,
+//     },
+//     headerTintColor: '#c43131',
+//     headerStyle: {
+//       backgroundColor: '#fff',
+//     }
+//   },
+// });
 
 
 const NotesStack = createStackNavigator({
@@ -46,10 +74,21 @@ const NotesStack = createStackNavigator({
         backgroundColor: '#fff',
       },
     }
-  }
+  },
+  Subfolder: {
+    screen: Subfolder,
+    navigationOptions: {
+      headerTitle: 'Trash',
+      headerStyle: {
+        borderBottomWidth: 0,
+        backgroundColor: '#fff',
+      },
+    }
+  },
 },
 {
   headerMode: 'float',
+  // mode: 'modal',
   headerTransitionPreset: 'uikit',
   navigationOptions: {
     gestureResponseDistance: {
@@ -61,6 +100,7 @@ const NotesStack = createStackNavigator({
     }
   },
 });
+
 
 export default createStackNavigator({
   Menu: {
