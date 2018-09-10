@@ -51,23 +51,6 @@ export default class App extends React.Component {
       .catch((error) => {
         console.log(error);
     });
-    this._setBadge();
-  }
-
-  _setBadge = () => {
-    let today = new Date().getDay();
-    
-    db.transaction(async tx => {
-      tx.executeSql(`select count(*) from tasks where completed = 0 and due = ?`, [today],
-        (_, { rows: { _array } }) => {
-          if (_array[0]['count(*)'] && _array[0]['count(*)'] > 0) {
-            Expo.Notifications.setBadgeNumberAsync(_array[0]['count(*)']);
-          } else {
-            Expo.Notifications.setBadgeNumberAsync(0);
-          }
-        }
-      );
-    });
   }
 
   _biometrics = async () => {
@@ -82,7 +65,7 @@ export default class App extends React.Component {
             }
         })
     }
-}
+  }
 
   // async componentWillMount() {
   //   console.log(this.state.authorised);

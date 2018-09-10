@@ -504,7 +504,11 @@ class Today extends React.Component {
   _getTasks = () => {
     let today = new Date().getDay();
     db.transaction(tx => {
-        tx.executeSql(`select * from tasks where completed = 0 and due = ? order by id desc;`,[today], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+        tx.executeSql(`select * from tasks where completed = 0 and due = ? order by id desc;`,[today],
+        (_, { rows: { _array } }) => {
+          Expo.Notifications.setBadgeNumberAsync(_array.length);
+          this.setState({ dataSource: _array });
+        }
       );
     });
   }

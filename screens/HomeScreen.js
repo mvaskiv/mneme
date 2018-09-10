@@ -94,14 +94,11 @@ const FadeItemAnimation = {
 };
 
 const RecoverBtn = ({onPress}) => (
-  <Fab
-      direction="up"
-      containerStyle={{ }}
-      style={{ backgroundColor: 'rgba(22,22,22,0)', width: 35, height: 35 }}
-      position="bottomLeft"
-      onPress={onPress}>
-      <Icon.MaterialIcons style={{color: '#555'}} name={'restore'} />
-  </Fab>
+  <View style={ styles.recoverPop }>
+    <Text style={ styles.recoverPopText }>
+      Tap to <Text style={{color: '#c43131'}}>Undo</Text>
+    </Text>
+  </View>
 )
 
 // const RmRecBtn = ({onPress}) => (
@@ -338,24 +335,19 @@ class ListItem extends React.Component {
   //   this.swipeable.recenter();
   // }
 
-  _fireNoti = () => {
+  _scheduleNotification = (body) => {
     Permissions.askAsync(Permissions.NOTIFICATIONS);
-    
     let localNoti = {
-      title: 'Hello',
-      body: 'World',
+      title: 'Reminder:',
+      body: body,
       ios: {
         sound: true,
       },
     };
-
     let time = (new Date()).getTime() + 10000;
-
     let schedulingOptions = {
       time: time,
     };
-
-    Expo.Notifications.presentLocalNotificationAsync(localNoti);
     Expo.Notifications.scheduleLocalNotificationAsync(localNoti, schedulingOptions);
   }
 
@@ -380,7 +372,7 @@ class ListItem extends React.Component {
             fontSize: 25,
            }}
         name={'done'} />
-          </TouchableHighlight>      ,
+          </TouchableHighlight>,
       // <TouchableHighlight style={{
       //   flex: 1,
       //   padding: 15,
@@ -460,7 +452,7 @@ class ListItem extends React.Component {
                       name="ios-create-outline" />
                   </RkButton>
                   <RkButton style={ styles.edit }
-                    onPress={() => this._fireNoti()}>
+                    onPress={() => this._scheduleNotification(this.props.text)}>
                     <Icon.Ionicons
                       style={[ styles.editBtn, {color: '#e8bb0b'} ]}
                       name="ios-alarm-outline" />
@@ -765,34 +757,8 @@ export default class HomeScreen extends React.Component {
           add={this._addItem}
           change={this._onChange} />
         <AddBtn onPress={this._toogleModal} />
-        {this.state.deleted ? <View>
-          <View 
-            style={{ position: 'absolute', bottom: 20, left: 31}} >
-            <CountdownCircle
-            seconds={1}
-            radius={17}
-            borderWidth={2}
-            color="#999"
-            bgColor="#fff"
-            textStyle={{ fontSize: 1, color: '#fff' }}
-            onTimeElapsed={() => {this.setState({deleted: false})}}
-          />
-          </View>
-          <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} /></View> :
-          this.state.dismissed ? <View>
-            <View 
-              style={{ position: 'absolute', bottom: 20, left: 31}} >
-              <CountdownCircle
-              seconds={1}
-              radius={17}
-              borderWidth={2}
-              color="#999"
-              bgColor="#fff"
-              textStyle={{ fontSize: 1, color: '#fff' }}
-              onTimeElapsed={() => {this.setState({dismissed: false})}}
-            />
-          </View>
-          <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} /></View> : null}
+
+        <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} />
       </View>
     );
   }
@@ -905,7 +871,7 @@ const styles = StyleSheet.create({
     padding: 5,
     shadowColor: '#555',
     shadowOffset: {bottom: 5},
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.75,
     shadowRadius: 5,
     borderWidth: 1,
     borderRadius: 20,
@@ -921,6 +887,26 @@ const styles = StyleSheet.create({
   PopUpBtn: {
     height: 27,
     borderRadius: 20,
+  },
+  recoverPop: {
+    position: 'absolute',
+    backgroundColor: '#fefefe',
+    height: 29,
+    width: 110,
+    bottom: 34,
+    left: (screenWidth / 2) - 55,
+    borderColor: '#e3e3e3',
+    borderRadius: 12,
+    borderWidth: 0.8,
+    shadowColor: '#555',
+    shadowOffset: {bottom: 5},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+  },
+  recoverPopText: {
+    color: '#777',
+    top: 5,
+    left: 14
   },
   separator: {
     top: -2,
