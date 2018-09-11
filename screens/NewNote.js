@@ -245,6 +245,7 @@ export default class NewNote extends React.Component {
   } 
 
   _addItem = async () => {
+    console.log(this.props.navigation.state.params.folder);
     let date = await new Date();
     let thisID = 0;
     // await this._toogleModal();

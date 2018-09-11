@@ -602,9 +602,10 @@ class MenuItem extends React.Component {
   }
 
   _getCount = () => {
-    let selection = this.props.route === 'tasks' ? ' where completed = 0;' : ';';
+    let selection = this.props.route === 'tasks' ? ' where completed = 0;' : ' where deleted = 0;';
     let route = this.props.route === 'tasks' ? 'tasks' : 'notes';
     route = this.props.id ? "notes where folder = ?" : route;
+    selection = this.props.id ? " and deleted = 0" : selection;
     db.transaction(async tx => {
         tx.executeSql(`select count(*) from ` + route + selection, [this.props.id],
             (_, { rows: { _array } }) => {

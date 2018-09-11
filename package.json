@@ -24,6 +24,7 @@
     "react-native-image-pan-zoom": "^2.1.8",
     "react-native-image-zoom-viewer": "^2.2.15",
     "react-native-keyboard-spacer": "^0.4.1",
+    "react-native-modal-datetime-picker": "^6.0.0",
     "react-native-modalbox": "^1.6.0",
     "react-native-notifications": "^1.1.20",
     "react-native-settings-components": "0.0.1",

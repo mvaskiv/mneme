@@ -760,7 +760,7 @@ export default class Notes extends React.Component {
   _getUpdate = (route) => {
     if (this.props.navigation.state.params.folder) {
       db.transaction(tx => {
-          tx.executeSql(`select * from notes where folder = ? and where deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+          tx.executeSql(`select * from notes where folder = ? and deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
         );
       });
     } else {
@@ -769,23 +769,22 @@ export default class Notes extends React.Component {
         );
       });
     }
-    this._getTrash();
-    console.log(this.state.trash);
+    // this._getTrash();
   }
 
-  _getTrash = () => {
-    if (this.props.navigation.state.params.folder) {
-      db.transaction(tx => {
-          tx.executeSql(`select * from notes where folder = ? and where deleted = 1 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
-        );
-      });
-    } else {
-      db.transaction(tx => {
-          tx.executeSql(`select * from notes where deleted = 1 order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ trash: _array })
-        );
-      });
-    }
-  }
+  // _getTrash = () => {
+  //   if (this.props.navigation.state.params.folder) {
+  //     db.transaction(tx => {
+  //         tx.executeSql(`select * from notes where folder = ? and deleted = 1 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+  //       );
+  //     });
+  //   } else {
+  //     db.transaction(tx => {
+  //         tx.executeSql(`select * from notes where deleted = 1 order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ trash: _array })
+  //       );
+  //     });
+  //   }
+  // }
 
   _delete = async (id) => {
     db.transaction(tx => {

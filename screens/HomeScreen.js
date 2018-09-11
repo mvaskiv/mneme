@@ -3,7 +3,8 @@ import { LayoutAnimation } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
 import { Icon, SQLite, Notifications, Permissions } from 'expo';
 import { Fab } from 'native-base';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons, Foundation, SimpleLineIcons } from '@expo/vector-icons';
+import DateTimePicker from 'react-native-modal-datetime-picker';
 // import Swipeout from 'react-native-swipeout';
 import CountdownCircle from 'react-native-countdown-circle'
 import Swipeable from 'react-native-swipeable';
@@ -25,6 +26,7 @@ import {
   CheckBox,
   AsyncStorage,
   Animated,
+  AlertIOS,
   DatePickerIOS,
 } from 'react-native';
 const db = SQLite.openDatabase('mneme.db');
@@ -39,7 +41,7 @@ const ListItemAnimation = {
     type: LayoutAnimation.Types.linear,
   },
   update: {
-    property: LayoutAnimation.Properties.scaleXY,
+    property: LayoutAnimation.Properties.opacity,
     type: LayoutAnimation.Types.linear,
   },
   delete: {
@@ -93,12 +95,12 @@ const FadeItemAnimation = {
   },
 };
 
-const RecoverBtn = ({onPress}) => (
-  <View style={ styles.recoverPop }>
+const RecoverBtn = ({ onPress }) => (
+  <TouchableOpacity style={ styles.recoverPop } onPress={ onPress }>
     <Text style={ styles.recoverPopText }>
       Tap to <Text style={{color: '#c43131'}}>Undo</Text>
     </Text>
-  </View>
+  </TouchableOpacity>
 )
 
 // const RmRecBtn = ({onPress}) => (
@@ -171,11 +173,16 @@ class Popup extends React.Component {
             <TextInput
               placeholder='Type it in'
               maxLength={60}
+              // clearButtonMode='always'
               autoCorrect={false}
               name="text"
               underlineColorAndroid="#fff"
               onChangeText={(text) => {LayoutAnimation.configureNext( SwipeItemAnimation ); this.setState({text})}}
               blurOnSubmit={false}
+              onSubmitEditing={async () => {
+                await this.state.text ? this.props.add(this.state.text, this.state.dueDate) : null;
+                this.setState({text: ''});
+              }}
               style={{fontSize: 16, padding: 11, paddingRight: 40}}
               autoFocus={true} />
               <RkButton
@@ -335,22 +342,6 @@ class ListItem extends React.Component {
   //   this.swipeable.recenter();
   // }
 
-  _scheduleNotification = (body) => {
-    Permissions.askAsync(Permissions.NOTIFICATIONS);
-    let localNoti = {
-      title: 'Reminder:',
-      body: body,
-      ios: {
-        sound: true,
-      },
-    };
-    let time = (new Date()).getTime() + 10000;
-    let schedulingOptions = {
-      time: time,
-    };
-    Expo.Notifications.scheduleLocalNotificationAsync(localNoti, schedulingOptions);
-  }
-
   render() {
     const leftContent = [
       <TouchableHighlight
@@ -427,110 +418,114 @@ class ListItem extends React.Component {
           }}
           >
           <TouchableWithoutFeedback
-            onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
-            { this.state.edit
-              ? 
-                <View style={ styles.item }>
-  
-                  {/* <DatePickerIOS
-                    date={this.state.date}
-                    mode="time"
-                    timeZoneOffsetInMinutes={this.state.timeZoneOffsetInHours * 60}
-                    onDateChange={this._onDateChange}
-                    minuteInterval={10}
-                  />  */}
-                  <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})}}>
+            onPress={() => { LayoutAnimation.configureNext( ListItemAnimation ); this.setState({edit: !this.state.edit})}}>
+          
+           
+              
+              <View style={{flexDirection: 'column'}}>
+                <View style={[ this.state.swipeOpen ? styles.itemDone : styles.item, {width: screenWidth, borderBottomColor: this.state.edit ? '#fff' : '#eee'}]}>
+                  { this.state.editText ?
+                    <TextInput
+                      defaultValue={this.props.text}
+                      maxLength={60}
+                      autoCorrect={false}
+                      name="newText"
+                      underlineColorAndroid="#fff"
+                      onChangeText={(newText) => this.setState({newText})}
+                      blurOnSubmit={true}
+                      style={{
+                        top: -5,
+                        marginLeft: 8,
+                        lineHeight: 23,
+                        paddingBottom: 5,
+                        paddingRight: 80,
+                        fontSize: 16,
+                        color: '#191919',
+                        width: screenWidth - 45,
+                      }}
+                      autoFocus={true} >
+                    </TextInput>
+                  //   <RkButton
+                  //   style={styles.submitBtn}
+                  //   onPress={() => {
+                  //     this.state.text ? this.props.add(this.state.text, this.state.dueDate) : null;
+                  //   }}
+                  //   rkType='rounded'>
+                  //   <Icon.MaterialIcons
+                  //     name='add'
+                  //     style={{
+                  //       position: 'absolute',
+                  //       color: '#fff',
+                  //       top:5,
+                  //       fontSize: 20,
+                  //     }} />
+                  // </RkButton>
+                  :
+                    <Text style={ this.state.swipeOpen ? styles.textDone : styles.text }>
+                      { this.props.text }
+                    </Text>
+                  }
+                  <Text style={styles.time}>
+                    { this._getSetDate() }
+                  </Text>
+                  { this.state.editText ?
+                    <View style={{flex: 1, flexDirection: 'row', left: -80}}>
+                      <RkButton style={{width: 50, backgroundColor: 'transparent'}}
+                        onPress={ async () => {await this.props.editItem(this.props.id, this.state.newText); this.setState({editText: false})} }>
+                      <Icon.Ionicons
+                        style={[ styles.editTextBtn, {color: '#2869d3'} ]}
+                        name="ios-checkmark-circle-outline" />
+                      </RkButton>
+                      <RkButton style={{width: 50, backgroundColor: 'transparent', marginLeft: -5}}
+                        onPress={() => this.setState({editText:false})}>
+                      <Icon.Ionicons
+                        style={[ styles.editTextBtn, {color: '#c43131'} ]}
+                        name="ios-close-circle-outline" />
+                    </RkButton>
+                    </View>
+                  : <Text style={styles.due}>
+                    { this.props.completed ? 'done' : this._getDueDate() }
+                    </Text>
+                  }
+                </View>
+                {this.state.edit &&
+                   <View style={ styles.itemOpt }>
+                   <RkButton style={ styles.edit }
+                    onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
                     <Icon.Ionicons
-                      style={ styles.editBtn }
-                      name="ios-arrow-dropleft-outline" />
+                      style={[ styles.editBtn ]}
+                      name="md-checkmark" />
+                  </RkButton>
+                  <RkButton style={ styles.edit }
+                    onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
+                    <Icon.SimpleLineIcons
+                      style={[ styles.editBtn, {fontSize: 20, top: -6} ]}
+                      name="pencil" />
                   </RkButton>
                   <RkButton style={ styles.edit }
                     onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
                     <Icon.Ionicons
-                      style={[ styles.editBtn, {color: '#4286f4'} ]}
-                      name="ios-create-outline" />
+                      style={[ styles.editBtn ]}
+                      name="ios-calendar-outline" />
                   </RkButton>
+                  
                   <RkButton style={ styles.edit }
-                    onPress={() => this._scheduleNotification(this.props.text)}>
+                    onPress={() => this.props.schedule(this.props.text)}>
                     <Icon.Ionicons
-                      style={[ styles.editBtn, {color: '#e8bb0b'} ]}
+                      style={[ styles.editBtn]}
                       name="ios-alarm-outline" />
                   </RkButton>
+                  
                   <RkButton style={ styles.edit }
                     onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
                     <Icon.Ionicons
-                      style={[ styles.editBtn, {color: '#c43131'} ]}
+                      style={[ styles.editBtn ]}
                       name="ios-trash-outline" />
                   </RkButton>
-                </View>
-              :
-              <View style={ this.state.swipeOpen ? styles.itemDone : styles.item }>
-                { this.state.editText ?
-                  <TextInput
-                    defaultValue={this.props.text}
-                    maxLength={60}
-                    autoCorrect={false}
-                    name="newText"
-                    underlineColorAndroid="#fff"
-                    onChangeText={(newText) => this.setState({newText})}
-                    blurOnSubmit={true}
-                    style={{
-                      top: -5,
-                      marginLeft: 8,
-                      lineHeight: 23,
-                      paddingBottom: 5,
-                      paddingRight: 80,
-                      fontSize: 16,
-                      color: '#191919',
-                      width: screenWidth - 45,
-                    }}
-                    autoFocus={true} >
-                  </TextInput>
-                //   <RkButton
-                //   style={styles.submitBtn}
-                //   onPress={() => {
-                //     this.state.text ? this.props.add(this.state.text, this.state.dueDate) : null;
-                //   }}
-                //   rkType='rounded'>
-                //   <Icon.MaterialIcons
-                //     name='add'
-                //     style={{
-                //       position: 'absolute',
-                //       color: '#fff',
-                //       top:5,
-                //       fontSize: 20,
-                //     }} />
-                // </RkButton>
-                :
-                  <Text style={ this.state.swipeOpen ? styles.textDone : styles.text }>
-                    { this.props.text }
-                  </Text>
-                }
-                <Text style={styles.time}>
-                  { this._getSetDate() }
-                </Text>
-                 { this.state.editText ?
-                  <View style={{flex: 1, flexDirection: 'row', left: -80}}>
-                    <RkButton style={{width: 50, backgroundColor: 'transparent'}}
-                      onPress={ async () => {await this.props.editItem(this.props.id, this.state.newText); this.setState({editText: false})} }>
-                    <Icon.Ionicons
-                      style={[ styles.editTextBtn, {color: '#2869d3'} ]}
-                      name="ios-checkmark-circle-outline" />
-                    </RkButton>
-                    <RkButton style={{width: 50, backgroundColor: 'transparent', marginLeft: -5}}
-                      onPress={() => this.setState({editText:false})}>
-                    <Icon.Ionicons
-                      style={[ styles.editTextBtn, {color: '#c43131'} ]}
-                      name="ios-close-circle-outline" />
-                  </RkButton>
-                  </View>
-                : <Text style={styles.due}>
-                  { this.props.completed ? 'done' : this._getDueDate() }
-                  </Text>
+                </View> 
                 }
               </View> 
-            }
+            
           </TouchableWithoutFeedback>
         </Swipeable>
       );
@@ -599,6 +594,10 @@ export default class HomeScreen extends React.Component {
       dataSource: [],
       refreshing: false,
       isSwiping: false,
+      removed: false,
+      timepicker: false,
+      reminder: false,
+      reminderBody: false,
     };
     this._bootstrapAsync();
   }
@@ -669,12 +668,13 @@ export default class HomeScreen extends React.Component {
   }
 
   _done = async (i) => {
+    this.setState({removed: i});
     db.transaction(tx => {
         tx.executeSql(`update tasks set completed = 1 where id = ?`,[i]
       );
     });
     await this._getUpdate();
-    LayoutAnimation.configureNext( SwipeItemAnimation );
+    LayoutAnimation.configureNext( ListItemAnimation );
     await this.setState({updated: true});
   }
 
@@ -683,7 +683,7 @@ export default class HomeScreen extends React.Component {
         tx.executeSql(`update tasks set text = ? where id = ?`,[text, i]
       );
     });
-    LayoutAnimation.configureNext( SwipeItemAnimation );
+    LayoutAnimation.configureNext( FadeItemAnimation );
     await this.setState({updated: true});
   }
 
@@ -705,11 +705,17 @@ export default class HomeScreen extends React.Component {
   //   await this.setState({updated: true});
   // }
 
-  // _recover = async () => {
-  //   await this._done(this.state.dismissed);
-  //   await this.setState({dismissed: false});
-  //   await this.setState({deleted: false});
-  // }
+  _recover = async () => {
+    await db.transaction(tx => {
+        tx.executeSql(`update tasks set completed = 0 where id = ?`, [this.state.removed], () => {
+          this.setState({removed: false});
+        }
+      );
+    });
+    await this._getUpdate();
+    LayoutAnimation.configureNext( ListItemAnimation );
+    await this.setState({updated: true});
+  }
 
   // _restore = async () => {
   //   let n = await this.state.deleted;
@@ -735,6 +741,42 @@ export default class HomeScreen extends React.Component {
     }
   }
 
+  _scheduleNotification = (when) => {
+    return new Promise(resolve => {
+      Permissions.askAsync(Permissions.NOTIFICATIONS);
+      let localNoti = {
+        title: 'Reminder:',
+        body: this.state.reminderBody,
+        ios: {
+          sound: true,
+        },
+      };
+
+      let time = when.getTime();
+
+      let schedulingOptions = {
+        time: time,
+      };
+      Expo.Notifications.scheduleLocalNotificationAsync(localNoti, schedulingOptions)
+        .then((res) => resolve(res));
+    });
+  }
+
+  _toogleTimePicker = (body) => {
+    this.setState({reminderBody: body});
+    this.setState({timepicker: !this.state.timepicker});
+  }
+
+  _saveReminderTime = (time) => {
+    this._toogleTimePicker();
+    this._scheduleNotification(time)
+      .then(() =>  {
+        setTimeout(() => AlertIOS.alert('Reminder has been set'), 400);
+      }
+    );
+    this.setState({reminderBody: false});
+  }
+
   render() {
     let today = new Date();
 
@@ -750,15 +792,20 @@ export default class HomeScreen extends React.Component {
           keyExtractor={item => item.id.toString()}
           // extraData={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} />}
+          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} schedule={this._toogleTimePicker} />}
           />
         <Popup visible={this.state.modal}
           close={this._toogleModal}
           add={this._addItem}
           change={this._onChange} />
         <AddBtn onPress={this._toogleModal} />
-
-        <RecoverBtn onPress={this.state.deleted ? this._restore : this.state.dismissed ? this._recover : null} />
+        <DateTimePicker
+          isVisible={this.state.timepicker}
+          mode='datetime'
+          onConfirm={this._saveReminderTime}
+          onCancel={this._toogleTimePicker}
+        />
+        {this.state.removed && <RecoverBtn onPress={this._recover} />}
       </View>
     );
   }
@@ -802,6 +849,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
     borderBottomWidth: 1,
+  },
+  itemOpt: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    height: 40,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(240,240,240,1)',
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+    shadowOffset:{ bottom: 5 },
+    shadowColor: '#777',
+    shadowRadius: 3,
+    shadowOpacity: 0,
   },
   itemDone: {
     flex: 1,
@@ -849,10 +910,11 @@ const styles = StyleSheet.create({
   },
   edit: {
     backgroundColor: 'transparent',
-    left: -20,
-    width: screenWidth / 4,
+    left: -15,
+    width: screenWidth / 5,
   },
   editBtn: {
+    top: -7,
     right: 0,
     fontSize: 27,
     color: '#555'
@@ -901,7 +963,7 @@ const styles = StyleSheet.create({
     shadowColor: '#555',
     shadowOffset: {bottom: 5},
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: 4,
   },
   recoverPopText: {
     color: '#777',
