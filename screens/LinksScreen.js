@@ -972,6 +972,7 @@ const styles = StyleSheet.create({
     maxWidth: screenWidth - 130,
     top: 10,
     left: 15,
+    color: '#333',
     fontWeight: "700",
     fontSize: 16,
   },

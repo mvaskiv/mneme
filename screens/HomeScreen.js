@@ -5,6 +5,7 @@ import { Icon, SQLite, Notifications, Permissions } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, Ionicons, Foundation, SimpleLineIcons } from '@expo/vector-icons';
 import DateTimePicker from 'react-native-modal-datetime-picker';
+import { Calendar, CalendarList, Agenda } from 'react-native-calendars';
 // import Swipeout from 'react-native-swipeout';
 import CountdownCircle from 'react-native-countdown-circle'
 import Swipeable from 'react-native-swipeable';
@@ -287,6 +288,13 @@ class ListItem extends React.Component {
       <TouchableHighlight><Text>Button 2</Text></TouchableHighlight>
     ];
   }
+
+  componentWillReceiveProps() {
+    if (this.props.expanded && this.props.id === this.props.expanded) {
+      this.setState({edit: false});
+    }
+  }
+
   _getDueDate = () => {
     if (this.props.due && this.props.today.getDay() > this.props.due) {
       return 'Overdue';
@@ -341,6 +349,12 @@ class ListItem extends React.Component {
   //   LayoutAnimation.configureNext(SwipeItemAnimation);
   //   this.swipeable.recenter();
   // }
+
+  _expand = () => {
+    this.props.expand(this.state.edit ? null : this.props.id);
+    LayoutAnimation.configureNext( ListItemAnimation );
+    this.setState({edit: !this.state.edit});
+  }
 
   render() {
     const leftContent = [
@@ -418,10 +432,8 @@ class ListItem extends React.Component {
           }}
           >
           <TouchableWithoutFeedback
-            onPress={() => { LayoutAnimation.configureNext( ListItemAnimation ); this.setState({edit: !this.state.edit})}}>
-          
-           
-              
+            onPress={this._expand}>
+
               <View style={{flexDirection: 'column'}}>
                 <View style={[ this.state.swipeOpen ? styles.itemDone : styles.item, {width: screenWidth, borderBottomColor: this.state.edit ? '#fff' : '#eee'}]}>
                   { this.state.editText ?
@@ -489,7 +501,7 @@ class ListItem extends React.Component {
                   }
                 </View>
                 {this.state.edit &&
-                   <View style={ styles.itemOpt }>
+                <View style={ styles.itemOpt }>
                    <RkButton style={ styles.edit }
                     onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
                     <Icon.Ionicons
@@ -503,14 +515,14 @@ class ListItem extends React.Component {
                       name="pencil" />
                   </RkButton>
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.expand(false)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn ]}
                       name="ios-calendar-outline" />
                   </RkButton>
                   
                   <RkButton style={ styles.edit }
-                    onPress={() => this.props.schedule(this.props.text)}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.schedule(this.props.text); this.props.expand(false)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn]}
                       name="ios-alarm-outline" />
@@ -522,10 +534,9 @@ class ListItem extends React.Component {
                       style={[ styles.editBtn ]}
                       name="ios-trash-outline" />
                   </RkButton>
-                </View> 
+                </View>
                 }
               </View> 
-            
           </TouchableWithoutFeedback>
         </Swipeable>
       );
@@ -598,6 +609,7 @@ export default class HomeScreen extends React.Component {
       timepicker: false,
       reminder: false,
       reminderBody: false,
+      showCal: false,
     };
     this._bootstrapAsync();
   }
@@ -768,13 +780,17 @@ export default class HomeScreen extends React.Component {
   }
 
   _saveReminderTime = (time) => {
-    this._toogleTimePicker();
-    this._scheduleNotification(time)
-      .then(() =>  {
-        setTimeout(() => AlertIOS.alert('Reminder has been set'), 400);
-      }
-    );
-    this.setState({reminderBody: false});
+    let today = new Date();
+
+    if (time > today) {
+      this._scheduleNotification(time)
+        .then(() =>  {
+          this._toogleTimePicker();
+          setTimeout(() => AlertIOS.alert('Reminder has been set'), 400);
+        }
+      );
+      this.setState({reminderBody: false});
+    }
   }
 
   render() {
@@ -792,7 +808,7 @@ export default class HomeScreen extends React.Component {
           keyExtractor={item => item.id.toString()}
           // extraData={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} schedule={this._toogleTimePicker} />}
+          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} schedule={this._toogleTimePicker} expand={(i) => this.setState({expanded: i})} expanded={this.state.expanded} />}
           />
         <Popup visible={this.state.modal}
           close={this._toogleModal}
@@ -806,6 +822,43 @@ export default class HomeScreen extends React.Component {
           onCancel={this._toogleTimePicker}
         />
         {this.state.removed && <RecoverBtn onPress={this._recover} />}
+        {/* {this.state.showCal && <CalendarList
+            style={{position: 'absolute', top: 60}}
+            horizontal={true}
+            pagingEnabled={true}
+            calendarWidth={screenWidth}
+            scrollEnabled={true}
+            showScrollIndicator={false}
+            current={this.state.CalendarSelected}
+            markedDates={this.state.CalendarSelected}
+            minDate={Date()}
+            maxDate={'2025-05-30'}
+            onDayPress={(day) => {
+                let d = '{"' + day['dateString'] + '": {"selected": true, "marked": false, "selectedColor": "#c43131"}}';
+                this.setState({
+                  CalendarSelected: JSON.parse(d)
+              })}
+            }
+            onDayLongPress={(day) => {console.log('selected day', day)}}
+            monthFormat={'MMM yyyy'}
+            onVisibleMonthsChange={(month) => {console.log('month changed', month)}}
+            hideArrows={true}
+            renderArrow={(direction) => (<Arrow />)}
+            hideExtraDays={true}
+            disableMonthChange={false}
+            firstDay={1}
+            hideDayNames={false}
+            showWeekNumbers={false}
+            onPressArrowLeft={substractMonth => substractMonth()}
+            onPressArrowRight={addMonth => addMonth()}
+            theme={{
+              backgroundColor: '#ffffff',
+              calendarBackground: '#ffffff',
+              textSectionTitleColor: '#b6c1cd',
+              selectedDayBackgroundColor: '#c43131',
+              todayTextColor: '#c43131',
+            }}
+          /> } */}
       </View>
     );
   }
