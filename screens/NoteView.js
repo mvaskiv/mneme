@@ -188,7 +188,7 @@ export default class Note extends React.Component {
 
   async componentWillUnmount() {
     await this._editNote();
-    LayoutAnimation.configureNext(ListItemAnimation);
+    // LayoutAnimation.configureNext(ListItemAnimation);
     this.data.update();
   }
 

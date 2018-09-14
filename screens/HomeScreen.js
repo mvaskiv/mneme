@@ -480,6 +480,13 @@ class ListItem extends React.Component {
                   <Text style={styles.time}>
                     { this._getSetDate() }
                   </Text>
+
+                  {this.props.reminder && <View style={ styles.reminderSet }>
+                    <Icon.Ionicons style={ styles.bell } name="ios-notifications-outline" />
+                    <Text style={ styles.reminderTime }>
+                      { this.props.reminder }
+                    </Text>
+                  </View>}
                   { this.state.editText ?
                     <View style={{flex: 1, flexDirection: 'row', left: -80}}>
                       <RkButton style={{width: 50, backgroundColor: 'transparent'}}
@@ -522,7 +529,7 @@ class ListItem extends React.Component {
                   </RkButton>
                   
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.schedule(this.props.text); this.props.expand(false)}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.schedule(this.props.text, this.props.id); this.props.expand(false)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn]}
                       name="ios-alarm-outline" />
@@ -765,17 +772,21 @@ export default class HomeScreen extends React.Component {
       };
 
       let time = when.getTime();
-
+      let reminderTime = when.getDate() + '/' + (when.getMonth() + 1) + ' at ' + when.getHours() + ':' + when.getMinutes();
       let schedulingOptions = {
         time: time,
       };
+      db.transaction(tx => {
+          tx.executeSql(`update tasks set reminder = ? where id = ?`, [reminderTime, this.state.reminderId]
+        );
+      });
       Expo.Notifications.scheduleLocalNotificationAsync(localNoti, schedulingOptions)
         .then((res) => resolve(res));
     });
   }
 
-  _toogleTimePicker = (body) => {
-    this.setState({reminderBody: body});
+  _toogleTimePicker = (body, id) => {
+    this.setState({reminderBody: body, reminderId: id});
     this.setState({timepicker: !this.state.timepicker});
   }
 
@@ -897,7 +908,7 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     padding: 12,
-    minHeight: 55,
+    minHeight: 60,
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
@@ -920,7 +931,7 @@ const styles = StyleSheet.create({
   itemDone: {
     flex: 1,
     padding: 12,
-    minHeight: 55,
+    minHeight: 60,
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
@@ -931,10 +942,10 @@ const styles = StyleSheet.create({
     top: -5,
     lineHeight: 23,
     paddingBottom: 5,
-    marginLeft: 8,
+    marginLeft: 1,
     maxWidth: screenWidth - 120,
     fontSize: 16,
-    color: '#191919',
+    color: '#292929',
   },
   textDone: {
     top: -5,
@@ -950,14 +961,14 @@ const styles = StyleSheet.create({
   time: {
     position: 'absolute',
     bottom: 5,
-    left: 20,
+    left: 13,
     fontSize: 12,
     color: '#777',
   },
   due: {
     position: 'absolute',
     top: 10,
-    right: 17,
+    right: 13,
     fontSize: 14,
     color: '#777',
   },
@@ -1002,6 +1013,26 @@ const styles = StyleSheet.create({
   PopUpBtn: {
     height: 27,
     borderRadius: 20,
+  },
+  reminderSet: {
+    position: 'absolute',
+    bottom: 4,
+    right: 15,
+    height: 20,
+    width: 92,
+  },
+  reminderTime: {
+    top: 2,
+    left: 15,
+    fontSize: 12,
+    color: '#777',
+    fontStyle: 'italic',
+  },
+  bell: {
+    position: 'absolute',
+    fontSize: 13,
+    top: 2.5,
+    left: 2,
   },
   recoverPop: {
     position: 'absolute',

@@ -66,17 +66,17 @@ const SwipeItemAnimation = {
   },
 };
 const SwipeOutItemAnimation = {
-  duration: 435,
+  duration: 275,
   create: {
-    property: LayoutAnimation.Properties.scaleXY,
+    property: LayoutAnimation.Properties.opacity,
     type: LayoutAnimation.Types.linear,
   },
   update: {
-    property: LayoutAnimation.Properties.scaleXY,
+    property: LayoutAnimation.Properties.opacity,
     type: LayoutAnimation.Types.linear,
   },
   delete: {
-    property: LayoutAnimation.Properties.scaleXY,
+    property: LayoutAnimation.Properties.opacity,
     type: LayoutAnimation.Types.linear,
   },
 };
@@ -513,7 +513,7 @@ class NoteItem extends React.Component {
         underlayColor={'#c43131'}
         onPress={async () => {await LayoutAnimation.configureNext(SwipeItemAnimation);
           await setTimeout(() => this.setState({removed: true}), 0);
-          await setTimeout(() => this.props.delete(this.props.id), 400)}}
+          await setTimeout(() => this.props.delete(this.props.id), 300)}}
         >
        <Icon.Ionicons
           style={{
@@ -790,7 +790,7 @@ export default class Notes extends React.Component {
     db.transaction(tx => {
       tx.executeSql(`update notes set deleted = 1 where id = ?`, [id]);
     });
-    LayoutAnimation.configureNext( SwipeItemAnimation );
+    LayoutAnimation.configureNext( SwipeOutItemAnimation );
     this._getUpdate(); 
     await this.setState({updated: true});
   }

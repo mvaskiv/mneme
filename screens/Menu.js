@@ -83,6 +83,21 @@ const IntroAnimation = {
     type: LayoutAnimation.Types.linear,
   },
 }
+const ExpandAnimation = {
+  duration: 175,
+  create: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.linear,
+  },
+  update: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.linear,
+  },
+  delete: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.linear,
+  },
+}
 // class SmallFolder extends React.Component {
 //   constructor(props) {
 //     super(props);
@@ -515,8 +530,8 @@ class Today extends React.Component {
 
   _expand = () => {
     this._getTasks();
-    LayoutAnimation.configureNext(FadeItemAnimation);
     this.props.updateCounter._getCount();
+    LayoutAnimation.configureNext( ExpandAnimation );    
     this.setState({expanded: !this.state.expanded});
     // this._expandAnimation(1);
   }
@@ -562,7 +577,7 @@ class Today extends React.Component {
                 {this.state.weather ? this.state.weather.currently.summary + ' ' + Math.round(this.state.weather.currently.apparentTemperature) + '\u2103' : null}
             </Text>
             <Text
-                style={[ styles.lastModif, {position: 'absolute', left: 0, top: 67} ]}>
+                style={[ styles.lastModif, {position: 'absolute', left: 0, top: 67, opacity: this.state.expanded ? 0.5 : 1} ]}>
                 {!this.state.dataSource[0] ? 'No tasks for today' :
                   'Next: ' + this.state.dataSource[0].text}
             </Text>
@@ -888,97 +903,52 @@ export default class Menu extends React.Component {
             updateCounter={this.todosBtn}
             />
         </Animated.View>
-          {/* <View style={{flex: 1, backgroundColor:'#fff', borderTopColor: '#ddd', borderTopWidth: 1 }}> */}
-            <ScrollView
-            // refreshControl={
-            //     <RefreshControl
-            //       tintColor={'#fff'}
-            //       titleColor={'#777'}
-            //       title={ this.state.refreshing ? !this.state.synced ? 'Sync in progress' : 'Up to Date' : 'Pull to refresh'}
-            //       refreshing={this.state.refreshing}
-            //       onRefresh={this._onRefresh}
-            //     />
-            //   }
-              style={{width: screenWidth, height: screenHeight - 150, zIndex:99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-start', backgroundColor:'transparent'}}>
-              <View style={{width: screenWidth, paddingBottom: 50, zIndex:99}}>
-                <MenuItem
-                  ref={(c) => this.todosBtn = c}
+          <ScrollView
+            style={{width: screenWidth, height: screenHeight - 150, zIndex:99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-start', backgroundColor:'transparent'}}>
+            <View style={{width: screenWidth, paddingBottom: 50, zIndex:99}}>
+              <MenuItem
+                ref={(c) => this.todosBtn = c}
+                updateToday={this._updateToday}
+                navigation={this.props.navigation}
+                caption={"To Do's"}
+                route={'tasks'} />
+              <MenuItem
+                navigation={this.props.navigation}
+                updateToday={this._updateToday}
+                caption={"Notes"}
+                route={'notes'} />
+              <FlatList
+                data={this.state.dataSource}
+                scrollEnabled={false}
+                contentContainerStyle={{bottom: 5}}
+                keyExtractor={item => item.id.toString()}
+                extraData={this._getUpdate}
+                onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+                renderItem={({ item }) => <MenuItem
                   updateToday={this._updateToday}
                   navigation={this.props.navigation}
-                  caption={"To Do's"}
-                  route={'tasks'} />
-                <MenuItem
-                  navigation={this.props.navigation}
-                  updateToday={this._updateToday}
-                  caption={"Notes"}
-                  route={'notes'} />
-                <FlatList
-                  data={this.state.dataSource}
-                  scrollEnabled={false}
-                  contentContainerStyle={{bottom: 5}}
-                  keyExtractor={item => item.id.toString()}
-                  extraData={this._getUpdate}
-                  onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-                  renderItem={({ item }) => <MenuItem
-                    updateToday={this._updateToday}
-                    navigation={this.props.navigation}
-                    id={item.id}
-                    caption={item.name}
-                    route={item.route}
-                    update={this._bootstrapAsync}
-                    custom={ true } />} 
-                  />
-                <MenuItem
-                  navigation={this.props.navigation}
-                  caption={"Add"}
-                  route={'Add'}
+                  id={item.id}
+                  caption={item.name}
+                  route={item.route}
                   update={this._bootstrapAsync}
-                  _toogleModal={this._toogleModal} />
-              </View>
-            </ScrollView>
-          {/* </View> */}
-      </View>
-          // /* <View style={{width: screenWidth, flexDirection: 'row', flexWrap: 'wrap'}}>
-          //   <MenuItem
-          //       navigation={this.props.navigation}
-          //       caption={"Media"}
-          //       route={'Add'}
-          //       small={true} />
-          //   <MenuItem
-          //       navigation={this.props.navigation}
-          //       caption={"Docs"}
-          //       route={'Add'}
-          //       small={true} />
-          //   <MenuItem
-          //       navigation={this.props.navigation}
-          //       caption={"Trash"}
-          //       route={'Add'}
-          //       small={true} /> */}
-          //     {/* <FlatList
-          //       data={this.state.dataSource}
-          //       contentContainerStyle={{bottom: 5}}
-          //       keyExtractor={item => item.id.toString()}
-          //       extraData={this._getUpdate}
-          //       onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          //       renderItem={({ item }) => <MenuItem
-          //         navigation={this.props.navigation}
-          //         caption={item.name}
-          //         route={item.route}
-          //         small={true}
-          //         update={this._bootstrapAsync}
-          //         custom={ true } />} 
-          //     /> */}
-          //   {/* <MenuItem
-          //       navigation={this.props.navigation}
-          //       caption={"Add"}
-          //       route={'Add'}
-          //       update={this._bootstrapAsync}
-          //       small={true} />
-          // </View> */}
-          // {/* <Popup visible={this.state.modal}
-          //       close={this._toogleModal}
-          //       add={this._addItem} /> */}
-     
+                  custom={ true } />} 
+                />
+              <MenuItem
+                navigation={this.props.navigation}
+                caption={"Add"}
+                route={'Add'}
+                update={this._bootstrapAsync}
+                _toogleModal={this._toogleModal} />
+            </View>
+          </ScrollView>
+          <RkButton
+            style={{ zIndex: 999, backgroundColor: 'transparent', position: 'absolute', width: 26, height: 26, bottom: 12, right: 12 }}
+            onPress={() => this.props.navigation.navigate('Settings')}>
+            <Icon.Ionicons
+              style={ styles.settings }
+              name='ios-settings' />
+          </RkButton>
+      </View>     
     );
   }
 }
@@ -1191,4 +1161,11 @@ const styles = StyleSheet.create({
     fontWeight: '100',
     opacity: 0.8
   },
+  settings: {
+    position: 'absolute',
+    top: 1,
+    right: 2,
+    color: '#c43131',
+    fontSize: 26,
+  }
 });
