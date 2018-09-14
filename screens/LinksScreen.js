@@ -898,7 +898,7 @@ export default class Notes extends React.Component {
             addImg={this._selectImage}
             change={this._onChange} /> */}
           <View style={ styles.editNote }>
-              {!this.state.route && <RkButton style={ styles.editL }
+              {!this.state.route && <RkButton style={ styles.editR }
                 onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate, folder: this.props.navigation.state.params.folder ? this.props.navigation.state.params.folder : 0})} >
                 <Icon.Ionicons
                   style={[ styles.editBtn, {color: '#c43131'} ]}
@@ -907,7 +907,7 @@ export default class Notes extends React.Component {
               <Text style={ styles.subFolder }>
                 {this.state.route ? this.state.route : null}
               </Text>
-              {!this.state.route && <RkButton style={ styles.editR }
+              {!this.state.route && <RkButton style={ styles.editL }
                 onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.setState({folders: !this.state.folders})}}>
                 <Icon.Ionicons
                     style={[ styles.editBtn, {color: '#c43131'} ]}

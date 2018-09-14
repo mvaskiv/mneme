@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { LayoutAnimation, AlertIOS } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
-import { Icon } from 'expo';
+import { SQLite, Icon } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import {SettingsDividerShort, SettingsDividerLong, SettingsEditText, SettingsCategoryHeader, SettingsSwitch, SettingsPicker} from 'react-native-settings-components';
@@ -26,6 +26,8 @@ import {
   Animated,
 } from 'react-native';
 import HomeScreen from './HomeScreen';
+
+const db = SQLite.openDatabase('mneme.db');
 
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
@@ -285,6 +287,37 @@ export default class Settings extends React.Component {
     console.log(i);
   }
 
+  _dropDB = () => {
+    AlertIOS.alert('Drop all DBs?', "This action is irreversible", [
+      {
+        text: 'Cancel',
+        onPress: () => null,
+        style: 'cancel',
+      },
+      {
+        text: 'Drop',
+        style: 'destructive',
+        onPress: async () => {
+          await db.transaction(tx => {
+            tx.executeSql(
+              `drop table tasks;`
+            );
+          });
+          db.transaction(tx => {
+            tx.executeSql(
+              `drop table notes;`
+            );
+          });
+          db.transaction(tx => {
+            tx.executeSql(
+              `drop table folders;`
+            );
+          });
+        }
+      },
+    ]);
+  }
+
   render() {
     return (
       <ScrollView style={{flex: 1, backgroundColor: 'rgb(240,240,240)'}}>
@@ -354,6 +387,19 @@ export default class Settings extends React.Component {
                 onSaveValue={(value) => this._biometrySet(value)}
                 value={this.state.biometry}
               />
+          <SettingsCategoryHeader title={'Development'} />
+            <SettingsDividerLong android={false}/>
+              <TouchableOpacity
+                style={{
+                  height: 48,
+                  backgroundColor: '#fff',
+                }}
+                onPress={this._dropDB}>
+                <Text style={ styles.settingsText }>Drop all databases</Text>
+                <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
+                  name="angle-right" />
+              </TouchableOpacity>
+            <SettingsDividerLong/>
       </ScrollView>
  
     );

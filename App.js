@@ -24,19 +24,15 @@ export default class App extends React.Component {
     await db.transaction(tx => {
       tx.executeSql(
         `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, reminder text);`
-        // `drop table tasks;`
       );
     });
     db.transaction(tx => {
       tx.executeSql(
-        // `drop table tasks;`
         `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, folder int, deleted int default 0, archive int default 0);`
-        // `create table if not exists img (id integer primary key not null, src text, note int);`
       );
     });
     db.transaction(tx => {
       tx.executeSql(
-        // `drop table folders;`
         `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
       );
     });
