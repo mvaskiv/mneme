@@ -410,6 +410,7 @@ class Today extends React.Component {
       today: false,
       location: false,
       weather: false,
+      weatherLoad: 0,
       weatherIcon: false,
       expanded: false,
       propOpen: this.props.open,
@@ -427,7 +428,7 @@ class Today extends React.Component {
   }
 
   componentDidMount() {
-    this._animationLoop();
+    // this._animationLoop();
   }
 
   componentWillReceiveProps() {
@@ -450,7 +451,12 @@ class Today extends React.Component {
       duration: 1500,
       easing: Easing.linear,
       useNativeDriver: true
-    }).start(() => this._animationLoop());
+    }).start(() => {
+      this.setState({weatherLoad: this.state.weatherLoad + 1});
+      if (this.state.weatherLoad < 5) {
+        this._animationLoop()
+      }
+    });
   }
 
   _expandAnimation = (i) => {
@@ -500,6 +506,7 @@ class Today extends React.Component {
   };
 
   _getWeather = async () => {
+    this.setState({weatherLoad: 0});
     await fetch('https://api.darksky.net/forecast/9356b07d5c4d535014e4593c241c3431/' + this.state.location.coords.latitude + ',' + this.state.location.coords.longitude + '?units=auto&exclude=minutely,hourly,daily,alerts,flags', {
       method: 'GET',
     })
@@ -508,6 +515,7 @@ class Today extends React.Component {
     {
       if (res) {
         this.setState({weather: res});
+        this._animationLoop();
         setTimeout(() => {LayoutAnimation.configureNext(WeatherAnimation); this.setState({weatherIcon: weatherIcons[res.currently.icon]})}, 500);
       }
     })
@@ -583,9 +591,11 @@ class Today extends React.Component {
             </Text>
             {this.state.weatherIcon 
               ? <Image style={{position: 'absolute', top: 5, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } />
-              : <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 5, right: 0, height: 22, width: 22}}>
-                  <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
-                </Animated.View>
+              : <TouchableOpacity onPress={() => {this._getWeather()}} style={{position: 'absolute', top: 5, right: 0, height: 22, width: 22}}>
+                  <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 0, right: 0, height: 22, width: 22}}>
+                    <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
+                  </Animated.View>
+                </TouchableOpacity>
             }
           </View>
       </TouchableHighlight>
@@ -720,14 +730,23 @@ class MenuItem extends React.Component {
 
     if (this.props.caption === 'Add') {
       return (
-        <TouchableHighlight
-            style={[ this.props.small ? styles.smallMenuBtn : styles.menuBtn , {backgroundColor: '#efefef'} ]}
-            underlayColor={'rgba(29, 29, 29, 0.11)'}
-            onPress={this._newFolder}>
+        <View>
+          <TouchableHighlight
+              style={[ this.props.small ? styles.smallMenuBtn : styles.menuBtn , {backgroundColor: '#efefef'} ]}
+              underlayColor={'rgba(29, 29, 29, 0.11)'}
+              onPress={this._newFolder}>
+              <Icon.Ionicons
+                  style={ styles.addIcon }
+                  name="ios-add" />
+          </TouchableHighlight>
+          <RkButton
+            style={{ zIndex: 101, backgroundColor: 'transparent', position: 'absolute', width: 26, height: 26, bottom: -39, right: 14 }}
+            onPress={() => this.props.navigation.navigate('Settings')}>
             <Icon.Ionicons
-                style={ styles.addIcon }
-                name="ios-add" />
-        </TouchableHighlight>
+              style={ styles.settings }
+              name='ios-settings' />
+          </RkButton>
+        </View>
       )
     } else {
       return (
@@ -893,7 +912,7 @@ export default class Menu extends React.Component {
           transform: [{scale: todayScale}],
           opacity: todayOpactity,
           top: todayShift,
-          zIndex:1,
+          zIndex: 1,
           backgroundColor: '#fff',
           }}>
           <Today
@@ -903,51 +922,46 @@ export default class Menu extends React.Component {
             updateCounter={this.todosBtn}
             />
         </Animated.View>
-          <ScrollView
-            style={{width: screenWidth, height: screenHeight - 150, zIndex:99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-start', backgroundColor:'transparent'}}>
-            <View style={{width: screenWidth, paddingBottom: 50, zIndex:99}}>
-              <MenuItem
-                ref={(c) => this.todosBtn = c}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{width: screenWidth, height: screenHeight - 150, zIndex: 99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-start', backgroundColor:'transparent'}}>
+          <View style={{width: screenWidth, paddingBottom: 50, zIndex:99}}>
+            <MenuItem
+              ref={(c) => this.todosBtn = c}
+              updateToday={this._updateToday}
+              navigation={this.props.navigation}
+              caption={"To Do's"}
+              route={'tasks'} />
+            <MenuItem
+              navigation={this.props.navigation}
+              updateToday={this._updateToday}
+              caption={"Notes"}
+              route={'notes'} />
+            <FlatList
+              data={this.state.dataSource}
+              scrollEnabled={false}
+              contentContainerStyle={{bottom: 5}}
+              keyExtractor={item => item.id.toString()}
+              extraData={this._getUpdate}
+              onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+              renderItem={({ item }) => <MenuItem
                 updateToday={this._updateToday}
                 navigation={this.props.navigation}
-                caption={"To Do's"}
-                route={'tasks'} />
-              <MenuItem
-                navigation={this.props.navigation}
-                updateToday={this._updateToday}
-                caption={"Notes"}
-                route={'notes'} />
-              <FlatList
-                data={this.state.dataSource}
-                scrollEnabled={false}
-                contentContainerStyle={{bottom: 5}}
-                keyExtractor={item => item.id.toString()}
-                extraData={this._getUpdate}
-                onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-                renderItem={({ item }) => <MenuItem
-                  updateToday={this._updateToday}
-                  navigation={this.props.navigation}
-                  id={item.id}
-                  caption={item.name}
-                  route={item.route}
-                  update={this._bootstrapAsync}
-                  custom={ true } />} 
-                />
-              <MenuItem
-                navigation={this.props.navigation}
-                caption={"Add"}
-                route={'Add'}
+                id={item.id}
+                caption={item.name}
+                route={item.route}
                 update={this._bootstrapAsync}
-                _toogleModal={this._toogleModal} />
-            </View>
-          </ScrollView>
-          <RkButton
-            style={{ zIndex: 999, backgroundColor: 'transparent', position: 'absolute', width: 26, height: 26, bottom: 12, right: 12 }}
-            onPress={() => this.props.navigation.navigate('Settings')}>
-            <Icon.Ionicons
-              style={ styles.settings }
-              name='ios-settings' />
-          </RkButton>
+                custom={ true } />} 
+              />
+            <MenuItem
+              navigation={this.props.navigation}
+              caption={"Add"}
+              route={'Add'}
+              update={this._bootstrapAsync}
+              _toogleModal={this._toogleModal} />
+          </View>
+        </ScrollView>
+       
       </View>     
     );
   }

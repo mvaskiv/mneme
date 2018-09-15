@@ -474,6 +474,7 @@ export default class Notes extends React.Component {
           </SlideDownPanel> */}
         <FlatList
             scrollEnabled={!this.state.isSwiping}
+            contentContainerStyle={{paddingTop: 85}}
             // onRefresh={() => null}
             // refreshing={false}
             ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
@@ -484,12 +485,20 @@ export default class Notes extends React.Component {
             onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
             renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
           />
-          {!this.state.dataSource[0] && 
+          {!this.state.dataSource[0] ?
             <View
               style={ styles.welcomeView }>
               <Text
                 style={ styles.welcome }>
                     Notes you delete {'\n'} will appear here
+              </Text>
+            </View>
+            :
+            <View
+              style={ styles.welcomeView }>
+              <Text
+                style={ styles.welcome }>
+                   Notes older than 30 days {'\n'} will be deleted automatically 
               </Text>
             </View>
           }

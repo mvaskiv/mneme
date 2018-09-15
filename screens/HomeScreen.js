@@ -441,19 +441,22 @@ class ListItem extends React.Component {
                       defaultValue={this.props.text}
                       maxLength={60}
                       autoCorrect={false}
+                      returnKeyType='done'
                       name="newText"
+                      onSubmitEditing={() => {if (this.state.newText) {this.props.editItem(this.props.id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
                       underlineColorAndroid="#fff"
                       onChangeText={(newText) => this.setState({newText})}
                       blurOnSubmit={true}
+                      onBlur={() => {if (this.state.newText) {this.props.editItem(this.props.id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
                       style={{
-                        top: -5,
-                        marginLeft: 8,
+                        top: -10,
+                        marginLeft: 1,
                         lineHeight: 23,
                         paddingBottom: 5,
                         paddingRight: 80,
                         fontSize: 16,
                         color: '#191919',
-                        width: screenWidth - 45,
+                        width: screenWidth - 25,
                       }}
                       autoFocus={true} >
                     </TextInput>
@@ -487,7 +490,7 @@ class ListItem extends React.Component {
                       { this.props.reminder }
                     </Text>
                   </View>}
-                  { this.state.editText ?
+                  {/* { this.state.editText ?
                     <View style={{flex: 1, flexDirection: 'row', left: -80}}>
                       <RkButton style={{width: 50, backgroundColor: 'transparent'}}
                         onPress={ async () => {await this.props.editItem(this.props.id, this.state.newText); this.setState({editText: false})} }>
@@ -502,27 +505,28 @@ class ListItem extends React.Component {
                         name="ios-close-circle-outline" />
                     </RkButton>
                     </View>
-                  : <Text style={styles.due}>
+                  :  */}
+                    <Text style={styles.due}>
                     { this.props.completed ? 'done' : this._getDueDate() }
                     </Text>
-                  }
+ 
                 </View>
                 {this.state.edit &&
                 <View style={ styles.itemOpt }>
                    <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.done(this.props.id); this.props.expand(false)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn ]}
                       name="md-checkmark" />
                   </RkButton>
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.setState({editText: true}); this.props.expand(false)}}>
                     <Icon.SimpleLineIcons
                       style={[ styles.editBtn, {fontSize: 20, top: -6} ]}
                       name="pencil" />
                   </RkButton>
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.expand(false)}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.showCal(); this.props.expand(false)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn ]}
                       name="ios-calendar-outline" />
@@ -536,7 +540,7 @@ class ListItem extends React.Component {
                   </RkButton>
                   
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.delete(this.props.id)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn ]}
                       name="ios-trash-outline" />
@@ -772,7 +776,7 @@ export default class HomeScreen extends React.Component {
       };
 
       let time = when.getTime();
-      let reminderTime = when.getDate() + '/' + (when.getMonth() + 1) + ' at ' + when.getHours() + ':' + when.getMinutes();
+      let reminderTime = (when.getDate() < 10 ? '0' + when.getDate() : when.getDate()) + '/' + ((when.getMonth() + 1 < 10) ? '0' + (when.getMonth() + 1) : (when.getMonth() + 1)) + ' at ' + (when.getHours() < 10 ? '0' + when.getHours() : when.getHours()) + ':' + (when.getMinutes() < 10 ? '0' +  when.getMinutes() :  when.getMinutes());
       let schedulingOptions = {
         time: time,
       };
@@ -809,7 +813,6 @@ export default class HomeScreen extends React.Component {
 
     return (
       <View style={styles.container}>
-       
         <FlatList
           scrollEnabled={!this.state.isSwiping}      
           refreshing={this.state.refreshing}
@@ -819,7 +822,7 @@ export default class HomeScreen extends React.Component {
           keyExtractor={item => item.id.toString()}
           // extraData={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} schedule={this._toogleTimePicker} expand={(i) => this.setState({expanded: i})} expanded={this.state.expanded} />}
+          renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} schedule={this._toogleTimePicker} expand={(i) => this.setState({expanded: i})} expanded={this.state.expanded} showCal={() => this.setState({showCal: !this.state.showCal})} />}
           />
         <Popup visible={this.state.modal}
           close={this._toogleModal}
@@ -833,8 +836,44 @@ export default class HomeScreen extends React.Component {
           onCancel={this._toogleTimePicker}
         />
         {this.state.removed && <RecoverBtn onPress={this._recover} />}
-        {/* {this.state.showCal && <CalendarList
-            style={{position: 'absolute', top: 60}}
+        <Modal visible={this.state.showCal} transparent={true} animationType='slide' >
+          <TouchableOpacity style={{flex: 1}} onPress={() => this.setState({showCal: !this.state.showCal})} />
+          <View
+            style={{flexDirection: 'row', position: 'absolute', bottom: 340}}>
+            <RkButton
+              style={ styles.dueDateMod }
+              onPress={() => this._addDueDate('today')} >
+            <Text
+              style={styles.dueDateModText}>
+                Today
+              </Text>
+            </RkButton>
+            <RkButton
+              style={ styles.dueDateMod }
+              onPress={() => this._addDueDate('tomorrow')} >
+            <Text 
+              style={styles.dueDateModText}>
+                Tomorrow
+              </Text>
+            </RkButton>
+            <RkButton
+              style={ styles.dueDateMod }
+              onPress={() => this._addDueDate('week')} >
+            <Text
+              style={styles.dueDateModText}>
+                This Week
+              </Text>
+            </RkButton>
+            <RkButton
+              style={ styles.dueDateMod }>
+              <Text
+                style={styles.dueDateModText}>
+                  {this.state.CalendarSelected && this.state.CalendarSelected.day}
+                </Text>
+            </RkButton>
+          </View>
+          <CalendarList
+            style={{position: 'absolute', bottom: 0}}
             horizontal={true}
             pagingEnabled={true}
             calendarWidth={screenWidth}
@@ -845,7 +884,7 @@ export default class HomeScreen extends React.Component {
             minDate={Date()}
             maxDate={'2025-05-30'}
             onDayPress={(day) => {
-                let d = '{"' + day['dateString'] + '": {"selected": true, "marked": false, "selectedColor": "#c43131"}}';
+                let d = '{"' + day['dateString'] + '": {"selected": true, "marked": false, "selectedColor": "#c43131"}, "day": "' + day['dateString'] + '"}';
                 this.setState({
                   CalendarSelected: JSON.parse(d)
               })}
@@ -869,7 +908,8 @@ export default class HomeScreen extends React.Component {
               selectedDayBackgroundColor: '#c43131',
               todayTextColor: '#c43131',
             }}
-          /> } */}
+          />
+          </Modal>
       </View>
     );
   }
@@ -890,6 +930,24 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#fff',
     left: -20,
+  },
+  dueDateMod: {
+    top: -5,
+    // width: 90,
+    padding: 0,
+    margin: 0,
+    maxWidth: screenWidth / 4,
+    backgroundColor: '#fff',
+  },
+  dueDateModText: {
+    position: 'absolute',
+    left: 0,
+    // top: -8,
+    color: '#555',
+    fontSize: 16,
+    width: 'auto',
+    // width: screenWidth / 4,
+    textAlign: 'left'
   },
   dueSelect: {
     top: -8,
@@ -951,7 +1009,7 @@ const styles = StyleSheet.create({
     top: -5,
     lineHeight: 23,
     paddingBottom: 5,
-    marginLeft: 8,
+    marginLeft: 1,
     maxWidth: screenWidth - 120,
     fontSize: 16,
     color: '#191919',
@@ -963,7 +1021,7 @@ const styles = StyleSheet.create({
     bottom: 5,
     left: 13,
     fontSize: 12,
-    color: '#777',
+    color: '#999',
   },
   due: {
     position: 'absolute',
@@ -1017,7 +1075,7 @@ const styles = StyleSheet.create({
   reminderSet: {
     position: 'absolute',
     bottom: 4,
-    right: 15,
+    right: 21,
     height: 20,
     width: 92,
   },
