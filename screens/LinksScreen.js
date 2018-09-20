@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
-import { RkButton, RkModalImg } from 'react-native-ui-kitten';
+import { RkButton, RkModalImg, RkTextInput } from 'react-native-ui-kitten';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import Expo, { Icon, SQLite, Notifications, Permissions, Camera, BlurView } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Month } from '../constants/Dates-Weather';
 import Swipeout from 'react-native-swipeout';
 import Swipeable from 'react-native-swipeable';
 // import Modal from 'react-native-modalbox';
@@ -27,6 +28,7 @@ import {
   Keyboard,
   CheckBox,
   AsyncStorage,
+  SectionList,
   Animated,
 } from 'react-native';
 
@@ -422,10 +424,9 @@ class NoteItem extends React.Component {
       removed: false,
       view: false,
     }
-    const rightButtons = [
-      <TouchableHighlight><Text>Button 1</Text></TouchableHighlight>,
-      <TouchableHighlight><Text>Button 2</Text></TouchableHighlight>
-    ];
+    this.newDate = 0;
+    // this._initSeparator();
+
   }
 
   _getSetDate = () => {
@@ -449,6 +450,21 @@ class NoteItem extends React.Component {
   // _toogleModal = async => {
   //   this.setState({view: !this.state.view});
     
+  // }
+
+  // _initSeparator = () => {
+  //   let today = new Date();
+  //   let day = this.props.date < 10 ? '0' + this.props.date : this.props.date;
+  //   let last_date = Month[this.props.month].name + ', ' + day;
+  //   if (!date_separator || date_separator !== last_date) {
+  //     if (today.getDate() === this.props.date && today.getMonth() === this.props.month) {
+  //       date_separator = "Today";
+  //       this.newDate = 1;
+  //     } else {
+  //       date_separator = last_date;
+  //       this.newDate = 1;
+  //     }
+  //   }
   // }
 
   _hideNote = () => {
@@ -497,7 +513,7 @@ class NoteItem extends React.Component {
           style={{
             position: 'absolute',
             left: 32,
-            top: 20,
+            top: 22,
             color: '#fff',
             fontSize: 25,
           }}
@@ -519,7 +535,7 @@ class NoteItem extends React.Component {
           style={{
             position: 'absolute',
             left: 34,
-            top: 20,
+            top: 22,
             color: '#fff',
             fontSize: 25,
            }}
@@ -527,97 +543,83 @@ class NoteItem extends React.Component {
       </TouchableHighlight>
     ];
 
-    return (
-      <Swipeable
-        onRef={ref => this.swipeable = ref}
-        swipeStartMinDistance={40}
-        style={{right: this.state.removed ? this.state.swipeOpen ? screenWidth - 120 : screenWidth / 1.3 : 0}}
-        onSwipeStart={() => this.props.swiping(1)}
-        onSwipeRelease={() => this.props.swiping(0)}
-        rightButtons={leftContent}
-        rightButtonWidth={80}
-        rightActionActivationDistance={230}
-        onRightActionActivate={ () => this._swipeActivation(1) }
-        onRightActionDeactivate={ () => this._swipeActivation(0) }
-        onRightActionRelease={async () => {
-          await LayoutAnimation.configureNext(SwipeItemAnimation);
-          await setTimeout(() => this.setState({removed: true}), 0);
-          // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
-          await setTimeout(() => this.props.delete(this.props.id), 450);
-          // await setTimeout(() => this.setState({removed: false}), 150);
-          // await setTimeout(() => this.setState({swipeOpen: false}), 400);
-        }}
-        >
-      <TouchableHighlight
-        underlayColor={'rgba(29, 29, 29, 0.3)'}
-        // onPress={() => this.setState({view: true})}
-        onPress={() => this.props.viewNote(options)}
-        // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
-        >
-        {
-          this.state.edit ? 
-          <View style={ styles.item }>
-            <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})}}>
-              <Icon.Ionicons
-                style={ styles.editBtn }
-                name="ios-arrow-dropleft-outline" />
-            </RkButton>
-            <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
-              <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#4286f4'} ]}
-                name="ios-create-outline" />
-            </RkButton>
-            <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
-              <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#c43131'} ]}
-                name="ios-trash-outline" />
-            </RkButton>
-          </View>
-        :
-          <View style={ styles.item }>
-            <Text
-              numberOfLines={1}
-              style={ styles.header }>
-              { this.props.header ? this.props.header : this.props.text }
-            </Text>
-            <Text
-              numberOfLines={3}
-              style={ this.props.text ? styles.text : styles.textDone }>
-              { this.props.text ? this.props.text : 'No additional data' }
-            </Text>
-            <Text style={styles.time}>
-              { creationDate }
-            </Text>
-            {this.state.view && <Popup
-              caption={this.props.header}
-              text={this.props.text}  
-              view={true}
-              id={this.props.id}
-              created={creationDate}
-              updated={null}
-              delete={this.props.delete}
-              hide={this._hideNote}
-              change={this._onChange} />}
-          </View>
-        }
-      </TouchableHighlight>
-      </Swipeable>
-    );
+    let search = new RegExp(this.props.search, 'i');
+    if (!this.props.search || (this.props.search && (this.props.text.match(search) || this.props.header.match(search)))) {
+      return (
+        <View>
+            {/* {this.newDate && <View style={ styles.dsCnt }><Text style={ styles.dsText }>{date_separator}</Text></View>} */}
+          <Swipeable
+            onRef={ref => this.swipeable = ref}
+            swipeStartMinDistance={40}
+            style={{right: this.state.removed ? this.state.swipeOpen ? screenWidth - 120 : screenWidth / 1.3 : 0}}
+            onSwipeStart={() => this.props.swiping(1)}
+            onSwipeRelease={() => this.props.swiping(0)}
+            rightButtons={leftContent}
+            rightButtonWidth={80}
+            rightActionActivationDistance={230}
+            onRightActionActivate={ () => this._swipeActivation(1) }
+            onRightActionDeactivate={ () => this._swipeActivation(0) }
+            onRightActionRelease={async () => {
+              await LayoutAnimation.configureNext(SwipeItemAnimation);
+              await setTimeout(() => this.setState({removed: true}), 0);
+              // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
+              await setTimeout(() => this.props.delete(this.props.id), 450);
+              // await setTimeout(() => this.setState({removed: false}), 150);
+              // await setTimeout(() => this.setState({swipeOpen: false}), 400);
+            }}
+            >
+          <TouchableHighlight
+            underlayColor={'rgba(29, 29, 29, 0.3)'}
+            // onPress={() => this.setState({view: true})}
+            onPress={() => this.props.viewNote(options)}
+            // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
+            >
+
+              <View style={ styles.item }>
+                <Text
+                  numberOfLines={1}
+                  style={ styles.header }>
+                  { this.props.header ? this.props.header : this.props.text }
+                </Text>
+                <Text
+                  numberOfLines={3}
+                  style={ this.props.text ? styles.text : styles.textDone }>
+                  { this.props.text ? this.props.text : 'No additional data' }
+                </Text>
+                <Text style={styles.time}>
+                  { creationDate }
+                </Text>
+                {this.state.view && <Popup
+                  caption={this.props.header}
+                  text={this.props.text}  
+                  view={true}
+                  id={this.props.id}
+                  created={creationDate}
+                  updated={null}
+                  delete={this.props.delete}
+                  hide={this._hideNote}
+                  change={this._onChange} />}
+              </View>
+            
+          </TouchableHighlight>
+          </Swipeable>
+        </View>
+      );
+    } else {
+      return null;
+    }
   }
 }
 
 const MoreBtn = (props) => (
   <Icon.Ionicons
-    onPress={() => props.nav.navigate('Settings')}
+    onPress={() => props.search()}
     style={{
       color: '#c43131',
       fontSize: 22,
       paddingHorizontal: 15,
     }}
-    name='ios-more' />
+    name='ios-search' />
 )
 
 const MenuBtn = (props) => (  
@@ -672,38 +674,79 @@ class MenuItem extends React.Component {
   }
 }
 
+const NotesSearch = (props) => {
+  return (
+    <View style={ styles.searchCnt }>
+      <RkTextInput
+        rkType='rounded'
+        returnKeyType='search'
+        autoFocus={true}
+        label={<Icon.Ionicons style={{fontSize: 20, marginTop: 3}} name={'ios-search'}/>}
+        placeholder='Search'
+        onChangeText={(text) => {props.go(text)}}
+        multiline={false}
+        // caretHidden={true}
+        style={{
+          margin: 0,
+          padding: 0,
+          height: 40,
+          paddingHorizontal: 10,
+        }}
+        />
+      {/* <TextInput style={ styles.searchInput } /> */}
+    </View>
+  )
+}
+
 export default class Notes extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       modal: false,
       newItem: '',
-      dataSource: '',
+      dataSource: [],
       refreshing: false,
       isSwiping: false,
       folders: false,
       route: false,
       trash: '',
+      searchVisible: false,
+      updated: false,
+      searchCriteria: false,
     };
+    this.searchDebounce;
     this._bootstrapAsync();
   }
+  
   static navigationOptions = ({ navigation }) => {
     return {
-      headerRight: <MoreBtn nav={navigation} />,
+      headerRight: <MoreBtn search={() => {navigation.state.params.searchVisible ? navigation.state.params.searchVisible = false : navigation.state.params.searchVisible = true; navigation.state.params.updateNotes() }} />,
       headerLeft: <MenuBtn nav={navigation} />,
     }
   };
 
   _bootstrapAsync = async () => {
-    // db.transaction(tx => {
-    //   tx.executeSql(
-    //     // `drop table notes; drop table img;`
-    //     // `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, completed int, archive int);
-    //     `create table if not exists img (id integer primary key not null, src text, note int);`
-    //   );
-    // });
+
     await this._getUpdate();
    
+  }
+
+  // componentWillUpdate() {
+  //   console.log('props');
+  //   if (this.props.navigation.state.params.searchVisible && !this.state.searchVisible) {
+  //     this.setState({searchVisible: true});
+  //     this.forceUpdate();
+  //     console.log('search');
+  //   }
+  // }
+
+  
+
+  async componentWillMount() {
+    this.props.navigation.state.params.updateNotes = () => {
+      LayoutAnimation.configureNext(ListItemAnimation);
+      this.setState({updated: !this.state.updated});
+    }
   }
 
   componentWillUnmount() {
@@ -711,64 +754,118 @@ export default class Notes extends React.Component {
     this.props.navigation.state.params.update();
   }
 
+  _toogleSearch = () => {
+    // console.log('asd');
+    this.setState({searchVisible: !this.state.searchVisible});
+  }
+
   _toogleModal = async => {
     this.setState({modal: !this.state.modal});
     this._getUpdate();
   }
 
-  // _addItem = async (i, due, img) => {
-  //   let date = await new Date();
-  //   let thisID = 0;
+  // _dbQuery = (route) => {
+  //   let data = [];
+  //   let array = [];
+  //   let date = "";
+  //   return new Promise(resolve => {
+  //     if (this.props.navigation.state.params.folder) {
+  //       db.transaction(tx => {
+  //           tx.executeSql(`select * from notes where folder = ? and deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => {
+  //             // this.setState({ dataSource: _array })
   
-  //   await this._toogleModal();
-  //   await db.transaction(async tx => {
-  //       await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, completed, archive) values
-  //         (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
-  //           i[0],
-  //           i[1],
-  //           date.getHours(),
-  //           date.getMinutes(),
-  //           date.getDay(),
-  //           date.getDate(),
-  //           date.getMonth(),
-  //           due === '' ? null :
-  //             due === 'tomorrow' ? date.getDay() + 1 :
-  //               due === 'today' ? date.getDay() : 7
-  //         ], async (_, res) => {
-  //           thisID = await res['insertId'];
-  //         }
-  //       );
-  //     }
-  //   );
-  //   await db.transaction(async tx => {
-  //     if (img) {
-  //       img.map((pic, i) => {
-  //         tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
-  //           async (_, res) => {
-  //             console.log(res);
+  
+  
+  //           }
+  //         );
+  //       });
+  //     } else {
+  //       db.transaction(tx => {
+  //           tx.executeSql(`select * from notes where deleted = 0 order by id desc;`,[], (_, { rows: { _array } }) => {
+  //             // this.setState({ dataSource: _array })
+  //             _array.map((note) => {
+  //               let day = note.date < 10 ? '0' + note.date : note.date;
+  //               let last_date = Month[note.month].name + ', ' + day;
+  //               if (date !== last_date) {
+  //                 date = last_date;
+  //               }
+           
+  //               if (array && last_date != date) {
+  //                 data.push({title: date, data: array});
+  //                 array = [];
+  //               }
+  //               array.push(note);
+  //             });
   //           }
   //         );
   //       });
   //     }
-  //   });
-  //   await this._getUpdate();
-  //   LayoutAnimation.configureNext( ListItemAnimation );
-  //   await this.setState({deleted: false});    
-  //   await this.setState({updated: true});
+  //     if (array && date) {
+  //       data.push({title: date, data: array});
+  //     }
+
+  //     resolve(data);
+  //   })
   // }
 
-  _getUpdate = (route) => {
+  _getUpdate = async (route) => {
+    let data = [];
+    let array = [];
+    let date = "";
     if (this.props.navigation.state.params.folder) {
       db.transaction(tx => {
-          tx.executeSql(`select * from notes where folder = ? and deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+          tx.executeSql(`select * from notes where folder = ? and deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => {
+            // this.setState({ dataSource: _array })
+            _array.map((note) => {
+              let day = note.date < 10 ? '0' + note.date : note.date;
+              let last_date = Month[note.month].name + ', ' + day;
+              if (date !== last_date) {
+                date = last_date;
+              }
+         
+              if (array && last_date != date) {
+                data.push({title: date, data: array});
+                array = [];
+              }
+              array.push(note);
+            });
+          }
         );
       });
     } else {
       db.transaction(tx => {
-          tx.executeSql(`select * from notes where deleted = 0 order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+          tx.executeSql(`select * from notes where deleted = 0 order by id desc;`,[], (_, { rows: { _array } }) => {
+            // this.setState({ dataSource: _array })
+            _array.map((note) => {
+              let day = note.date < 10 ? '0' + note.date : note.date;
+              let last_date = Month[note.month].name + ', ' + day;
+              if (date !== last_date) {
+                date = last_date;
+              }
+         
+              if (array && last_date != date) {
+                data.push({title: date, data: array});
+                array = [];
+              }
+              array.push(note);
+            });
+          }
         );
       });
     }
+    setTimeout(() => {
+      if (array && date) {
+        data.push({title: date, data: array});
+      }
+      if (data) {
+        LayoutAnimation.configureNext(ListItemAnimation);
+        this.setState({dataSource: data});
+      } else {
+        this.setState({dataSource: false});
+      }
+      // this.forceUpdate();
+    }, 330);
+    
     // this._getTrash();
   }
 
@@ -821,6 +918,11 @@ export default class Notes extends React.Component {
     // await this._getUpdate(route);
   }
 
+  _search = (c) => {
+    clearTimeout(this.searchDebounce);
+    this.searchDebounce = setTimeout(() => this.setState({searchCriteria: c}), 400);
+  }
+
   render() {
     let today = new Date();
 
@@ -866,19 +968,21 @@ export default class Notes extends React.Component {
               </Text>
             </View>
           </SlideDownPanel> */}
-        <FlatList
+          {this.props.navigation.state.params.searchVisible && <NotesSearch go={this._search} />}
+        <SectionList
             scrollEnabled={!this.state.isSwiping}
             // onRefresh={() => null}
             // refreshing={false}
             ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
-            data={this.state.dataSource}
+            sections={this.state.dataSource}
+            renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
             style={ styles.listContainer }
             keyExtractor={item => item.id.toString()}
             extraData={this._getUpdate}
             onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-            renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
+            renderItem={({ item }) => <NoteItem {...item} search={this.state.searchCriteria} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
           />
-          {!this.state.dataSource[0] && 
+          {this.state.dataSource === false && 
             <View
               style={ styles.welcomeView }>
               <Text
@@ -1104,5 +1208,30 @@ const styles = StyleSheet.create({
       marginLeft: 'auto',
       marginRight: 'auto',
       color: '#777'
+  },
+  dsCnt: {
+    width: screenWidth,
+    height: 32,
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    borderBottomColor: '#ddd',
+    borderBottomWidth: 0.5,
+    // borderTopColor: '#ddd',
+    // borderTopWidth: 0.5,
+    paddingTop: 5,
+  },
+  dsText: {
+    fontSize: 18,
+    color: '#c43131',
+    textAlign: 'right',
+    fontWeight: '100',
+
+  },
+  searchCnt: {
+    paddingHorizontal: 12,
+    height: 55,
+  },
+  searchInput: {
+
   },
 });

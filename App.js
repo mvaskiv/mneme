@@ -20,23 +20,23 @@ export default class App extends React.Component {
   
   // }
 
-  _bootstrapAsync = async () => {
-    await db.transaction(tx => {
+  _bootstrapAsync = () => {
+    setTimeout(() => db.transaction(tx => {
       tx.executeSql(
         `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, reminder text);`
       );
-    });
-    db.transaction(tx => {
+    }), 0);
+    setTimeout(() => db.transaction(tx => {
       tx.executeSql(
         `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, folder int, deleted int default 0, archive int default 0);`
       );
-    });
-    db.transaction(tx => {
+    }), 200);
+    setTimeout(() => db.transaction(tx => {
       tx.executeSql(
         `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
       );
-    });
-    await AsyncStorage.getItem('biometry')
+    }), 400);
+    AsyncStorage.getItem('biometry')
       .then((res) => {
         if (res && res === '1') {
           console.log('biometry: ' + res);

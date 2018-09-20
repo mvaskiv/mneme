@@ -54,7 +54,7 @@ const NotesStack = createStackNavigator({
         borderBottomWidth: 0,
         backgroundColor: '#fff',
       },
-    
+      
     }),
   },
   Note: {
