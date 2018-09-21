@@ -511,9 +511,10 @@ class NoteItem extends React.Component {
         >
       <Icon.Ionicons
           style={{
-            position: 'absolute',
-            left: 32,
-            top: 22,
+            // position: 'absolute',
+            left: 18,
+            marginTop: 'auto',
+            marginBottom: 'auto',
             color: '#fff',
             fontSize: 25,
           }}
@@ -533,9 +534,9 @@ class NoteItem extends React.Component {
         >
        <Icon.Ionicons
           style={{
-            position: 'absolute',
-            left: 34,
-            top: 22,
+            left: 18,
+            marginTop: 'auto',
+            marginBottom: 'auto',
             color: '#fff',
             fontSize: 25,
            }}
@@ -681,6 +682,7 @@ const NotesSearch = (props) => {
         rkType='rounded'
         returnKeyType='search'
         autoFocus={true}
+        clearButtonMode='always'
         label={<Icon.Ionicons style={{fontSize: 20, marginTop: 3}} name={'ios-search'}/>}
         placeholder='Search'
         onChangeText={(text) => {props.go(text)}}
@@ -726,21 +728,8 @@ export default class Notes extends React.Component {
   };
 
   _bootstrapAsync = async () => {
-
     await this._getUpdate();
-   
   }
-
-  // componentWillUpdate() {
-  //   console.log('props');
-  //   if (this.props.navigation.state.params.searchVisible && !this.state.searchVisible) {
-  //     this.setState({searchVisible: true});
-  //     this.forceUpdate();
-  //     console.log('search');
-  //   }
-  // }
-
-  
 
   async componentWillMount() {
     this.props.navigation.state.params.updateNotes = () => {
@@ -764,50 +753,6 @@ export default class Notes extends React.Component {
     this._getUpdate();
   }
 
-  // _dbQuery = (route) => {
-  //   let data = [];
-  //   let array = [];
-  //   let date = "";
-  //   return new Promise(resolve => {
-  //     if (this.props.navigation.state.params.folder) {
-  //       db.transaction(tx => {
-  //           tx.executeSql(`select * from notes where folder = ? and deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => {
-  //             // this.setState({ dataSource: _array })
-  
-  
-  
-  //           }
-  //         );
-  //       });
-  //     } else {
-  //       db.transaction(tx => {
-  //           tx.executeSql(`select * from notes where deleted = 0 order by id desc;`,[], (_, { rows: { _array } }) => {
-  //             // this.setState({ dataSource: _array })
-  //             _array.map((note) => {
-  //               let day = note.date < 10 ? '0' + note.date : note.date;
-  //               let last_date = Month[note.month].name + ', ' + day;
-  //               if (date !== last_date) {
-  //                 date = last_date;
-  //               }
-           
-  //               if (array && last_date != date) {
-  //                 data.push({title: date, data: array});
-  //                 array = [];
-  //               }
-  //               array.push(note);
-  //             });
-  //           }
-  //         );
-  //       });
-  //     }
-  //     if (array && date) {
-  //       data.push({title: date, data: array});
-  //     }
-
-  //     resolve(data);
-  //   })
-  // }
-
   _getUpdate = async (route) => {
     let data = [];
     let array = [];
@@ -816,16 +761,16 @@ export default class Notes extends React.Component {
       db.transaction(tx => {
           tx.executeSql(`select * from notes where folder = ? and deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => {
             // this.setState({ dataSource: _array })
+            this.setState({searchData: _array});            
             _array.map((note) => {
               let day = note.date < 10 ? '0' + note.date : note.date;
               let last_date = Month[note.month].name + ', ' + day;
-              if (date !== last_date) {
-                date = last_date;
-              }
-         
-              if (array && last_date != date) {
+              if (array[0] && last_date != date) {
                 data.push({title: date, data: array});
                 array = [];
+              }
+              if (date !== last_date) {
+                date = last_date;
               }
               array.push(note);
             });
@@ -836,16 +781,16 @@ export default class Notes extends React.Component {
       db.transaction(tx => {
           tx.executeSql(`select * from notes where deleted = 0 order by id desc;`,[], (_, { rows: { _array } }) => {
             // this.setState({ dataSource: _array })
+            this.setState({searchData: _array});
             _array.map((note) => {
               let day = note.date < 10 ? '0' + note.date : note.date;
               let last_date = Month[note.month].name + ', ' + day;
-              if (date !== last_date) {
-                date = last_date;
-              }
-         
-              if (array && last_date != date) {
+              if (array[0] && last_date != date) {
                 data.push({title: date, data: array});
                 array = [];
+              }
+              if (date !== last_date) {
+                date = last_date;
               }
               array.push(note);
             });
@@ -920,7 +865,7 @@ export default class Notes extends React.Component {
 
   _search = (c) => {
     clearTimeout(this.searchDebounce);
-    this.searchDebounce = setTimeout(() => this.setState({searchCriteria: c}), 400);
+    this.searchDebounce = setTimeout(() => this.setState({searchCriteria: c}), 450);
   }
 
   render() {
@@ -969,10 +914,13 @@ export default class Notes extends React.Component {
             </View>
           </SlideDownPanel> */}
           {this.props.navigation.state.params.searchVisible && <NotesSearch go={this._search} />}
-        <SectionList
+        { !this.state.searchCriteria
+        ?
+         <SectionList
             scrollEnabled={!this.state.isSwiping}
             // onRefresh={() => null}
             // refreshing={false}
+            showsVerticalScrollIndicator={false}
             ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
             sections={this.state.dataSource}
             renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
@@ -982,6 +930,23 @@ export default class Notes extends React.Component {
             onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
             renderItem={({ item }) => <NoteItem {...item} search={this.state.searchCriteria} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
           />
+        :
+        <FlatList
+          scrollEnabled={!this.state.isSwiping}
+          // onRefresh={() => null}
+          // refreshing={false}
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
+          // sections={this.state.dataSource}
+          data={this.state.searchData}
+          // renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
+          style={ styles.listContainer }
+          keyExtractor={item => item.id.toString()}
+          extraData={this._getUpdate}
+          onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+          renderItem={({ item }) => <NoteItem {...item} search={this.state.searchCriteria} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
+          />
+        }
           {this.state.dataSource === false && 
             <View
               style={ styles.welcomeView }>

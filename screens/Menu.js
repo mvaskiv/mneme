@@ -507,7 +507,7 @@ class Today extends React.Component {
 
   _getWeather = async () => {
     this.setState({weatherLoad: 0});
-    await fetch('https://api.darksky.net/forecast/9356b07d5c4d535014e4593c241c3431/' + this.state.location.coords.latitude + ',' + this.state.location.coords.longitude + '?units=auto&exclude=minutely,hourly,daily,alerts,flags', {
+    await fetch('https://api.darksky.net/forecast/9356b07d5c4d535014e4593c241c3431/' + this.state.location.coords.latitude + ',' + this.state.location.coords.longitude + '?units=auto&exclude=minutely,hourly,alerts,flags', {
       method: 'GET',
     })
     .then((response) => response.json())
@@ -580,9 +580,9 @@ class Today extends React.Component {
               style={[ styles.enterIcon, { color: '#aaa', top: 75 } ]}
               name={this.state.expanded ? 'arrow-up' : "arrow-down"} />}
             <Text
-                style={[ styles.lastModif, {position: 'absolute', right: 35, top: 0, textAlign: 'right', lineHeight: 15, fontSize: 12} ] }>
-                
-                {this.state.weather ? this.state.weather.currently.summary + ' ' + Math.round(this.state.weather.currently.apparentTemperature) + '\u2103' : null}
+                style={[ styles.lastModif, {position: 'absolute', right: 35, top: -5, textAlign: 'right', lineHeight: 15, fontSize: 12} ] }>
+                {this.state.weather ? this.state.weather.currently.summary + ' ' + Math.round(this.state.weather.currently.apparentTemperature) + '\u2103' + '\n' : null}
+                {this.state.weather ? Math.round(this.state.weather.daily.data[0].temperatureMax) + '\u00b0' + ' / ' + Math.round(this.state.weather.daily.data[0].temperatureMin) + '\u00b0' : null}
             </Text>
             <Text
                 style={[ styles.lastModif, {position: 'absolute', left: 0, top: 67, opacity: this.state.expanded ? 0.5 : 1} ]}>
@@ -590,8 +590,8 @@ class Today extends React.Component {
                   'Next: ' + this.state.dataSource[0].text}
             </Text>
             {this.state.weatherIcon 
-              ? <Image style={{position: 'absolute', top: 5, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } />
-              : <TouchableOpacity onPress={() => {this._getWeather()}} style={{position: 'absolute', top: 5, right: 0, height: 22, width: 22}}>
+              ? <Image style={{position: 'absolute', top: 9, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } />
+              : <TouchableOpacity onPress={() => {this._getWeather()}} style={{position: 'absolute', top: 9, right: 0, height: 22, width: 22}}>
                   <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 0, right: 0, height: 22, width: 22}}>
                     <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
                   </Animated.View>

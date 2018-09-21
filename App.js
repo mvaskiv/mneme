@@ -33,7 +33,8 @@ export default class App extends React.Component {
     }), 200);
     setTimeout(() => db.transaction(tx => {
       tx.executeSql(
-        `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
+        // `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
+        `create table if not exists img (id integer primary key not null, src text, note int);`
       );
     }), 400);
     AsyncStorage.getItem('biometry')

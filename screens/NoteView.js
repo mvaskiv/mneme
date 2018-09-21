@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
-import { RkButton, RkModalImg } from 'react-native-ui-kitten';
+import { RkButton, RkModalImg, RkGalleryImage, RkGallery } from 'react-native-ui-kitten';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import Expo, { Icon, SQLite, Notifications, Permissions, Camera } from 'expo';
 import { Fab } from 'native-base';
@@ -26,6 +26,7 @@ import {
   CheckBox,
   AsyncStorage,
   Animated,
+  StatusBar,
 } from 'react-native';
 
 const db = SQLite.openDatabase('mneme.db');
@@ -152,6 +153,7 @@ export default class Note extends React.Component {
       text: this.props.navigation.state.params.text ? this.props.navigation.state.params.text : '',
       header: this.props.navigation.state.params.caption ? this.props.navigation.state.params.caption : '',
       img: [],
+      imgView: false,
       dueDate: '',
       updated: false,
     };
@@ -179,7 +181,7 @@ export default class Note extends React.Component {
   }
 
   componentDidMount() {
-    this._getPictures();
+   setTimeout(() => this._getPictures(), 500);
   }
 
   componentDidUpdate() {
@@ -189,7 +191,7 @@ export default class Note extends React.Component {
   async componentWillUnmount() {
     await this._editNote();
     // LayoutAnimation.configureNext(ListItemAnimation);
-    this.data.update();
+    // this.data.update();
   }
 
   _getUpdate = () => {
@@ -217,6 +219,7 @@ export default class Note extends React.Component {
   }
 
   _getPictures = async () => {
+    let array = [];
     let id = await this.data.id;
     if (id) {
         db.transaction(tx => {
@@ -224,11 +227,10 @@ export default class Note extends React.Component {
             async (_, { rows: { _array } }) => {
               if (_array) {
                 _array.map(async (pic) => {
-                  console.log(JSON.parse(pic.src));
-                  await this.state.img.push(JSON.parse(pic.src));
-                  LayoutAnimation.configureNext( ListItemAnimation );
-                  await this.setState({updated: true});
-                })
+                  await array.push(JSON.parse(pic.src));
+                });
+                // LayoutAnimation.configureNext( ListItemAnimation );
+                await this.setState({img: array});
               }
             }
         );
@@ -302,6 +304,7 @@ export default class Note extends React.Component {
           tx.executeSql(`update notes set header = ?, text = ? where id = ?`,[this.state.header, this.state.text, this.data.id]
         );
       });
+      this.data.update();
     }
     this.setState({editText: false});
   }
@@ -330,6 +333,7 @@ export default class Note extends React.Component {
       tx.executeSql(`delete from notes where id = ?`, [id]);
     });
     // LayoutAnimation.configureNext( SwipeItemAnimation );
+    this.data.update();
     this.props.navigation.navigate('Notes');
     // this._getUpdate(); 
     // await this.setState({updated: true});
@@ -338,18 +342,17 @@ export default class Note extends React.Component {
   render() {
     let today = new Date();
     // let creationDate = this._getSetDate();
-    let imageMap = this.state.img ? this.state.img.map((picture, i) => {
-        console.log('mapped', this.state.img[i]);
-        return <RkModalImg
-          // resizeMethod='scale'
-          style={{flexDirection: 'column', maxWidth: screenWidth / 3.2}}
-          key={String(i)} source={this.state.img} index={i} />
-      }) : null;
+    // let imageMap = this.state.img ? this.state.img.map((picture, i) => {
+    //     console.log('mapped', this.state.img[i]);
+    //     return <RkModalImg
+    //       // resizeMethod='scale'
+    //       style={{flexDirection: 'column', maxWidth: screenWidth / 3.2}}
+    //       key={String(i)} source={picture} index={i} />
+    //   }) : null;
 
     return (
         <View style={{
-            position: 'absolute',
-            top: 0,
+            flex: 1,
             height: this.data.view ? screenHeight - 55 : screenHeight - 140,
             width: screenWidth,
             // borderBottomLeftRadius: 0,
@@ -362,6 +365,8 @@ export default class Note extends React.Component {
             // borderWidth: 1,
             backgroundColor: '#fff'
           }}>
+          
+          <KeyboardAvoidingView behavior='height' nes style={ styles.noteBody } keyboardVerticalOffset={70} enabled={true}>
             <TextInput
               placeholder='Caption'
               editable={ this.data.view ? 
@@ -370,14 +375,14 @@ export default class Note extends React.Component {
               value={ this.data.caption ? this.state.header : null }
               // numberOfLines={1}
               autoCorrect={false}
-              multiline={false}
-              maxLength={30}
+              multiline={true}
+              scrollEnabled={false}
               name="header"
               underlineColorAndroid="#fff"
               onChangeText={(header) => {this.setState({header})}}
               blurOnSubmit={false}
-              onSubmitEditing={() => this.noteTextIn.focus()}
-              style={{fontSize: 18, fontWeight: '700', padding: 11, paddingRight: 50, paddingBottom: 10}}
+              // onSubmitEditing={() => this.noteTextIn.focus()}
+              style={{fontSize: 18, fontWeight: '500', padding: 11, height: 'auto', paddingRight: 50, paddingBottom: 10}}
               autoFocus={ this.data.view ? false : true } />
             <TextInput
               ref={ref => this.noteTextIn = ref}
@@ -386,15 +391,25 @@ export default class Note extends React.Component {
               }
               placeholder='Additional text'
               value={ this.data.text ? this.state.text : null }
-              numberOfLines={17}
+              // numberOfLines={17}
               autoCorrect={false}
               multiline={true}
+              scrollEnabled={false}
               name="text"
               underlineColorAndroid="#fff"
               onChangeText={(text) => {this.setState({text})}}
               blurOnSubmit={false}
-              style={{fontSize: 16, padding: 11, paddingTop: 5, paddingRight: 50, paddingBottom: 20}}/>
-              
+              style={{fontSize: 16, padding: 11, paddingTop: 5, height: 'auto', paddingRight: 50, paddingBottom: 80}}/>
+            { this.state.img[0] && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                {/* { imageMap } */}
+                <RkGallery
+                  style={{height: screenHeight}}
+                  previewFooter={<View style={{height: 50, width: screenWidth, backgroundColor: 'rgba(0,0,0,0.5)'}} />}
+                  // onGridItemClick={() => StatusBar.setHidden(true)}
+                  spanCount={3}
+                  items={this.state.img}/>
+            </View> }
+          </KeyboardAvoidingView>
               { this.data.view && <View style={ styles.editNote }>
                 <RkButton style={ styles.editL }
                 onPress={async () => {await this.setState({editText: true}); this.noteTextIn.focus()}}>
@@ -412,9 +427,7 @@ export default class Note extends React.Component {
                   name="ios-trash-outline" />
               </RkButton>
           </View>}
-          { this.state.img && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-            { imageMap }
-        </View> }
+          
       </View>
     );
   }
@@ -506,21 +519,23 @@ const styles = StyleSheet.create({
   editR: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 0,
+    bottom: 7,
     right: -35,
   },
   editL: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 0,
+    bottom: 7,
     left: -35,
   },
   editNote: {
     position: 'absolute',
     flexDirection: 'row',
     width: screenWidth,
-    bottom: 15,
-    backgroundColor: 'transparent',
+    // paddingBottom: 7,
+    bottom: 0,
+    height: 47,
+    backgroundColor: '#fff',
   },
   attRow: {
     top: -5,
@@ -546,7 +561,7 @@ const styles = StyleSheet.create({
     color: '#777',
     marginLeft: 'auto',
     marginRight: 'auto',
-    bottom: 17,
+    bottom: -8,
   },
   editBtn: {
     right: 0,
@@ -557,5 +572,9 @@ const styles = StyleSheet.create({
     top: 0,
     fontSize: 30,
   },
-  
+  noteBody: {
+    flex: 1,
+    height: 'auto',
+    paddingBottom: 80,
+  }
 });

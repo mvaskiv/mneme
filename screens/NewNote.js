@@ -160,7 +160,7 @@ export default class NewNote extends React.Component {
   }
   componentWillMount() {
     this.props.navigation.setParams({
-        RightRow: <AttachmentRow />
+        RightRow: <AttachmentRow _callCamera={this._callCamera} _selectImage={this._selectImage} />
     });
   // this._getPictures();
   }
@@ -175,8 +175,8 @@ export default class NewNote extends React.Component {
   };
 
   _bootstrapAsync = async () => {
-    console.log(this.props.navigation.state.params.folder);
-    this._getUpdate();
+    // console.log(this.props.navigation.state.params.folder);
+    // this._getUpdate();
   }
 
   
@@ -190,12 +190,12 @@ export default class NewNote extends React.Component {
       this.props.navigation.state.params.update();
   }
 
-  _getUpdate = () => {
-    db.transaction(tx => {
-        tx.executeSql(`select * from notes;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
-      );
-    });
-  }
+  // _getUpdate = () => {
+  //   db.transaction(tx => {
+  //       tx.executeSql(`select * from notes;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
+  //     );
+  //   });
+  // }
 
   _addDueDate(d) {
     if (d === this.state.dueDate) {
@@ -298,7 +298,7 @@ export default class NewNote extends React.Component {
   _selectImage = async () => {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);
     let img = await Expo.ImagePicker.launchImageLibraryAsync();
-    if (img) {
+    if (img && !img.cancelled) {
       await this.state.img.push(img);
     }
     this.setState({updated: true});
@@ -307,32 +307,32 @@ export default class NewNote extends React.Component {
   _callCamera = async () => {
     await Permissions.askAsync(Permissions.CAMERA);
     let img = await Expo.ImagePicker.launchCameraAsync();
-    if (img) {
+    if (img && !img.cancelled) {
       await this.state.img.push(img);
     }
     this.setState({updated: true});
   }
   
 
-  _delete = async (id) => {
-    db.transaction(tx => {
-      tx.executeSql(`delete from notes where id = ?`, [id]);
-    });
-    LayoutAnimation.configureNext( SwipeItemAnimation );
-    this._getUpdate(); 
-    await this.setState({updated: true});
-  }
+  // _delete = async (id) => {
+  //   db.transaction(tx => {
+  //     tx.executeSql(`delete from notes where id = ?`, [id]);
+  //   });
+  //   LayoutAnimation.configureNext( SwipeItemAnimation );
+  //   this._getUpdate(); 
+  //   await this.setState({updated: true});
+  // }
 
   render() {
     // let today = new Date();
     // let creationDate = this._getSetDate();
-    // let imageMap = this.state.img ? this.state.img.map((picture, i) => {
-    //     console.log('mapped', this.state.img[i]);
-    //     return <RkModalImg
-    //       // resizeMethod='scale'
-    //       style={{flexDirection: 'column', maxWidth: screenWidth / 3.2}}
-    //       key={String(i)} source={this.state.img} index={i} />
-    //   }) : null;
+    let imageMap = this.state.img ? this.state.img.map((picture, i) => {
+        console.log('mapped', this.state.img[i]);
+        return <RkModalImg
+          // resizeMethod='scale'
+          style={{flexDirection: 'column', maxWidth: screenWidth / 3.2}}
+          key={i.toString()} source={this.state.img} index={i} />
+      }) : null;
 
     return (
         <View style={{
@@ -370,6 +370,11 @@ export default class NewNote extends React.Component {
               onChangeText={(text) => {this.setState({text})}}
               blurOnSubmit={false}
               style={{fontSize: 16, padding: 11, paddingTop: 5, paddingRight: 50, paddingBottom: 20}}/>
+            {this.state.img &&
+              <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                { imageMap }
+              </View>
+            }
               {/* { !this.data.view ?
               <View style={{ flexDirection: 'column', position: 'absolute', right: 0, top: -3}} >
                 <RkButton
@@ -464,9 +469,9 @@ export default class NewNote extends React.Component {
                   name="ios-trash-outline" />
               </RkButton>
           </View>}
-          { this.state.img && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-            { imageMap }
+          
         </View> } */}
+       
         </KeyboardAvoidingView>
     </View>
     );
