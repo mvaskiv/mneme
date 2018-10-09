@@ -127,12 +127,15 @@ const AddBtn = ({onPress}) => (
   </Fab>
 )
 
-class Popup extends React.Component {
+export class Popup extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       text: '',
       dueDate: '',
+      tag: [],
+      day: '',
+      time: '',
     }
   }
 
@@ -147,8 +150,106 @@ class Popup extends React.Component {
       this.setState({dueDate: 'week'});
     }
   }
+
+  _timeParse = (time) => {
+    let parseRegexp = /(\d{1,2}:\d{2})|(\d{1,2})/;
+
+    let date = new Date();
+    date.setSeconds(0);
+
+    let str = time.match(parseRegexp);
+    if (time.includes(':')) {
+      let tmp = time.split(':');
+      if (time.includes('pm')) {
+        if (tmp[0] === '12') {
+          date.setHours(parseInt(tmp[0]));
+        } else {
+          date.setHours(parseInt(tmp[0]) + 12);          
+        }
+      } else {
+        if (tmp[0] === '12') {
+          date.setHours(parseInt(tmp[0]) + 12);  
+        } else {
+          date.setHours(parseInt(tmp[0]));        
+        }
+      }
+      date.setMinutes(tmp[1].match(/\d{2}/)[0]);
+    } else {
+      date.setMinutes(0);
+      if (time.includes('pm')) {
+        if (str === '12') {
+          date.setHours(parseInt(str) + 12);
+        } else {
+          date.setHours(parseInt(str) + 12);          
+        }
+      } else {
+        if (str === '12') {
+          date.setHours(parseInt(str));  
+        } else {
+          date.setHours(parseInt(str));        
+        }
+      }
+    }
+    return date;
+  }
+
+  _timeManager = () => {
+    const timeRegexp = /( at \d{1,2}:\d{2}[ap]m)|( at \d{1,2}[ap]m)/;
+
+    if (this.state.text.toLowerCase().match(timeRegexp)) {
+      // this._timeParse(this.state.text.toLowerCase().match(timeRegexp)[0].substr(4,7));
+      this.setState({time: this.state.text.toLowerCase().match(timeRegexp)[0].substr(4,10)});
+    } else {
+      this.setState({time: ''});
+    }
+  }
+
+  _dayManager = () => {
+    if (this.state.text.toLowerCase().includes('today')) {
+      this.setState({day: 'Today'});
+    } else if (this.state.text.toLowerCase().includes('tomorrow')) {
+      this.setState({day: 'Tomorrow'});
+    } else {
+      this.setState({day: ''});
+    }
+  }
+
+  _tagManager = () => {
+    if (this.state.tag.length < 5 && this.state.text) {
+      if (this.state.text.toLowerCase().includes('buy') && (!this.state.tag || !this.state.tag.join(' ').includes('Buy'))) {
+        this.state.tag.push('Buy');
+      } else if (this.state.text.toLowerCase().includes('call') && (!this.state.tag || !this.state.tag.join(' ').includes('Call'))) {
+        this.state.tag.push('Call');
+      } 
+    }
+  }
+
+  _input = (e) => {
+    this.setState({text: e});
+    this._tagManager();
+    this._timeManager();
+    this._dayManager();
+    if (!e && this.state.tag) {
+      this.setState({tag: []});
+    }
+  }
+
+  _submit = async () => {
+    await this.state.text ? this.props.add(this.state.text, this.state.day, this.state.tag.join(' ').toLowerCase(), this._timeParse(this.state.time)) : null;
+    this.setState({text: '', tag: [], time: ''});
+  }
+
   
   render() {
+    let Tags = <Text style={styles.tagPlace}>#SpaceForTags</Text>;
+    if (this.state.tag[0]) {
+      // let tmp = this.state.tag;
+      // if (this.state.day && !tmp.includes(this.state.day)) {tmp.push(this.state.day)}
+      Tags = this.state.tag.map((tag, i) => {
+        return <Text style={styles.tag} key={ i }>#{tag}</Text>
+      })
+    }
+
     return (
       <Modal
         animationType="slide"
@@ -171,6 +272,7 @@ class Popup extends React.Component {
             borderWidth: 1,
             backgroundColor: '#fff'
           }}>
+          
             <TextInput
               placeholder='Type it in'
               maxLength={60}
@@ -178,20 +280,15 @@ class Popup extends React.Component {
               autoCorrect={false}
               name="text"
               underlineColorAndroid="#fff"
-              onChangeText={(text) => {LayoutAnimation.configureNext( SwipeItemAnimation ); this.setState({text})}}
+              value={this.state.text}
+              onChangeText={this._input}
               blurOnSubmit={false}
-              onSubmitEditing={async () => {
-                await this.state.text ? this.props.add(this.state.text, this.state.dueDate) : null;
-                this.setState({text: ''});
-              }}
+              onSubmitEditing={this._submit}
               style={{fontSize: 16, padding: 11, paddingRight: 40}}
               autoFocus={true} />
               <RkButton
                 style={styles.submitBtn}
-                onPress={async () => {
-                  await this.state.text ? this.props.add(this.state.text, this.state.dueDate) : null;
-                  this.setState({text: ''});
-                }}
+                onPress={this._submit}
                 rkType='rounded'>
                 <Icon.MaterialIcons
                   name='add'
@@ -210,8 +307,12 @@ class Popup extends React.Component {
                     }}> A </Text> */}
               </RkButton>
               <View
-                style={{flexDirection: 'row'}}>
-                <RkButton
+                style={{display: 'flex', width: screenWidth, flexDirection: 'row'}}>
+                { Tags }
+                {this.state.day && <Text style={[styles.tag, {color: '#c43131', backgroundColor: '#fff', paddingHorizontal: 0, marginHorizontal: 2}]}>{this.state.day}</Text>}
+                {this.state.time && <Text style={[styles.tag, {color: '#c43131', backgroundColor: '#fff', paddingHorizontal: 0, marginHorizontal: 2}]}>@{this.state.time}</Text>}
+                
+                {/* <RkButton
                   style={ styles.dueDate }
                   onPress={() => this._addDueDate('today')} >
                 <Text
@@ -246,19 +347,22 @@ class Popup extends React.Component {
                     }}>
                     This Week
                   </Text>
-                </RkButton>
+                </RkButton> */}
                 <RkButton
-                  style={{top: -5,
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
                     width: 110,
-                    flexDirection: 'column',
-                    backgroundColor: '#fff',
-                    left: this.state.text.length > 0 ? -20 : 50
+                    height: 30,
+                    backgroundColor: 'transparent',
                     }}>
                   <Text
                     style={{ 
-                      top: -8,
-                      left: -22,
-                      color: this.state.text.length >= 60 ? '#c43131' : '#555',
+                      top: -5,
+                      right: -10,
+                      textAlign: 'right',
+                      color: this.state.text.length >= 60 ? '#c43131' : '#999',
                       fontSize: 13,
                     }}>{this.state.text.length}/60</Text>
                 </RkButton>
@@ -1199,4 +1303,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#2e78b7',
   },
+
+
+  tag: {
+    // position: 'absolute',
+    overflow: 'hidden',
+    backgroundColor: '#c43131',
+    borderRadius: 12,
+    top: -4,
+    left: 1,
+    fontSize: 15,
+    padding: 2.5,
+    height: 25,
+    paddingHorizontal: 8,
+    color: '#fff',
+    zIndex: 100,
+    margin: 0,
+    marginHorizontal: 5,
+  },
+  tagPlace: {
+    top: -4,
+    left: 0,
+    fontSize: 15,
+    padding: 2.5,
+    height: 25,
+    paddingHorizontal: 5,
+    color: '#999',
+    zIndex: 100,
+    margin: 0,
+    marginHorizontal: 5,
+  }
 });

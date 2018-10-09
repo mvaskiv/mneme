@@ -23,7 +23,7 @@ export default class App extends React.Component {
   _bootstrapAsync = () => {
     setTimeout(() => db.transaction(tx => {
       tx.executeSql(
-        `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, reminder text);`
+        `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, reminder text, tag text);`
       );
     }), 0);
     setTimeout(() => db.transaction(tx => {

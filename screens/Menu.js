@@ -29,7 +29,7 @@ import {
   AlertIOS,
   RefreshControl
 } from 'react-native';
-import HomeScreen from './HomeScreen';
+import HomeScreen, {Popup} from './HomeScreen';
 
 const db = SQLite.openDatabase('mneme.db');
 const Dimensions = require('Dimensions');
@@ -203,7 +203,7 @@ const ExpandAnimation = {
 //       this.setState({dueDate: 'week'});
 //     }
 //   }
-  
+
 //   render() {
 //     return (
 //       <Modal
@@ -258,7 +258,7 @@ const ExpandAnimation = {
 //                   style={ styles.dueDate }
 //                   onPress={() => this._addDueDate('today')} >
 //                 <Text
-//                   style={{ 
+//                   style={{
 //                     top: -8,
 //                     color: this.state.dueDate === 'today' ? '#c43131' : '#555',
 //                     fontSize: 16,
@@ -269,8 +269,8 @@ const ExpandAnimation = {
 //                 <RkButton
 //                   style={ styles.dueDate }
 //                   onPress={() => this._addDueDate('tomorrow')} >
-//                 <Text 
-//                   style={{ 
+//                 <Text
+//                   style={{
 //                     top: -8,
 //                     color: this.state.dueDate === 'tomorrow' ? '#c43131' : '#555',
 //                     fontSize: 16,
@@ -286,7 +286,7 @@ const ExpandAnimation = {
 //                     left: this.state.text.length > 0 ? -20 : 50
 //                     }}>
 //                   <Text
-//                     style={{ 
+//                     style={{
 //                       top: -8,
 //                       left: -22,
 //                       color: this.state.text.length >= 30 ? '#c43131' : '#555',
@@ -334,11 +334,11 @@ class NoteItem extends React.Component {
       let month = this.props.month < 10 ? '0' + this.props.month : this.props.month;
       return day + '/' + month + ' at ' + hr + ':' + min;
     }
-  } 
+  }
 
   // _toogleModal = async => {
   //   this.setState({view: !this.state.view});
-    
+
   // }
 
   _hideNote = () => {
@@ -389,7 +389,7 @@ class NoteItem extends React.Component {
             </Text>
             {this.state.view && <Popup
               caption={this.props.header}
-              text={this.props.text}  
+              text={this.props.text}
               view={true}
               id={this.props.id}
               created={creationDate}
@@ -412,11 +412,11 @@ class Today extends React.Component {
       weather: false,
       weatherLoad: 0,
       weatherIcon: false,
-      expanded: false,
+      expanded: true,
       propOpen: this.props.open,
       dataSource: false,
       spin: new Animated.Value(0),
-      open: new Animated.Value(1),  
+      open: new Animated.Value(1),
     };
     this._getTasks();
   }
@@ -538,8 +538,8 @@ class Today extends React.Component {
 
   _expand = () => {
     this._getTasks();
-    this.props.updateCounter._getCount();
-    LayoutAnimation.configureNext( ExpandAnimation );    
+    // this.props.updateCounter._getCount();
+    LayoutAnimation.configureNext( ExpandAnimation );
     this.setState({expanded: !this.state.expanded});
     // this._expandAnimation(1);
   }
@@ -559,9 +559,9 @@ class Today extends React.Component {
     // })
 
     return (
-      <View style={{top: 5, height: this.state.expanded ? 'auto' : 150, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
+      <View style={{top: 5, height: this.state.expanded ? 'auto' : 94, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
         <TouchableHighlight
-          style={[ styles.todayView, {height: 120, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0)'} ]}
+          style={[ styles.todayView, {height: 75, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0)'} ]}
           underlayColor={'rgba(255,255,255,0.2)'}
           onPress={this.state.dataSource[0] ? this._expand : null}>
           <View style={{backgroundColor: 'rgba(255,255,255,0)',
@@ -571,25 +571,26 @@ class Today extends React.Component {
                 style={[ styles.folderHeader, {fontSize: 35} ]}>
                 {this.state.today ? this.state.today['Day'] : 'Today'}
             </Text>
-            {this.state.today && 
+            {this.state.today &&
               <Text style={styles.monthNdate}>
                 {this.state.today['Date']}
               </Text>
             }
-            {this.state.dataSource[0] && <Icon.SimpleLineIcons
-              style={[ styles.enterIcon, { color: '#aaa', top: 75 } ]}
-              name={this.state.expanded ? 'arrow-up' : "arrow-down"} />}
             <Text
-                style={[ styles.lastModif, {position: 'absolute', right: 35, top: -5, textAlign: 'right', lineHeight: 15, fontSize: 12} ] }>
-                {this.state.weather ? this.state.weather.currently.summary + ' ' + Math.round(this.state.weather.currently.apparentTemperature) + '\u2103' + '\n' : null}
-                {this.state.weather ? Math.round(this.state.weather.daily.data[0].temperatureMax) + '\u00b0' + ' / ' + Math.round(this.state.weather.daily.data[0].temperatureMin) + '\u00b0' : null}
+              style={[ styles.lastModif, {position: 'absolute', right: 35, top: -5, textAlign: 'right', lineHeight: 15, fontSize: 12} ] }>
+              {this.state.weather ? this.state.weather.currently.summary + ' ' + Math.round(this.state.weather.currently.apparentTemperature) + '\u2103' + '\n' : null}
+              {this.state.weather ? Math.round(this.state.weather.daily.data[0].temperatureMax) + '\u00b0' + ' / ' + Math.round(this.state.weather.daily.data[0].temperatureMin) + '\u00b0' : null}
             </Text>
-            <Text
+            {/* {this.state.dataSource[0] && <Icon.SimpleLineIcons
+              style={[ styles.enterIcon, { color: '#aaa', top: 75 } ]}
+              name={this.state.expanded ? 'arrow-up' : "arrow-down"} />} */}
+
+            {/* <Text
                 style={[ styles.lastModif, {position: 'absolute', left: 0, top: 67, opacity: this.state.expanded ? 0.5 : 1} ]}>
                 {!this.state.dataSource[0] ? 'No tasks for today' :
                   'Next: ' + this.state.dataSource[0].text}
-            </Text>
-            {this.state.weatherIcon 
+            </Text> */}
+            {this.state.weatherIcon
               ? <Image style={{position: 'absolute', top: 9, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } />
               : <TouchableOpacity onPress={() => {this._getWeather()}} style={{position: 'absolute', top: 9, right: 0, height: 22, width: 22}}>
                   <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 0, right: 0, height: 22, width: 22}}>
@@ -599,17 +600,23 @@ class Today extends React.Component {
             }
           </View>
       </TouchableHighlight>
+      {this.state.dataSource[0] ?
       <FlatList
         scrollEnabled={!this.state.isSwiping}
         // onRefresh={() => null}
         // refreshing={false}
         data={this.state.dataSource}
-        style={[ styles.listContainer, {backgroundColor:'#fff'} ]}
+        style={[ styles.listContainer, { height: screenHeight - 263, overflow: 'hidden', backgroundColor:'#fff'} ]}
         keyExtractor={item => item.id.toString()}
         extraData={this._getUpdate}
         onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
         renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._todayIDone} swiping={this._swipeHandler} />}
       />
+      :
+      <View style={[ styles.listContainer, { height: screenHeight - 263, overflow: 'hidden', backgroundColor:'#fff'} ]}>
+        <Text style={{textAlign: 'center', color: '#999', fontSize: 25, fontWeight: '200', paddingTop: 10}}>No tasks for Today</Text>
+      </View>
+      }
     </View>
     )
   }
@@ -730,22 +737,23 @@ class MenuItem extends React.Component {
 
     if (this.props.caption === 'Add') {
       return (
-        <View>
+        <View style={{height: 99}}>
           <TouchableHighlight
               style={[ this.props.small ? styles.smallMenuBtn : styles.menuBtn , {backgroundColor: '#efefef'} ]}
               underlayColor={'rgba(29, 29, 29, 0.11)'}
-              onPress={this._newFolder}>
+              // onLongPress={() => this.props.navigation.navigate('NewNote', {update: this._getCount, folder: 0})}
+              onPress={this.props._toogleModal}>
               <Icon.Ionicons
                   style={ styles.addIcon }
                   name="ios-add" />
           </TouchableHighlight>
-          <RkButton
-            style={{ zIndex: 101, backgroundColor: 'transparent', position: 'absolute', width: 26, height: 26, bottom: -39, right: 14 }}
+          {/* <RkButton
+            style={{ zIndex: 101, backgroundColor: 'transparent', position: 'absolute', width: 26, height: 26, bottom: -5, right: 14 }}
             onPress={() => this.props.navigation.navigate('Settings')}>
             <Icon.Ionicons
               style={ styles.settings }
               name='ios-settings' />
-          </RkButton>
+          </RkButton> */}
         </View>
       )
     } else {
@@ -777,13 +785,13 @@ class MenuItem extends React.Component {
             underlayColor={this.state.edit ? 'transparent' : 'rgba(29, 29, 29, 0.1)'}
             onPress={this.state.edit ? () => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})} : () => this.props.route === 'tasks' ? this.props.navigation.navigate('tasks', {update: this._getCount, updateToday: this.props.updateToday}) : this.props.navigation.navigate('notes', {update: this._getCount, folder: this.props.id, caption: this.props.caption, updateToday: this.props.updateToday})}>
             { this.props.small
-            ? 
+            ?
               <View>
                 <Text
                     style={ styles.folderHeader }>
                     {this.props.caption}
                 </Text>
-                <Text 
+                <Text
                   style={{color: '#888', fontSize: 14, fontWeight: 'normal', paddingBottom: 2, top: 12}}>
                    { this.state.count > 0 ? this.state.count + this.state.count > 1 ? ' Items' : 'Item' : 'Empty' }
                 </Text>
@@ -835,6 +843,7 @@ export default class Menu extends React.Component {
       synced: true,
       todayUpd: false,
       todayOpactity: new Animated.Value(0),
+      modal: false,
     };
     this._bootstrapAsync();
   }
@@ -855,20 +864,41 @@ export default class Menu extends React.Component {
       });
       resolve('yes');
     });
-    this.setState({updated: true});
   }
 
-  _toogleModal = () => {
+  _toogleModal = async => {
     this.setState({modal: !this.state.modal});
   }
 
-  // _handleScroll = (event) => {
-  //   if (event.nativeEvent.contentOffset.y > 0) {
-  //     this.setState({todayOpactity: 10 / event.nativeEvent.contentOffset.y})
-  //   } else {
-  //     this.setState({todayOpactity: 1});
-  //   }
-  // }
+  _addItem = async (text, due, tags, time) => {
+    console.log(due);
+    await this._toogleModal();
+    let date = await new Date();
+    let dueDate = due === '' ? null :
+    due === 'Tomorrow' ? date.getDay() + 1 :
+      due === 'Today' ? date.getDay() : 7;
+    let thisID = 0;
+    await db.transaction(async tx => {
+        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due) values
+          (?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
+            text,
+            time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : date.getHours(),
+            time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : date.getMinutes(),
+            dueDate ? dueDate : date.getDay(),
+            date.getDate(),
+            date.getMonth(),
+            dueDate,
+          ], async (_, res) => {
+            thisID = await res['insertId'];
+          }
+        );
+      }
+    );
+    this._updateToday();
+    LayoutAnimation.configureNext( ExpandAnimation );
+    await this.setState({updated: true});
+  }
+
 
   _onRefresh = () => {
     LayoutAnimation.configureNext( FadeItemAnimation );
@@ -887,27 +917,35 @@ export default class Menu extends React.Component {
   render() {
     let today = new Date();
     const todayOpactity = this.state.todayOpactity.interpolate({
-      inputRange: [20, 105],
+      inputRange: [20, 155],
       outputRange: [1, 0],
       extrapolate: 'clamp',
-      useNativeDriver: true,
+      // useNativeDriver: true,
     });
     const todayShift = this.state.todayOpactity.interpolate({
       inputRange: [-250, -15, 30, 100],
       outputRange: [15, 0, 0, 20],
       extrapolate: 'clamp',
-      useNativeDriver: true,
+      // useNativeDriver: true,
     });
     const todayScale = this.state.todayOpactity.interpolate({
       inputRange: [-250, -10, 10, 30],
-      outputRange: [0.9, 1, 1, 0.94],
+      outputRange: [0.87, 1, 1, 0.94],
       extrapolate: 'clamp',
-      useNativeDriver: true,
+      // useNativeDriver: true,
     });
 
 
     return (
       <View style={{flex:1, backgroundColor:'#fff'}}>
+      <Popup visible={true} visible={this.state.modal}
+          close={this._toogleModal}
+          add={this._addItem} />
+      <ScrollView
+          showsVerticalScrollIndicator={false}
+          // stickyHeaderIndices={[0]}
+          // bounces={false}
+          style={{position: 'absolute', top: 0, width: screenWidth, height: screenHeight + 322, zIndex: 99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-end', backgroundColor:'transparent'}}>
         <Animated.View style={{
           transform: [{scale: todayScale}],
           opacity: todayOpactity,
@@ -915,17 +953,21 @@ export default class Menu extends React.Component {
           zIndex: 1,
           backgroundColor: '#fff',
           }}>
-          <Today
-            update={this._updateToday}
-            navigation={this.props.navigation}
-            clickable={this.state.todayOpactity === 1 ? true : false}
-            updateCounter={this.todosBtn}
-            />
+
+        <Today
+          update={this._updateToday}
+          navigation={this.props.navigation}
+          clickable={this.state.todayOpactity === 1 ? true : false}
+          updateCounter={this.todosBtn}
+          />
         </Animated.View>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={{width: screenWidth, height: screenHeight - 150, zIndex: 99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-start', backgroundColor:'transparent'}}>
-          <View style={{width: screenWidth, paddingBottom: 50, zIndex:99}}>
+        <View style={{width: screenWidth, height: screenHeight, paddingTop: 30, zIndex:99, overflow: 'visible'}}>
+            <MenuItem
+              navigation={this.props.navigation}
+              caption={"Add"}
+              route={'Add'}
+              update={this._bootstrapAsync}
+              _toogleModal={this._toogleModal} />
             <MenuItem
               ref={(c) => this.todosBtn = c}
               updateToday={this._updateToday}
@@ -937,39 +979,16 @@ export default class Menu extends React.Component {
               updateToday={this._updateToday}
               caption={"Notes"}
               route={'notes'} />
-            <FlatList
-              data={this.state.dataSource}
-              scrollEnabled={false}
-              contentContainerStyle={{bottom: 5}}
-              keyExtractor={item => item.id.toString()}
-              extraData={this._getUpdate}
-              onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-              renderItem={({ item }) => <MenuItem
-                updateToday={this._updateToday}
-                navigation={this.props.navigation}
-                id={item.id}
-                caption={item.name}
-                route={item.route}
-                update={this._bootstrapAsync}
-                custom={ true } />} 
-              />
-            <MenuItem
-              navigation={this.props.navigation}
-              caption={"Add"}
-              route={'Add'}
-              update={this._bootstrapAsync}
-              _toogleModal={this._toogleModal} />
           </View>
         </ScrollView>
-       
-      </View>     
+      </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,   
+    flex: 1,
     top: 0,
     // paddingTop: 60,
     backgroundColor: '#fff',
