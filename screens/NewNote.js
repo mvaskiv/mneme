@@ -160,7 +160,7 @@ export default class NewNote extends React.Component {
   }
   componentWillMount() {
     this.props.navigation.setParams({
-        RightRow: <AttachmentRow _callCamera={this._callCamera} _selectImage={this._selectImage} />
+        // RightRow: <AttachmentRow _callCamera={this._callCamera} _selectImage={this._selectImage} />
     });
   // this._getPictures();
   }
@@ -168,6 +168,7 @@ export default class NewNote extends React.Component {
   static navigationOptions = ({ navigation }) => {
       return {
         headerRight: navigation.state.params ? navigation.state.params.RightRow : null,
+        title: 'New Note',  
         // headerBackTitleStyle: {
         //     color: '#fff'
         // }

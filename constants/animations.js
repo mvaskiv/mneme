@@ -1,4 +1,5 @@
 import { LayoutAnimation } from 'react-native';
+
 export const ListItemAnimation = {
     duration: 175,
     create: {

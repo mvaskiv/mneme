@@ -30,6 +30,7 @@ import {
   RefreshControl
 } from 'react-native';
 import HomeScreen, {Popup} from './HomeScreen';
+import SmartTags from './SmartTags';
 
 const db = SQLite.openDatabase('mneme.db');
 const Dimensions = require('Dimensions');
@@ -320,26 +321,19 @@ class NoteItem extends React.Component {
 
   _getSetDate = () => {
     if (this.props.today.getDay() == this.props.day && this.props.today.getMonth() == this.props.month) {
-      let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-      let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-      return 'Today at ' + hr + ':' + min;
-    } else if (this.props.today.getDay() - 1 == this.props.day && this.props.today.getMonth() == this.props.month) {
-      let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-      let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-      return 'Yesterday at ' + hr + ':' + min;
+      if (this.props.hours >= 0 && this.props.minutes >= 0) {
+        let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
+        let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
+        return hr + ':' + min;
+      } else {
+        return '';
+      }
+    } else if (this.props.today.getDay() + 1 == this.props.day && this.props.today.getMonth() == this.props.month) {
+      return 'Tomorrow';
     } else {
-      let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-      let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-      let day = this.props.date < 10 ? '0' + this.props.date : this.props.date;
-      let month = this.props.month < 10 ? '0' + this.props.month : this.props.month;
-      return day + '/' + month + ' at ' + hr + ':' + min;
+      return '';
     }
   }
-
-  // _toogleModal = async => {
-  //   this.setState({view: !this.state.view});
-
-  // }
 
   _hideNote = () => {
     this.setState({view: false});
@@ -362,11 +356,12 @@ class NoteItem extends React.Component {
       <TouchableWithoutFeedback
         underlayColor={'rgba(29, 29, 29, 0.3)'}
         onPress={() => this.props.done(this.props.id)}
+        
         // onPress={() => this.props.viewNote(options)}
 
         // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
         >
-          <View style={ styles.noteItem }>
+          <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.4 : 1} ]}>
             <Icon.Ionicons
               onPress={() => {
                 this.props.done(this.state.done ? 0 : 1, this.props.id)
@@ -524,13 +519,30 @@ class Today extends React.Component {
     });
   }
 
+  _sortTasks(stash, today) {
+    let arr = [];
+
+    stash.map(e => {
+      if (e.due === today) {
+        arr.push(e);
+      }
+    })
+    stash.map(e => {
+      if (e.due === today + 1) {
+        arr.push(e);
+      }
+    })
+    return(arr);
+  }
+
   _getTasks = () => {
     let today = new Date().getDay();
     db.transaction(tx => {
-        tx.executeSql(`select * from tasks where completed = 0 and due = ? order by id desc;`,[today],
+        tx.executeSql(`select * from tasks where completed = 0 and due between ? and ? order by id desc;`, [today, today + 1],
         (_, { rows: { _array } }) => {
-          Expo.Notifications.setBadgeNumberAsync(_array.length);
-          this.setState({ dataSource: _array });
+          console.log(_array);
+          // Expo.Notifications.setBadgeNumberAsync(_array.length);
+          this.setState({ dataSource: this._sortTasks(_array, today) });
         }
       );
     });
@@ -563,7 +575,8 @@ class Today extends React.Component {
         <TouchableHighlight
           style={[ styles.todayView, {height: 75, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0)'} ]}
           underlayColor={'rgba(255,255,255,0.2)'}
-          onPress={this.state.dataSource[0] ? this._expand : null}>
+          // onPress={this.state.dataSource[0] ? this._expand : null}
+          >
           <View style={{backgroundColor: 'rgba(255,255,255,0)',
             // opacity: this.state.expanded ? 0.5 : 1
             }}>
@@ -719,17 +732,17 @@ class MenuItem extends React.Component {
     if (today.getDay() == this.state.lastItem.day && today.getMonth() == this.state.lastItem.month) {
       let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
       let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-      return 'Last added at ' + hr + ':' + min;
+      return 'Last added Today';
     } else if (this.state.lastItem.day === 6 ? today.getDay() === 0 : today.getDay() - 1 === this.state.lastItem.day && today.getMonth() == this.state.lastItem.month) {
       let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
       let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-      return 'Last added yesterday at ' + hr + ':' + min;
+      return 'Last added Yesterday';
     } else {
       let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
       let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
       let day = this.state.lastItem.date < 10 ? '0' + this.state.lastItem.date : this.state.lastItem.date;
       let month = this.state.lastItem.month < 10 ? '0' + this.state.lastItem.month : this.state.lastItem.month;
-      return 'Last added ' + day + '/' + month + ' at ' + hr + ':' + min;
+      return 'Last added ' + day + '/' + month;
     }
   }
 
@@ -741,7 +754,7 @@ class MenuItem extends React.Component {
           <TouchableHighlight
               style={[ this.props.small ? styles.smallMenuBtn : styles.menuBtn , {backgroundColor: '#efefef'} ]}
               underlayColor={'rgba(29, 29, 29, 0.11)'}
-              // onLongPress={() => this.props.navigation.navigate('NewNote', {update: this._getCount, folder: 0})}
+              onLongPress={() => this.props.navigation.navigate('NewNoteM', {update: this.props.notes, folder: 0, caption: "Notes", updateToday: this.props.updateToday})}
               onPress={this.props._toogleModal}>
               <Icon.Ionicons
                   style={ styles.addIcon }
@@ -879,22 +892,25 @@ export default class Menu extends React.Component {
       due === 'Today' ? date.getDay() : 7;
     let thisID = 0;
     await db.transaction(async tx => {
-        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due) values
-          (?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
+        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
+          (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
             text,
-            time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : date.getHours(),
-            time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : date.getMinutes(),
-            dueDate ? dueDate : date.getDay(),
+            time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1,
+            time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1,
+            dueDate ? dueDate : null,
             date.getDate(),
             date.getMonth(),
             dueDate,
+            tags,
           ], async (_, res) => {
             thisID = await res['insertId'];
+            if (tags) {() => SmartTags._getTasks()}
           }
         );
       }
     );
     this._updateToday();
+    this.todosBtn._getCount();
     LayoutAnimation.configureNext( ExpandAnimation );
     await this.setState({updated: true});
   }
@@ -938,10 +954,10 @@ export default class Menu extends React.Component {
 
     return (
       <View style={{flex:1, backgroundColor:'#fff'}}>
-      <Popup visible={true} visible={this.state.modal}
+        <Popup visible={true} visible={this.state.modal}
           close={this._toogleModal}
           add={this._addItem} />
-      <ScrollView
+        <ScrollView
           showsVerticalScrollIndicator={false}
           // stickyHeaderIndices={[0]}
           // bounces={false}
@@ -967,6 +983,7 @@ export default class Menu extends React.Component {
               caption={"Add"}
               route={'Add'}
               update={this._bootstrapAsync}
+              notes={() => this.notesBtn._getCount()}
               _toogleModal={this._toogleModal} />
             <MenuItem
               ref={(c) => this.todosBtn = c}
@@ -975,6 +992,7 @@ export default class Menu extends React.Component {
               caption={"To Do's"}
               route={'tasks'} />
             <MenuItem
+              ref={(ref) => this.notesBtn = ref}
               navigation={this.props.navigation}
               updateToday={this._updateToday}
               caption={"Notes"}
@@ -1170,7 +1188,7 @@ const styles = StyleSheet.create({
     top: 2,
     right: -5,
     fontSize: 12,
-    color: '#555',
+    color: '#c43131',
   },
   emptyToday: {
     color: '#777'

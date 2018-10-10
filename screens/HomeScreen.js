@@ -236,7 +236,7 @@ export class Popup extends React.Component {
 
   _submit = async () => {
     await this.state.text ? this.props.add(this.state.text, this.state.day, this.state.tag.join(' ').toLowerCase(), this._timeParse(this.state.time)) : null;
-    this.setState({text: '', tag: [], time: ''});
+    this.setState({text: '', tag: [], time: '', day: ''});
   }
 
   

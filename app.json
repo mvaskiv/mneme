@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Mneme",
-    "description": "To Do's and To Don'ts",
+    "description": "To Do's and Notes With Smart Lists and Reminders ",
     "slug": "mneme",
     "privacy": "public",
     "sdkVersion": "29.0.0",

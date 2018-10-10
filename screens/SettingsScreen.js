@@ -320,7 +320,10 @@ export default class Settings extends React.Component {
 
   render() {
     return (
-      <ScrollView style={{flex: 1, backgroundColor: 'rgb(240,240,240)'}}>
+      <ScrollView style={{flex: 1, backgroundColor: '#fff'}}>
+        <Text style={styles.header}>
+          Settings
+        </Text>
         <SettingsCategoryHeader title={'History'} />
           <SettingsDividerLong android={false}/>
             <TouchableOpacity
@@ -410,6 +413,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  header: {
+    marginTop: 40,
+    left: 12,
+    marginBottom: 10,
+    // textAlign: 'right',
+    color: '#292929',
+    fontWeight: 'bold',
+    fontSize: 35,
   },
   addBtn: {
     width: 56,

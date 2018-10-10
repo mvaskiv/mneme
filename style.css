@@ -1,0 +1,109 @@
+body {
+    overflow: hidden;
+}
+
+#grad {
+    height: 100%;
+    background: radial-gradient(circle, #FBCA01, #FB9F00);
+}
+
+.papa {
+    margin-top: 15px;
+    width: 300px;
+    box-shadow: 10px 10px 20px black;
+}
+
+.last {
+    border-style: solid;
+    border-color: black;
+}
+.min {
+    color: #FBB300;
+    border-style: solid;
+    border-color: black;
+    background-color: black;
+}
+
+h1.allerta {
+    font-family: 'Allerta Stencil', sans-serif;
+    font-variant: normal;
+    font-weight: 400;
+    font-size: 50px;
+}
+
+h1.han {
+    font-family: 'Black Han Sans', sans-serif;
+    font-weight: inherit;
+    font-size: 50px;
+}
+
+h1.barcode {
+    font-family: 'Libre Barcode 39', cursive;
+    font-weight: 400;
+    font-size: 70px;
+}
+
+h1.blow {
+    font-family: 'Bowlby One SC', cursive;
+    font-weight: 400;
+    font-size: 50px;
+}
+
+h2.allerta {
+    font-family: 'Allerta Stencil', sans-serif;
+    font-variant: normal;
+    font-weight: 400;
+    font-size: 15px;
+}
+
+div.header {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    margin-top: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    background-color: transparent;
+    text-align: center;
+}
+div.middle {
+    position: relative;
+    width: 130%;
+    height: 600px;
+    margin-top: 0px;
+    margin-left: -15%;
+    margin-right: -15%;
+    background: radial-gradient(circle, #1D1F20, #1A1C1D);
+    box-shadow: inset 5px 5px 10px black;
+    border-top: 1px;
+    border-bottom: 1px;
+    border-style: solid;
+    border-color: black;
+    transform: rotate(1.7deg);
+    text-align: center;
+}
+div.middle_lower {
+    position: relative;
+    width: 130%;
+    height: 600px;
+    margin-top: 350px;
+    margin-bottom: 40px;
+    margin-left: -15%;
+    margin-right: -15%;
+    background: radial-gradient(circle, #1D1F20, #1A1C1D);
+    box-shadow: inset 5px 5px 10px black;
+    border-top: 1px;
+    border-bottom: 1px;
+    border-style: solid;
+    border-color: black;
+    transform: rotate(-1deg);
+    text-align: center;
+}
+div.footer {
+    position: fixed;
+    height: 35px;
+    text-align: center;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+}

@@ -2,7 +2,7 @@ import React from 'react';
 import {TouchableHighlight, Text} from 'react-native';
 import { Icon } from 'expo';
 import { MaterialIcons, SimpleLineIcons, Ionicons } from '@expo/vector-icons';
-import { createSwitchNavigator, createMaterialTopTabNavigator, createStackNavigator, NavigationActions } from 'react-navigation';
+import { createSwitchNavigator, createDrawerNavigator, createMaterialTopTabNavigator, createStackNavigator, NavigationActions } from 'react-navigation';
 
 import MainTabNavigator from './MainTabNavigator';
 import Todos from '../screens/HomeScreen';
@@ -14,6 +14,7 @@ import NoteView from '../screens/NoteView';
 import NewNote from '../screens/NewNote';
 import Settings from '../screens/SettingsScreen';
 import Subfolder from '../screens/SubfolderScreen';
+import SmartTags from '../screens/SmartTags';
 
 
 // const SubfolderStack = createStackNavigator({
@@ -101,20 +102,52 @@ const NotesStack = createStackNavigator({
   },
 });
 
+const MenuN = createMaterialTopTabNavigator({
+   SmartTagsS: {
+      screen: SmartTags,
+      navigationOptions: {
+        tabBarVisible: false,
+      },
+    },
+    MenuS: {
+      screen: Menu,
+      navigationOptions: {
+      // headerLeft: <Text style={{ color: '#c43131', fontWeight: 'bold', fontSize: 28, paddingHorizontal: 12, paddingTop: 12 }}>Folders</Text>,
+      // headerRight: <SettingsBtn />,
+        tabBarVisible: false,
+      },
+    },
+    SettingsS: {
+      screen: Settings,
+      navigationOptions: {
+      // headerLeft: <Text style={{ color: '#c43131', fontWeight: 'bold', fontSize: 28, paddingHorizontal: 12, paddingTop: 12 }}>Folders</Text>,
+      // headerRight: <SettingsBtn />,
+        tabBarVisible: false,
+      },
+    },
+   
+  },
+  {
+    initialRouteName: 'MenuS',
+    lazy: true
+  }
+);
+
 
 export default createStackNavigator({
   Menu: {
-    screen: Menu,
+    screen: MenuN,
     navigationOptions: {
-      headerLeft: <Text style={{ color: '#c43131', fontWeight: 'bold', fontSize: 28, paddingHorizontal: 12, paddingTop: 12 }}>Folders</Text>,
+      // headerLeft: <Text style={{ color: '#c43131', fontWeight: 'bold', fontSize: 28, paddingHorizontal: 12, paddingTop: 12 }}>Folders</Text>,
       // headerRight: <SettingsBtn />,
-      headerBackTitle: null,
-      headerTintColor: '#c43131',
-      headerStyle: {
+      // headerBackTitle: null,
+      // headerTintColor: '#c43131',
+      // headerStyle: {
         // height: 57,
-        borderBottomWidth: 0,        
-        backgroundColor: '#fff'
-      },
+        // borderBottomWidth: 0,        
+        // backgroundColor: '#fff'
+      // },
+      header: null,
     }
   },
   tasks: {
@@ -132,6 +165,15 @@ export default createStackNavigator({
     screen: NotesStack,
     navigationOptions: {
       header: null,
+    }
+  },
+  NewNoteM: {
+    screen: NewNote,
+    navigationOptions: {
+      headerStyle: {
+        borderBottomWidth: 0,
+        backgroundColor: '#fff',
+      },
     }
   },
     // navigationOptions:{
