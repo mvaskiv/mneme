@@ -960,7 +960,7 @@ export default class Menu extends React.Component {
         <ScrollView
           showsVerticalScrollIndicator={false}
           snapToInterval={300}
-          snapToAlignment='start'
+          snapToAlignment='center'
           decelerationRate='fast'
           style={{position: 'absolute', top: 0, width: screenWidth, height: screenHeight + 322, zIndex: 99, overflow: 'visible'}}
           onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])}
@@ -1003,6 +1003,16 @@ export default class Menu extends React.Component {
               route={'notes'} />
           </View>
         </ScrollView>
+        {/* <Modal
+          transparent={true}
+          visible={true}>
+            <ScrollView
+              scrollEventThrottle={16}
+              onScroll={this._modalScroll}
+              style={{position: 'absolute', bottom: 0, height: screenHeight - 85, width: screenWidth, backgroundColor: '#fff', borderColor: '#bbb', borderWidth: 0.5, borderTopLeftRadius: 15, borderTopRightRadius: 15}}>
+              <View style={{height: screenHeight * 2, width: screenWidth, backgroundColor: '#aaa'}} />
+            </ScrollView>
+        </Modal> */}
       </View>
     );
   }
