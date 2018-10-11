@@ -958,9 +958,10 @@ export default class Menu extends React.Component {
           close={this._toogleModal}
           add={this._addItem} />
         <ScrollView
+          // onScrollEndDrag={() => {console.log('qwe')}}
           showsVerticalScrollIndicator={false}
           snapToInterval={300}
-          snapToAlignment='center'
+          snapToAlignment='start'
           decelerationRate='fast'
           style={{position: 'absolute', top: 0, width: screenWidth, height: screenHeight + 322, zIndex: 99, overflow: 'visible'}}
           onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])}
