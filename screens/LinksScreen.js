@@ -655,21 +655,21 @@ class MenuItem extends React.Component {
 
   render() {
     return (
-        <TouchableHighlight
-          style={ styles.smallMenuBtn }
-          underlayColor={this.state.edit ? 'transparent' : 'rgba(169, 169, 169, 0.1)'}
-          onPress={() => this.props.navigation.navigate('Subfolder', {mode: 'modal', update: this._getUpdate, folder: this.props.navigation.state.params.folder ? this.props.navigation.state.params.folder : 0})}>
-            <View>
-              <Text
-                  style={ styles.folderHeader }>
-                  {this.props.caption}
-              </Text>
-              <Text 
-                style={{color: '#888', fontSize: 14, fontWeight: 'normal', paddingBottom: 2, top: 12, marginLeft: 'auto', marginRight: 'auto',}}>
-                  { this.state.count > 0 ? this.state.count + this.state.count > 1 ? ' Items' : 'Item' : 'Empty' }
-              </Text>
-            </View>
-        </TouchableHighlight>
+      <TouchableHighlight
+        style={ styles.smallMenuBtn }
+        underlayColor={this.state.edit ? 'transparent' : 'rgba(169, 169, 169, 0.1)'}
+        onPress={() => this.props.navigation.navigate('Subfolder', {mode: 'modal', update: this._getUpdate, folder: this.props.navigation.state.params.folder ? this.props.navigation.state.params.folder : 0})}>
+          <View>
+            <Text
+                style={ styles.folderHeader }>
+                {this.props.caption}
+            </Text>
+            <Text 
+              style={{color: '#888', fontSize: 14, fontWeight: 'normal', paddingBottom: 2, top: 12, marginLeft: 'auto', marginRight: 'auto',}}>
+                { this.state.count > 0 ? this.state.count + this.state.count > 1 ? ' Items' : 'Item' : 'Empty' }
+            </Text>
+          </View>
+      </TouchableHighlight>
     
     );
   }
@@ -923,7 +923,7 @@ export default class Notes extends React.Component {
             showsVerticalScrollIndicator={false}
             ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
             sections={this.state.dataSource}
-            renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
+            // renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
             style={ styles.listContainer }
             keyExtractor={item => item.id.toString()}
             extraData={this._getUpdate}

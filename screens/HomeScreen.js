@@ -409,26 +409,33 @@ class ListItem extends React.Component {
     } else if (this.props.due === 7) {
       return 'This Week';
     } else {
-      return 'Some day';
+      return '';
     }
   }
 
   _getSetDate = () => {
-    if (this.props.today.getDay() == this.props.day && this.props.today.getMonth() == this.props.month) {
+
+    if (this.props.hours >= 0 && this.props.minutes >= 0) {
       let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
       let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
       return hr + ':' + min;
-    } else if (this.props.day === 6 ? this.props.today.getDay() == 0 : this.props.today.getDay() == this.props.day && this.props.today.getMonth() == this.props.month) {
-      let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-      let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-      return 'Yesterday at ' + hr + ':' + min;
-    } else {
-      let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-      let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-      let day = this.props.date < 10 ? '0' + this.props.date : this.props.date;
-      let month = this.props.month < 10 ? '0' + this.props.month : this.props.month;
-      return day + '/' + month + ' at ' + hr + ':' + min;
     }
+
+    // if (this.props.today.getDay() === this.props.day && this.props.today.getMonth() == this.props.month) {
+    //   let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
+    //   let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
+    //   return hr + ':' + min;
+    // } else if (this.props.day === 6 ? this.props.today.getDay() == 0 : this.props.today.getDay() == this.props.day && this.props.today.getMonth() == this.props.month) {
+    //   let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
+    //   let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
+    //   return 'Yesterday at ' + hr + ':' + min;
+    // } else {
+    //   let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
+    //   let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
+    //   let day = this.props.date < 10 ? '0' + this.props.date : this.props.date;
+    //   let month = this.props.month < 10 ? '0' + this.props.month : this.props.month;
+    //   return day + '/' + month + ' at ' + hr + ':' + min;
+    // }
   } 
 
   _swipeActivation = async (i) => {
@@ -553,12 +560,12 @@ class ListItem extends React.Component {
                       blurOnSubmit={true}
                       onBlur={() => {if (this.state.newText) {this.props.editItem(this.props.id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
                       style={{
-                        top: -10,
+                        top: 3,
                         marginLeft: 1,
                         lineHeight: 23,
                         paddingBottom: 5,
                         paddingRight: 80,
-                        fontSize: 16,
+                        fontSize: 18,
                         color: '#191919',
                         width: screenWidth - 25,
                       }}
@@ -737,7 +744,6 @@ export default class HomeScreen extends React.Component {
 
   _bootstrapAsync = async () => {
     await this._getUpdate();
-    console.log(this.state.dataSource)
   }
 
   componentWillUnmount() {
@@ -811,6 +817,7 @@ export default class HomeScreen extends React.Component {
       );
     });
     LayoutAnimation.configureNext( FadeItemAnimation );
+    this._getUpdate();
     await this.setState({updated: true});
   }
 
@@ -1070,7 +1077,7 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     padding: 12,
-    minHeight: 60,
+    minHeight: 62,
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
@@ -1093,7 +1100,7 @@ const styles = StyleSheet.create({
   itemDone: {
     flex: 1,
     padding: 12,
-    minHeight: 60,
+    minHeight: 62,
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
@@ -1101,35 +1108,35 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   text: {
-    top: -5,
+    top: 7,
     lineHeight: 23,
     paddingBottom: 5,
     marginLeft: 1,
     maxWidth: screenWidth - 120,
-    fontSize: 16,
+    fontSize: 18,
     color: '#292929',
   },
   textDone: {
-    top: -5,
+    top: 7,
     lineHeight: 23,
     paddingBottom: 5,
     marginLeft: 1,
     maxWidth: screenWidth - 120,
-    fontSize: 16,
+    fontSize: 18,
     color: '#191919',
     textDecorationLine: 'line-through',
     textDecorationStyle: 'solid',
   },
   time: {
     position: 'absolute',
-    bottom: 5,
-    left: 13,
+    bottom: 20,
+    right: 13,
     fontSize: 12,
-    color: '#999',
+    color: '#888',
   },
   due: {
     position: 'absolute',
-    top: 10,
+    top: 8,
     right: 13,
     fontSize: 14,
     color: '#777',

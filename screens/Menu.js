@@ -540,7 +540,6 @@ class Today extends React.Component {
     db.transaction(tx => {
         tx.executeSql(`select * from tasks where completed = 0 and due between ? and ? order by id desc;`, [today, today + 1],
         (_, { rows: { _array } }) => {
-          console.log(_array);
           // Expo.Notifications.setBadgeNumberAsync(_array.length);
           this.setState({ dataSource: this._sortTasks(_array, today) });
         }
@@ -884,7 +883,6 @@ export default class Menu extends React.Component {
   }
 
   _addItem = async (text, due, tags, time) => {
-    console.log(due);
     await this._toogleModal();
     let date = await new Date();
     let dueDate = due === '' ? null :
@@ -904,7 +902,6 @@ export default class Menu extends React.Component {
             tags,
           ], async (_, res) => {
             thisID = await res['insertId'];
-            if (tags) {() => SmartTags._getTasks()}
           }
         );
       }
@@ -927,7 +924,10 @@ export default class Menu extends React.Component {
   }
 
   _updateToday = () => {
-    this.setState({todayUpd: !this.state.todayUpd});
+    return new Promise(resolve => {
+      this.setState({todayUpd: !this.state.todayUpd});
+      resolve('done');
+    })
   }
 
   render() {
@@ -959,25 +959,29 @@ export default class Menu extends React.Component {
           add={this._addItem} />
         <ScrollView
           showsVerticalScrollIndicator={false}
-          // stickyHeaderIndices={[0]}
-          // bounces={false}
-          style={{position: 'absolute', top: 0, width: screenWidth, height: screenHeight + 322, zIndex: 99, overflow: 'visible'}} onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])} scrollEventThrottle={16} contentContainerStyle={{justifyContent: 'flex-end', backgroundColor:'transparent'}}>
-        <Animated.View style={{
-          transform: [{scale: todayScale}],
-          opacity: todayOpactity,
-          top: todayShift,
-          zIndex: 1,
-          backgroundColor: '#fff',
-          }}>
+          snapToInterval={300}
+          snapToAlignment='start'
+          decelerationRate='fast'
+          style={{position: 'absolute', top: 0, width: screenWidth, height: screenHeight + 322, zIndex: 99, overflow: 'visible'}}
+          onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])}
+          scrollEventThrottle={16}
+          contentContainerStyle={{justifyContent: 'flex-end', backgroundColor:'transparent'}}>
+          <Animated.View style={{
+            transform: [{scale: todayScale}],
+            opacity: todayOpactity,
+            top: todayShift,
+            zIndex: 1,
+            backgroundColor: '#fff',
+            }}>
 
-        <Today
-          update={this._updateToday}
-          navigation={this.props.navigation}
-          clickable={this.state.todayOpactity === 1 ? true : false}
-          updateCounter={this.todosBtn}
-          />
-        </Animated.View>
-        <View style={{width: screenWidth, height: screenHeight, paddingTop: 30, zIndex:99, overflow: 'visible'}}>
+          <Today
+            update={this._updateToday}
+            navigation={this.props.navigation}
+            clickable={this.state.todayOpactity === 1 ? true : false}
+            updateCounter={this.todosBtn}
+            />
+          </Animated.View>
+          <View style={{width: screenWidth, height: screenHeight, paddingTop: 30, zIndex:99, overflow: 'visible'}}>
             <MenuItem
               navigation={this.props.navigation}
               caption={"Add"}

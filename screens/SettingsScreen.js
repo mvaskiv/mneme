@@ -404,7 +404,6 @@ export default class Settings extends React.Component {
               </TouchableOpacity>
             <SettingsDividerLong/>
       </ScrollView>
- 
     );
   }
 }
