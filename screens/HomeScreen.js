@@ -1152,9 +1152,10 @@ const styles = StyleSheet.create({
   },
   time: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 21,
     right: 13,
     fontSize: 12,
+    fontWeight: '200',
     color: '#888',
   },
   due: {
@@ -1162,7 +1163,8 @@ const styles = StyleSheet.create({
     top: 8,
     right: 13,
     fontSize: 14,
-    color: '#777',
+    fontWeight: '200',
+    color: '#888',
   },
   edit: {
     backgroundColor: 'transparent',

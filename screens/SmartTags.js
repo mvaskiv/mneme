@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { RkButton } from 'react-native-ui-kitten';
-import { SQLite, Icon, Permissions, Location } from 'expo';
+import { SQLite, Icon, Permissions, Location, Contacts } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, SimpleLineIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import Swipeout from 'react-native-swipeout';
@@ -27,7 +27,8 @@ import {
   Animated,
   Easing,
   AlertIOS,
-  RefreshControl
+  RefreshControl,
+  Linking
 } from 'react-native';
 const Dimensions = require('Dimensions');
 const db = SQLite.openDatabase('mneme.db');
@@ -91,8 +92,17 @@ class SmartListItem extends React.Component {
         done: false,
         text: '',
       }
+      this.contacts = [];
     }
   
+    async componentDidMount() {
+        if (this.props.tag && this.props.tag.key === 'call') {
+            this.contacts = await Contacts.getContactsAsync({
+                fields: [Contacts.Fields.PhoneNumbers],
+            });
+        }
+    }
+
     _getSetDate = () => {
       if (this.props.today.getDay() == this.props.day && this.props.today.getMonth() == this.props.month) {
         let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
@@ -136,6 +146,32 @@ class SmartListItem extends React.Component {
     _onChange = (e) => {
         this.setState({text: e});
     }
+
+    _checkContact = () => {
+        if (this.props.tag && this.props.tag.key === 'call') {
+            this.contacts.data.some((c) => {
+                if (c.name && c.name.toLowerCase().includes(this.props.text.replace(/(Call)|(today)/g, '').trim().toLowerCase())) {
+                    if (c.phoneNumbers[0].number) {
+                        AlertIOS.alert('Call ' + c.name + '?','', [
+                            {
+                                text: 'Cancel',
+                                onPress: () => null,
+                                style: 'cancel',
+                            },
+                            {
+                                text: 'Call',
+                                onPress: () => {
+                                    Linking.openURL('tel:' + c.phoneNumbers[0].number.replace(/[ ()+-]/g, ''));
+                                },
+                                style: 'normal',
+                            },
+                        ]);
+                    }
+                    return true;
+                }
+            })
+        }
+    }
   
     render() {
       let creationDate = this._getSetDate();
@@ -172,10 +208,12 @@ class SmartListItem extends React.Component {
                     autoFocus={true} />
             :
                 <Text
+                    onPress={this._checkContact}
                     numberOfLines={1}
                     style={ this.state.done ? styles.textDone : styles.text }>
-                    { this.props.text.replace(/(Buy)|(today)/g, '').trim().replace(/^\w/, c => c.toUpperCase()) }
+                    { this.props.text.replace(/(Buy)|(today)|(Call)/g, '').trim().replace(/^\w/, c => c.toUpperCase()) }
                 </Text>
+     
             }
             {this.state.view && <Popup
                 caption={this.props.header}
