@@ -49,6 +49,36 @@ const ThemeAnimation = {
       type: LayoutAnimation.Types.linear,
     },
 }
+const ExpandAnimation = {
+    duration: 150,
+    create: {
+      property: LayoutAnimation.Properties.opacity,
+      type: LayoutAnimation.Types.linear,
+    },
+    update: {
+      property: LayoutAnimation.Properties.opacity,
+      type: LayoutAnimation.Types.linear,
+    },
+    delete: {
+      property: LayoutAnimation.Properties.opacity,
+      type: LayoutAnimation.Types.linear,
+    },
+}
+const ChangeAnimation = {
+    duration: 100,
+    create: {
+      property: LayoutAnimation.Properties.opacity,
+      type: LayoutAnimation.Types.linear,
+    },
+    update: {
+      property: LayoutAnimation.Properties.scaleXY,
+      type: LayoutAnimation.Types.linear,
+    },
+    delete: {
+      property: LayoutAnimation.Properties.opacity,
+      type: LayoutAnimation.Types.linear,
+    },
+}
 
 class SmartListItem extends React.Component {
     constructor(props) {
@@ -59,6 +89,7 @@ class SmartListItem extends React.Component {
         removed: false,
         view: false,
         done: false,
+        text: '',
       }
     }
   
@@ -76,13 +107,42 @@ class SmartListItem extends React.Component {
       this.setState({view: false});
       this.props.update()
     }
+
+    _addItem = async () => {
+
+        let date = await new Date();
+        let thisID = 0;
+        await db.transaction(async tx => {
+            await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
+            (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
+                this.props.tag.key.replace(/^\w/, c => c.toUpperCase()) + ' ' + this.state.text,
+                -1,
+                -1,
+                null,
+                date.getDate(),
+                date.getMonth(),
+                null,
+                this.props.tag.key,
+            ], async (_, res) => {
+                thisID = await res['insertId'];
+            }
+            );
+        }
+        );
+        LayoutAnimation.configureNext( ExpandAnimation );
+        await this.setState({updated: true});
+    }
+
+    _onChange = (e) => {
+        this.setState({text: e});
+    }
   
     render() {
       let creationDate = this._getSetDate();
       let styles = this.props.dark ? dark : light;
       if (!this.props.text) {
           return (
-            <View style={[ styles.noteItem, {opacity: 0.4} ]} >
+            <View style={[ styles.noteItem, {opacity: 0.35} ]} >
                 <Icon.Ionicons
                     style={[ styles.checkmark, { color: this.props.dark ? '#292929' : '#fff' } ]}
                     name="ios-radio-button-off" />
@@ -90,24 +150,34 @@ class SmartListItem extends React.Component {
           );
       }
       return (
-        <TouchableWithoutFeedback
-          underlayColor={'rgba(29, 29, 29, 0.3)'}
-          onPress={() => this.props.done(this.props.id)}
-          >
-            <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.4 : 1} ]}>
-              <Icon.Ionicons
+        <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.4 : 1} ]}>
+            <Icon.Ionicons
                 onPress={() => {
-                  this.props.done(this.state.done ? 0 : 1, this.props.id)
+                    this.props.done(this.state.done ? 0 : 1, this.props.id)
                     .then(this.setState({done: !this.state.done}));
                 }}
                 style={styles.checkmark}
                 name={this.state.done ? "ios-checkmark-circle-outline" : "ios-radio-button-off"} />
-              <Text
-                numberOfLines={1}
-                style={ this.state.done ? styles.textDone : styles.text }>
-                { this.props.text.replace(/(Buy)|(today)/g, '').trim().replace(/^\w/, c => c.toUpperCase()) }
-              </Text>
-              {this.state.view && <Popup
+            {this.props.create ?
+                <TextInput
+                    keyboardAppearance={this.props.dark ? 'dark' : 'light'}
+                    value={this.state.text}
+                    onChangeText={this._onChange}
+                    onSubmitEditing={() => this.props.addMore()}
+                    onBlur={this.state.text ? this._addItem : () => {LayoutAnimation.configureNext( ExpandAnimation );this.props.refresh()}}
+                    blurOnSubmit={true}
+                    maxLength={60}
+                    numberOfLines={1}
+                    style={ styles.text }
+                    autoFocus={true} />
+            :
+                <Text
+                    numberOfLines={1}
+                    style={ this.state.done ? styles.textDone : styles.text }>
+                    { this.props.text.replace(/(Buy)|(today)/g, '').trim().replace(/^\w/, c => c.toUpperCase()) }
+                </Text>
+            }
+            {this.state.view && <Popup
                 caption={this.props.header}
                 text={this.props.text}
                 view={true}
@@ -116,12 +186,37 @@ class SmartListItem extends React.Component {
                 updated={null}
                 delete={this.props.delete}
                 hide={this._hideNote}
-                change={this._onChange} />}
-            </View>
-        </TouchableWithoutFeedback>
+                change={this._onChange} />
+            }
+        </View>
       );
     }
   }
+
+const emptySet = [
+    {id: -1},
+    {id: -2},
+    {id: -3},
+    {id: -4},
+    {id: -5},
+    {id: -6},
+    {id: -7},
+    {id: -8},
+    {id: -9},
+    {id: -10},
+    {id: -11},
+    {id: -12},
+    {id: -13},
+    {id: -14},
+    {id: -15},
+    {id: -16},
+    {id: -17},
+    {id: -18},
+    {id: -19},
+    {id: -20},
+    {id: -21},
+    {id: -22},
+]
 
 export default class SmartTags extends React.Component {
     constructor() {
@@ -131,19 +226,31 @@ export default class SmartTags extends React.Component {
             dark: true,
             refreshing: false,
             list: false,
+            changes: false,
+            modal: false,
+            tag: {key: 'buy', name: 'Shopping'}
         }
         this._getTasks();
     }
 
-    _getTasks = () => {
+    componentDidMount() {
+        let time = new Date().getHours();
+        // if (time > )
+    }
+
+    _getTasks = async (key) => {
         let today = new Date().getDay();
+        let tag = key ? key : this.state.tag.key;
         db.transaction(tx => {
-            tx.executeSql(`select * from tasks where completed = 0 and tag like "%buy%" order by id desc;`, [today, today + 1],
+            tx.executeSql(`select * from tasks where completed = 0 and tag like ? order by id desc;`, [
+                '%'+tag+'%'
+            ],
             (_, { rows: { _array } }) => {
-                if (_array.length < 11) {
-                    for(let i = 1; _array.length < 11; i++) { _array.push({id: -i}) }
-                }
-                this.setState({ dataSource: _array });
+                // if (_array.length < 11) {
+                //     for(let i = 1; _array.length < 11; i++) { _array.push({id: -i}) }
+                // }
+                LayoutAnimation.configureNext(ChangeAnimation);
+                this.setState({ dataSource: _array, changes: false });
                 }
             );
         });
@@ -156,6 +263,7 @@ export default class SmartTags extends React.Component {
     }
 
     _listIDone = async (i, id) => {
+        this.setState({changes: true});
         return new Promise(
           resolve => {
             db.transaction(tx => {
@@ -171,15 +279,28 @@ export default class SmartTags extends React.Component {
         this.props.navigation.navigate('MenuS');
     }
 
+    _addItem = () => {
+        let i = this.state.dataSource[0] ? this.state.dataSource[0].id + 1 : 0;
+        LayoutAnimation.configureNext(ThemeAnimation);
+        this.state.dataSource.unshift({text: 'New', id: i, create: true, addMore: this._addItem, refresh: this._getTasks})
+        this.setState({updated: true});
+    }
+
+    _setTag = (tag) => {
+        this.setState({tag: tag});
+        this._getTasks(tag.key);
+    }
+
     render() {
         let styles = this.state.dark ? dark : light;
+        // const footer = this.
         let today = new Date();
         return (
             <View style={styles.container}>
-                <View style={[styles.container, {bottom: this.state.list ? screenHeight - 70  : 0} ]}>
+                <View style={[styles.container, {opacity: this.state.modal ? 0.05 : 1} ]}>
                     <View style={ styles.headerCnt }>
-                        <Text style={styles.header}>Shopping</Text>
-                        <Text onPress={this._done} style={styles.counter}>DONE</Text>
+                        <Text style={styles.header}>{this.state.tag.name}</Text>
+                        {this.state.changes && <Text onPress={this._done} style={styles.counter}>DONE</Text>}
                     </View>
                     <FlatList
                         refreshControl={
@@ -195,10 +316,18 @@ export default class SmartTags extends React.Component {
                         style={[ styles.listContainer, {display: this.state.list ? 'none' : 'flex'} ]}
                         keyExtractor={item => item.id.toString()}
                         extraData={this._getTasks}
-                        ListFooterComponent={<View style={{height: 75, width: screenWidth}}/>}
+                        ListFooterComponent={<View style={{height: 90, marginTop: -15, width: screenWidth, overflow: 'visible'}}>
+                            <FlatList
+                                scrollEnabled={false}
+                                data={emptySet}
+                                style={styles.listContainer}
+                                keyExtractor={item => item.id.toString()}
+                                renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} />}
+                            /></View>}
                         // onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-                        renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} update={this._getTasks} done={this._listIDone} />}
+                        renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} update={this._getTasks} done={this._listIDone} tag={this.state.tag} />}
                     />
+                    
                     <View style={styles.footer}>
                         <Icon.MaterialCommunityIcons
                             onPress={() => {
@@ -207,16 +336,38 @@ export default class SmartTags extends React.Component {
                             }}
                             style={styles.themeSwitch}
                             name="theme-light-dark" />
+                        <Text style={[styles.moreBtn, {bottom: this.state.modal ? -40 : 12}]} onPress={() => this.setState({modal: !this.state.modal})}>more</Text>
                         <Icon.Ionicons
-                            // onPress={() => {
-                            //     LayoutAnimation.configureNext(ThemeAnimation);
-                            //     this.setState({list: !this.state.list})
-                            // }}
+                            onPress={this._addItem}
                             style={styles.tagsList}
-                            name="ios-menu" /> 
+                            name="ios-create-outline" /> 
                     </View>
-                    
                 </View>
+                <Modal
+                    transparent={true}
+                    visible={this.state.modal}
+                    animationType='slide'>
+                    <TouchableOpacity style={{flex: 1}} onPress={() => this.setState({modal: false})}/>
+                    <View style={{overflow: 'visible'}}>
+                        <FlatList
+                            data={Tags}
+                            style={[styles.listContainer, {overflow: 'visible'}]}
+                            keyExtractor={item => item.id.toString()}
+                            ListFooterComponent={<View style={{height: 15}} />}
+                            renderItem={({ item }) => <TagsView {...item} set={this._setTag} dark={this.state.dark} hide={() => this.setState({modal: false})}/>}
+                        />
+                        <View style={[ styles.noteItem, { borderBottomWidth: 0 } ]}>
+                            <Text
+                                numberOfLines={1}
+                                onPress={() => {LayoutAnimation.configureNext(ThemeAnimation);this.setState({modal: false})}}
+                                style={[ styles.text, {left: 0, textAlign: 'center', width: screenWidth, maxWidth: screenWidth, fontSize: 16, fontWeight: '700', top: -2} ]}>
+                                cancel
+                            </Text>
+                        </View>
+
+                    </View>
+                </Modal>
+
                 {/* <View style={ styles.list }>
                     <View style={ styles.listItem }>
                         <Text style={[ styles.listText, {color: '#FBB300'} ]}>S</Text>
@@ -232,6 +383,26 @@ export default class SmartTags extends React.Component {
         );
     }
 }
+
+const Tags = [
+    {id: 0, name: 'Shopping', keyword: 'buy'},
+    {id: 1, name: 'Calls', keyword: 'call'},
+    {id: 2, name: 'Work', keyword: 'work'},
+    {id: 3, name: 'Home', keyword: 'home'},
+    {id: 4, name: 'Errands', keyword: 'misc'},
+    {id: 5, name: 'Shared', keyword: 'shared'},
+];
+
+const TagsView = (props) => (
+    <View style={[ props.dark ? dark.noteItem : light.noteItem , { borderBottomWidth: 0 } ]} >
+        <Text
+            onPress={() => {props.set({key: props.keyword, name: props.name}); setTimeout(() => props.hide(), 120)}}
+            numberOfLines={1}
+            style={[ props.dark ? dark.text : light.text, {left: 0, textAlign: 'center', width: screenWidth, maxWidth: screenWidth} ]}>
+            { props.name }
+        </Text>
+    </View>
+)
 
 const light = StyleSheet.create({
     container: {
@@ -255,12 +426,14 @@ const light = StyleSheet.create({
     },
     tagsList: {
         position: 'absolute',
-        left: 12,
-        top: 11,
-        fontSize: 25
+        left: 14,
+        top: 8,
+        fontSize: 28,
     },
     headerCnt: {
+        top: 5,
         height: 90,
+        marginBottom: 5,
         borderBottomColor: '#ccc',
         borderBottomWidth: 0.5,
     },
@@ -278,7 +451,7 @@ const light = StyleSheet.create({
         right: 12,
         color: '#292929',
         fontWeight: 'normal',
-        fontSize: 17,
+        fontSize: 16,
         textAlign: 'center',
         backgroundColor: '#fff',
         height: 50,
@@ -304,11 +477,10 @@ const light = StyleSheet.create({
         flexDirection: 'row',
         borderBottomColor: '#aaa',
         borderBottomWidth: 0.5,
-        
     },
     text: {
         position: 'absolute',
-        maxWidth: screenWidth - 170,
+        maxWidth: screenWidth - 70,
         top: 0,
         left: 52,
         lineHeight: 30,
@@ -319,14 +491,14 @@ const light = StyleSheet.create({
     },
     textDone: {
         position: 'absolute',
-        maxWidth: screenWidth - 170,
+        maxWidth: screenWidth - 70,
         top: 0,
         left: 52,
         lineHeight: 30,
         letterSpacing: 0.5,
         fontWeight: "400",
         fontSize: 24,
-        color: '#292929',
+        color: '#777',
         textDecorationLine: 'line-through',
         textDecorationStyle: 'solid',
     },
@@ -379,6 +551,16 @@ const light = StyleSheet.create({
         backgroundColor: '#292929',
         fontWeight: 'normal',
         fontSize: 18,
+    },
+    moreBtn: {
+        position: 'absolute',
+        bottom: 12,
+        width: 60,
+        textAlign: 'center',
+        color: '#292929',
+        fontWeight: '700',
+        fontSize: 16,
+        marginHorizontal: screenWidth/2 - 30,
     }
 })
 
@@ -405,13 +587,15 @@ const dark = StyleSheet.create({
     },
     tagsList: {
         position: 'absolute',
-        left: 12,
-        top: 11,
-        fontSize: 25,
+        left: 14,
+        top: 8,
+        fontSize: 28,
         color: '#FBB300'
     },
     headerCnt: {
+        top: 5,
         height: 90,
+        marginBottom: 5,
         backgroundColor: '#282828',
         borderBottomColor: '#222',
         borderBottomWidth: 0.5,
@@ -430,7 +614,7 @@ const dark = StyleSheet.create({
         right: 12,
         color: '#FBB300',
         fontWeight: 'normal',
-        fontSize: 17,
+        fontSize: 16,
         textAlign: 'center',
         backgroundColor: '#292929',
         height: 50,
@@ -459,7 +643,7 @@ const dark = StyleSheet.create({
     },
     text: {
         position: 'absolute',
-        maxWidth: screenWidth - 170,
+        maxWidth: screenWidth - 70,
         top: 0,
         left: 52,
         lineHeight: 30,
@@ -470,7 +654,7 @@ const dark = StyleSheet.create({
     },
     textDone: {
         position: 'absolute',
-        maxWidth: screenWidth - 170,
+        maxWidth: screenWidth - 70,
         top: 0,
         left: 52,
         lineHeight: 30,
@@ -480,6 +664,7 @@ const dark = StyleSheet.create({
         color: '#FBB300',
         textDecorationLine: 'line-through',
         textDecorationStyle: 'solid',
+        opacity: 0.8
     },
     checkmark: {
         position: 'absolute',
@@ -530,6 +715,39 @@ const dark = StyleSheet.create({
         backgroundColor: '#292929',
         fontWeight: 'normal',
         fontSize: 18,
+    },
+    moreBtn: {
+        position: 'absolute',
+        bottom: 12,
+        width: 60,
+        textAlign: 'center',
+        color: '#FBB300',
+        fontWeight: '700',
+        fontSize: 16,
+        marginHorizontal: screenWidth/2 - 30,
+    },
+    modal: {
+        position: 'absolute',
+        bottom: 85,
+        height: 250,
+        width: screenWidth - 30,
+        marginHorizontal: 15,
+        backgroundColor: '#f7f7f7',
+        borderRadius: 12,
+        borderWidth: 0.5,
+        borderColor: '#222',
+        shadowColor: '#151515',
+        shadowOffset: {bottom: 5},
+        shadowOpacity: 0.55,
+        shadowRadius: 33,
+    },
+    tagHeader: {
+        marginTop: 5,
+        left: 12,
+        // textAlign: 'right',
+        color: '#292929',
+        fontWeight: 'bold',
+        fontSize: 27,
     }
 })
 

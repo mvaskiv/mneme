@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
-import { Icon, SQLite, Notifications, Permissions } from 'expo';
+import { Icon, SQLite, Notifications, Permissions, Contacts } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, Ionicons, Foundation, SimpleLineIcons } from '@expo/vector-icons';
 import DateTimePicker from 'react-native-modal-datetime-picker';
@@ -117,14 +117,23 @@ const RecoverBtn = ({ onPress }) => (
 
 
 const AddBtn = ({onPress}) => (
-  <Fab
-      direction="up"
-      containerStyle={{ }}
-      style={{ backgroundColor: '#c43131' }}
-      position="bottomRight"
+  // <Fab
+  //     direction="up"
+  //     containerStyle={{ }}
+  //     style={{ backgroundColor: '#c43131' }}
+  //     position="bottomRight"
+  //     onPress={onPress}>
+    <TouchableOpacity
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        height: 60,
+        width: screenWidth,
+      }}
       onPress={onPress}>
-      <Icon.MaterialIcons name={'add'} />
-  </Fab>
+      <Icon.Ionicons name={'ios-add'} style={{color: '#c43131', textAlign: 'center', fontSize: 52}} />
+    </TouchableOpacity>
+  // </Fab>
 )
 
 export class Popup extends React.Component {
@@ -137,6 +146,14 @@ export class Popup extends React.Component {
       day: '',
       time: '',
     }
+    this.contacts = [];
+  }
+
+  async componentDidMount() {
+    // this.contacts = await Contacts.getContactsAsync({
+    //   fields: [Contacts.Fields.PhoneNumbers],
+    // });
+    // console.log(this.contacts);
   }
 
   _addDueDate(d) {
@@ -551,6 +568,7 @@ class ListItem extends React.Component {
                     <TextInput
                       defaultValue={this.props.text}
                       maxLength={60}
+                      numberOfLines={1}
                       autoCorrect={false}
                       returnKeyType='done'
                       name="newText"
@@ -560,7 +578,7 @@ class ListItem extends React.Component {
                       blurOnSubmit={true}
                       onBlur={() => {if (this.state.newText) {this.props.editItem(this.props.id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
                       style={{
-                        top: 3,
+                        top: 2,
                         marginLeft: 1,
                         lineHeight: 23,
                         paddingBottom: 5,
@@ -587,7 +605,7 @@ class ListItem extends React.Component {
                   //     }} />
                   // </RkButton>
                   :
-                    <Text style={ this.state.swipeOpen ? styles.textDone : styles.text }>
+                    <Text style={ this.state.swipeOpen ? styles.textDone : styles.text } numberOfLines={this.state.edit ? 5 : 1}>
                       { this.props.text }
                     </Text>
                   }
@@ -677,17 +695,19 @@ class MoreBtn extends React.Component {
   }
 
   render() {
+    console.log(this.props.nav)
     return (
     <View>
       {this.state.popup && <PopUpTop />}
       <Icon.Ionicons
-        onPress={async () => {await LayoutAnimation.configureNext(ListItemAnimation); this.setState({popup: !this.state.popup})}}
+        onPress={() => this.props.nav.state.params.addTask()}
         style={{
           color: '#c43131',
-          fontSize: 22,
+          top: 2,
+          fontSize: 32,
           paddingHorizontal: 15,
         }}
-        name='ios-more' />
+        name='ios-add' />
       </View>
     );
   }
@@ -744,6 +764,7 @@ export default class HomeScreen extends React.Component {
 
   _bootstrapAsync = async () => {
     await this._getUpdate();
+    this.props.navigation.state.params.addTask = this._toogleModal;
   }
 
   componentWillUnmount() {
@@ -755,22 +776,24 @@ export default class HomeScreen extends React.Component {
     this.setState({modal: !this.state.modal});
   }
 
-  _addItem = async (text, due) => {
+  _addItem = async (text, due, tags, time) => {
     await this._toogleModal();
     let date = await new Date();
+    let dueDate = due === '' ? null :
+    due === 'Tomorrow' ? date.getDay() + 1 :
+      due === 'Today' ? date.getDay() : 7;
     let thisID = 0;
     await db.transaction(async tx => {
-        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due) values
-          (?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
+        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
+          (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
             text,
-            date.getHours(),
-            date.getMinutes(),
-            date.getDay(),
+            time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1,
+            time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1,
+            dueDate ? dueDate : null,
             date.getDate(),
             date.getMonth(),
-            due === '' ? null :
-              due === 'tomorrow' ? date.getDay() + 1 :
-                due === 'today' ? date.getDay() : 7
+            dueDate,
+            tags,
           ], async (_, res) => {
             thisID = await res['insertId'];
           }
@@ -816,7 +839,7 @@ export default class HomeScreen extends React.Component {
         tx.executeSql(`update tasks set text = ? where id = ?`,[text, i]
       );
     });
-    LayoutAnimation.configureNext( FadeItemAnimation );
+    LayoutAnimation.configureNext( ListItemAnimation );
     this._getUpdate();
     await this.setState({updated: true});
   }
@@ -939,7 +962,7 @@ export default class HomeScreen extends React.Component {
           close={this._toogleModal}
           add={this._addItem}
           change={this._onChange} />
-        <AddBtn onPress={this._toogleModal} />
+        {/* <AddBtn onPress={this._toogleModal} /> */}
         <DateTimePicker
           isVisible={this.state.timepicker}
           mode='datetime'

@@ -583,7 +583,7 @@ class NoteItem extends React.Component {
                   { this.props.header ? this.props.header : this.props.text }
                 </Text>
                 <Text
-                  numberOfLines={3}
+                  numberOfLines={2}
                   style={ this.props.text ? styles.text : styles.textDone }>
                   { this.props.text ? this.props.text : 'No additional data' }
                 </Text>
@@ -876,14 +876,14 @@ export default class Notes extends React.Component {
         <View style={{position: 'absolute', bottom: this.state.route ? - 100 : 0, backgroundColor: '#eee', width: screenWidth, height: 90, flexDirection: 'row'}}>
           <MenuItem
               navigation={this.props.navigation}
-              caption={"Media"}
+              caption={"Marked"}
               goto={this._goTo}
-              route={'media'}/>
+              route={'marked'}/>
           <MenuItem
               navigation={this.props.navigation}
-              caption={"Docs"}
+              caption={"Archive"}
               goto={this._goTo}
-              route={'docs'}/>
+              route={'archive'}/>
           <MenuItem
               navigation={this.props.navigation}
               caption={"Trash"}
@@ -914,7 +914,7 @@ export default class Notes extends React.Component {
             </View>
           </SlideDownPanel> */}
           {this.props.navigation.state.params.searchVisible && <NotesSearch go={this._search} />}
-        { !this.state.searchCriteria
+        { this.state.searchCriteria
         ?
          <SectionList
             scrollEnabled={!this.state.isSwiping}
@@ -923,7 +923,7 @@ export default class Notes extends React.Component {
             showsVerticalScrollIndicator={false}
             ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
             sections={this.state.dataSource}
-            // renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
+            renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
             style={ styles.listContainer }
             keyExtractor={item => item.id.toString()}
             extraData={this._getUpdate}
@@ -1030,7 +1030,7 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     padding: 12,
-    minHeight: 55,
+    minHeight: 75,
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
@@ -1043,10 +1043,10 @@ const styles = StyleSheet.create({
     left: 15,
     color: '#333',
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 18,
   },
   text: {
-    marginTop: 20,
+    marginTop: 29,
     left: -5,
     paddingTop: 5,
     paddingBottom: 0,
@@ -1055,13 +1055,14 @@ const styles = StyleSheet.create({
     color: '#191919',
   },
   textDone: {
-    marginTop: 20,
+    marginTop: 29,
     left: -5,
     paddingTop: 5,
     paddingBottom: 0,
     marginLeft: 8,
     fontSize: 16,
-    color: '#555',
+    color: '#999',
+    fontWeight: '200'
   },
 
   editNote: {
@@ -1074,10 +1075,11 @@ const styles = StyleSheet.create({
   },
   time: {
     position: 'absolute',
-    top: 12,
+    top: 15,
     right: 10,
     fontSize: 12,
     color: '#555',
+    fontWeight: '200'
   },
   due: {
     position: 'absolute',

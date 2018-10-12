@@ -361,7 +361,7 @@ class NoteItem extends React.Component {
 
         // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
         >
-          <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.4 : 1} ]}>
+          <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
             <Icon.Ionicons
               onPress={() => {
                 this.props.done(this.state.done ? 0 : 1, this.props.id)
@@ -509,6 +509,7 @@ class Today extends React.Component {
     .then((res) =>
     {
       if (res) {
+        // console.log(new Date(res.daily.data[0].sunsetTime).getUTCHours());
         this.setState({weather: res});
         this._animationLoop();
         setTimeout(() => {LayoutAnimation.configureNext(WeatherAnimation); this.setState({weatherIcon: weatherIcons[res.currently.icon]})}, 500);
@@ -840,7 +841,39 @@ const SettingsBtn = (props) => (
         paddingTop: 20,
       }}
       name='ios-settings' />
-  )
+)
+
+const addedItemStyle = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: 340,
+    left: screenWidth/2 - 60,
+    right: screenWidth/2 - 60,
+    width: 120,
+    height: 25,
+    backgroundColor: '#fff',
+    borderWidth: 0.5,
+    borderColor: '#ccc',
+    shadowColor: '#888',
+    shadowOffset: {bottom: 5},
+    shadowOpacity: 0.2,
+    shadowRadius: 33,
+    borderRadius: 12,
+    zIndex: 101,
+  },
+  text: {
+    fontWeight: '200',
+    color: '#c41313',
+    paddingHorizontal: 11,
+    paddingTop: 3
+  }
+});
+
+const AddedItem = (props) => (
+  <View style={addedItemStyle.container}>
+    <Text style={addedItemStyle.text}>Added to tasks</Text>
+  </View>
+)
 
 export default class Menu extends React.Component {
   constructor(props) {
@@ -856,6 +889,7 @@ export default class Menu extends React.Component {
       todayUpd: false,
       todayOpactity: new Animated.Value(0),
       modal: false,
+      added: false,
     };
     this._bootstrapAsync();
   }
@@ -882,6 +916,33 @@ export default class Menu extends React.Component {
     this.setState({modal: !this.state.modal});
   }
 
+  _scheduleNotification = (day, when, body) => {
+    return new Promise(resolve => {
+      Permissions.askAsync(Permissions.NOTIFICATIONS);
+      let localNoti = {
+        title: 'Reminder:',
+        body: body,
+        ios: {
+          sound: true,
+        },
+      };
+      let date = new Date(when);
+      date.setSeconds(0);
+      // date.setHours(when.hr);
+      // date.setMinutes(when.min);
+      if (day) {
+        date.setDate(day);    
+      }
+      
+      let schedulingOptions = {
+        time: date,
+      };
+    
+      Expo.Notifications.scheduleLocalNotificationAsync(localNoti, schedulingOptions)
+        .then((res) => resolve(res));
+    });
+  }
+
   _addItem = async (text, due, tags, time) => {
     await this._toogleModal();
     let date = await new Date();
@@ -902,6 +963,10 @@ export default class Menu extends React.Component {
             tags,
           ], async (_, res) => {
             thisID = await res['insertId'];
+            // console.log(date.getHours(), time.getHours(), date.getMinutes(), time.getMinutes())
+            if (time && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
+              this._scheduleNotification(dueDate, time, text);
+            }
           }
         );
       }
@@ -909,7 +974,8 @@ export default class Menu extends React.Component {
     this._updateToday();
     this.todosBtn._getCount();
     LayoutAnimation.configureNext( ExpandAnimation );
-    await this.setState({updated: true});
+    await this.setState({updated: true, added: true});
+    setTimeout(() => {LayoutAnimation.configureNext( ExpandAnimation );this.setState({added: false})}, 1550);
   }
 
 
@@ -921,6 +987,12 @@ export default class Menu extends React.Component {
       setTimeout(() => this.setState({synced: true}), 2500);
       setTimeout(() => this.setState({refreshing: false}), 4000);
     });
+  }
+
+  _refresh = () => {
+    this.setState({refreshing: true});
+    setTimeout(() => this.setState({refreshing: false}), 1000);
+    this._updateToday();
   }
 
   _updateToday = () => {
@@ -957,7 +1029,17 @@ export default class Menu extends React.Component {
         <Popup visible={true} visible={this.state.modal}
           close={this._toogleModal}
           add={this._addItem} />
+        {this.state.added && <AddedItem />}
         <ScrollView
+          refreshControl={
+            <RefreshControl
+                onRefresh={this._refresh}
+                refreshing={this.state.refreshing}
+                tintColor='#fff'
+                title={this.state.refreshing ? 'Up to Date' : 'Pull to Update'}
+                titleColor='#c41313'
+            />
+          }
           // onScrollEndDrag={() => {console.log('qwe')}}
           showsVerticalScrollIndicator={false}
           snapToInterval={300}

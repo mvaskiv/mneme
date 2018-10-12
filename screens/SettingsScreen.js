@@ -402,7 +402,6 @@ export default class Settings extends React.Component {
                 <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
                   name="angle-right" />
               </TouchableOpacity>
-            <SettingsDividerLong/>
       </ScrollView>
     );
   }
