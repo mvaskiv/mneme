@@ -537,7 +537,7 @@ class Today extends React.Component {
   }
 
   _getTasks = () => {
-    let today = new Date().getDay();
+    let today = new Date().getDate();
     db.transaction(tx => {
         tx.executeSql(`select * from tasks where completed = 0 and due between ? and ? order by id desc;`, [today, today + 1],
         (_, { rows: { _array } }) => {
@@ -944,18 +944,20 @@ export default class Menu extends React.Component {
   }
 
   _addItem = async (text, due, tags, time) => {
+    console.log(due);
     await this._toogleModal();
     let date = await new Date();
     let dueDate = due === '' ? null :
-    due === 'Tomorrow' ? date.getDay() + 1 :
-      due === 'Today' ? date.getDay() : 7;
+    due === 'Tomorrow' ? date.getDate() + 1 :
+      due === 'Today' ? date.getDate() : null;
     let thisID = 0;
+    console.log(dueDate);
     await db.transaction(async tx => {
         await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
           (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
             text,
-            time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1,
-            time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1,
+            time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1,
+            time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1,
             dueDate ? dueDate : null,
             date.getDate(),
             date.getMonth(),
@@ -964,7 +966,7 @@ export default class Menu extends React.Component {
           ], async (_, res) => {
             thisID = await res['insertId'];
             // console.log(date.getHours(), time.getHours(), date.getMinutes(), time.getMinutes())
-            if (time && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
+            if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
               this._scheduleNotification(dueDate, time, text);
             }
           }

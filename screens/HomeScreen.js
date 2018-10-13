@@ -194,16 +194,17 @@ export class Popup extends React.Component {
     } else {
       date.setMinutes(0);
       if (time.includes('pm')) {
-        if (str === '12') {
-          date.setHours(parseInt(str) + 12);
+        if (str[0] === '12') {
+          date.setHours(parseInt(str[0]));
         } else {
-          date.setHours(parseInt(str) + 12);          
+          date.setHours(parseInt(str[0]) + 12);          
         }
       } else {
-        if (str === '12') {
-          date.setHours(parseInt(str));  
+        console.log(str);
+        if (str[0] === '12') {
+          date.setHours(parseInt(str[0]) - 12);  
         } else {
-          date.setHours(parseInt(str));        
+          date.setHours(parseInt(str[0]));        
         }
       }
     }
@@ -231,14 +232,25 @@ export class Popup extends React.Component {
     }
   }
 
-  _tagManager = () => {
-    if (this.state.tag.length < 5 && this.state.text) {
+  _tagManager = (tag) => {
+    if (tag && this.state.tag.length < 3) {
+      console.log(this.state.tag)
+      let a = this.state.tag;
+      a.push(tag);
+      this.setState({tag: a});
+    } else if (this.state.tag.length < 3 && this.state.text) {
       if (this.state.text.toLowerCase().includes('buy') && (!this.state.tag || !this.state.tag.join(' ').includes('Buy'))) {
         this.state.tag.push('Buy');
       } else if (this.state.text.toLowerCase().includes('call') && (!this.state.tag || !this.state.tag.join(' ').includes('Call'))) {
         this.state.tag.push('Call');
       } 
     }
+  }
+
+  _tagDelete = (e) => {
+    let a = this.state.tag.join(' ').replace(e, '').replace('  ', ' ').trim();
+    console.log(a);
+    this.setState({tag: a ? a.split(' ') : []});
   }
 
   _input = (e) => {
@@ -252,18 +264,32 @@ export class Popup extends React.Component {
   }
 
   _submit = async () => {
-    await this.state.text ? this.props.add(this.state.text, this.state.day, this.state.tag.join(' ').toLowerCase(), this._timeParse(this.state.time)) : null;
+    await this.state.text ? this.props.add(this.state.text, this.state.day, this.state.tag.join(' ').toLowerCase(), this.state.time ? this._timeParse(this.state.time) : null) : null;
     this.setState({text: '', tag: [], time: '', day: ''});
   }
 
   
   render() {
+    let Taglist = TagsListFull.map((tag, i) => {
+      if (!this.state.tag.join(' ').includes(tag.keyword)) {
+        return (
+          <TouchableOpacity onPress={() => this._tagManager(tag.keyword)} key={ i }>
+            <Text
+              style={[styles.tag, {marginVertical: 3, color: '#c41313', borderWidth: 1, borderColor: '#c41313', backgroundColor: '#fff'}]}
+              >#{tag.keyword}</Text>
+          </TouchableOpacity>
+        );
+      } else {
+        return null;
+      }
+    });
+
     let Tags = <Text style={styles.tagPlace}>#SpaceForTags</Text>;
     if (this.state.tag[0]) {
       // let tmp = this.state.tag;
       // if (this.state.day && !tmp.includes(this.state.day)) {tmp.push(this.state.day)}
       Tags = this.state.tag.map((tag, i) => {
-        return <Text style={styles.tag} key={ i }>#{tag}</Text>
+        return <Text onPress={() => this._tagDelete(tag)} style={styles.tag} key={ i }>#{tag}</Text>
       })
     }
 
@@ -273,11 +299,11 @@ export class Popup extends React.Component {
         transparent={true}
         visible={this.props.visible}
         onRequestClose={this.props.close}>
-        <TouchableOpacity style={{flex: 1}} onPress={this.props.close} activeOpacity={1}>
+        <TouchableOpacity style={{flex: 1}} onPress={this.props.close} activeOpacity={1} />
           <View style={{
-            position: 'absolute',
+            position: 'relative',
             bottom: 0,
-            height: screenHeight > 800 ? 365 : 292,
+            height: screenHeight > 800 ? 365 : 328,
             width: screenWidth,
             borderColor: '#ccc',
             borderRadius: 11,
@@ -289,10 +315,11 @@ export class Popup extends React.Component {
             borderWidth: 1,
             backgroundColor: '#fff'
           }}>
-          
+            
             <TextInput
               placeholder='Type it in'
               maxLength={60}
+              selectionColor='#c41313'
               // clearButtonMode='always'
               autoCorrect={false}
               name="text"
@@ -328,44 +355,7 @@ export class Popup extends React.Component {
                 { Tags }
                 {this.state.day && <Text style={[styles.tag, {color: '#c43131', backgroundColor: '#fff', paddingHorizontal: 0, marginHorizontal: 2}]}>{this.state.day}</Text>}
                 {this.state.time && <Text style={[styles.tag, {color: '#c43131', backgroundColor: '#fff', paddingHorizontal: 0, marginHorizontal: 2}]}>@{this.state.time}</Text>}
-                
                 {/* <RkButton
-                  style={ styles.dueDate }
-                  onPress={() => this._addDueDate('today')} >
-                <Text
-                  style={{ 
-                    top: -8,
-                    color: this.state.dueDate === 'today' ? '#c43131' : '#555',
-                    fontSize: 16,
-                    }}>
-                    Today
-                  </Text>
-                </RkButton>
-                <RkButton
-                  style={ styles.dueDate }
-                  onPress={() => this._addDueDate('tomorrow')} >
-                <Text 
-                  style={{ 
-                    top: -8,
-                    color: this.state.dueDate === 'tomorrow' ? '#c43131' : '#555',
-                    fontSize: 16,
-                    }}>
-                    Tomorrow
-                  </Text>
-                </RkButton>
-                <RkButton
-                  style={ styles.dueDate }
-                  onPress={() => this._addDueDate('week')} >
-                <Text
-                  style={{ 
-                    top: -8,
-                    color: this.state.dueDate === 'week' ? '#c43131' : '#555',
-                    fontSize: 16,
-                    }}>
-                    This Week
-                  </Text>
-                </RkButton> */}
-                <RkButton
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -382,14 +372,25 @@ export class Popup extends React.Component {
                       color: this.state.text.length >= 60 ? '#c43131' : '#999',
                       fontSize: 13,
                     }}>{this.state.text.length}/60</Text>
-                </RkButton>
+                </RkButton> */}
               </View>
+              <ScrollView keyboardShouldPersistTaps='always' keyboardDismissMode='none' horizontal={true} style={{position: 'relative', zIndex: 1104, height: 50, top: 0, paddingTop: 5, paddingRight: 20}}>
+              { Taglist }
+            </ScrollView>
           </View>
-        </TouchableOpacity>
       </Modal>
     );
   }
 }
+
+const TagsListFull = [
+  {id: 0, name: 'Shopping', keyword: 'buy'},
+  {id: 1, name: 'Calls', keyword: 'call'},
+  {id: 2, name: 'Work', keyword: 'work'},
+  {id: 3, name: 'Home', keyword: 'home'},
+  {id: 4, name: 'Errands', keyword: 'misc'},
+  {id: 5, name: 'Shared', keyword: 'shared'},
+];
 
 class ListItem extends React.Component {
   constructor(props) {
@@ -787,8 +788,8 @@ export default class HomeScreen extends React.Component {
         await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
           (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
             text,
-            time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1,
-            time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1,
+            time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1,
+            time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1,
             dueDate ? dueDate : null,
             date.getDate(),
             date.getMonth(),

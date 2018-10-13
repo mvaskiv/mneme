@@ -178,7 +178,7 @@ class SmartListItem extends React.Component {
       let styles = this.props.dark ? dark : light;
       if (!this.props.text) {
           return (
-            <View style={[ styles.noteItem, {opacity: 0.35} ]} >
+            <View style={[ styles.noteItem, {opacity: this.props.dark ? 0.2 : 0.35} ]} >
                 <Icon.Ionicons
                     style={[ styles.checkmark, { color: this.props.dark ? '#292929' : '#fff' } ]}
                     name="ios-radio-button-off" />
