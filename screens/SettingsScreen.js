@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { LayoutAnimation, AlertIOS } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
-import { SQLite, Icon } from 'expo';
+import { SQLite, Icon, Updates } from 'expo';
 import { Fab } from 'native-base';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome, Foundation } from '@expo/vector-icons';
 import {SettingsDividerShort, SettingsDividerLong, SettingsEditText, SettingsCategoryHeader, SettingsSwitch, SettingsPicker} from 'react-native-settings-components';
 import Swipeable from 'react-native-swipeable';
 import {
@@ -22,6 +22,7 @@ import {
   View,
   Keyboard,
   CheckBox,
+  Easing,
   AsyncStorage,
   Animated,
 } from 'react-native';
@@ -255,6 +256,9 @@ export default class Settings extends React.Component {
       newItem: '',
       dataSource: [],
       refreshing: false,
+      update: false,
+      spin: new Animated.Value(0),
+      loading: false,
     };
     this._bootstrapAsync();
   }
@@ -267,6 +271,31 @@ export default class Settings extends React.Component {
       .then((res) => {
         this.setState({biometry: res === '1' ? true : false});
       })
+  }
+
+  _animationLoop = () => {
+    this.state.spin.setValue(0);
+    Animated.timing(this.state.spin, {
+      toValue: 1,
+      duration: 1500,
+      easing: Easing.linear,
+      useNativeDriver: true
+    }).start(() => {
+      this._animationLoop()
+    });
+  }
+
+  _update = async (a) => {
+    this._animationLoop();
+    this.setState({loading: true});
+    let status = await Expo.Updates.checkForUpdateAsync();
+    if (a === 0) {
+      this.setState({update: status, loading: false});
+    } else if (a === 1) {
+      Expo.Updates.fetchUpdateAsync().then(() => Expo.Updates.reload());
+    } else if (a === -1) {
+      this.setState({update: false, loading: false});
+    }
   }
 
   _biometrySet = async (i) => {
@@ -319,6 +348,10 @@ export default class Settings extends React.Component {
   }
 
   render() {
+    const spin = this.state.spin.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg']
+    });
     return (
       <ScrollView style={{flex: 1, backgroundColor: '#fff'}}>
         <Text style={styles.header}>
@@ -390,6 +423,7 @@ export default class Settings extends React.Component {
                 onSaveValue={(value) => this._biometrySet(value)}
                 value={this.state.biometry}
               />
+
           <SettingsCategoryHeader title={'Development'} />
             <SettingsDividerLong android={false}/>
               <TouchableOpacity
@@ -401,6 +435,40 @@ export default class Settings extends React.Component {
                 <Text style={ styles.settingsText }>Drop all databases</Text>
                 <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
                   name="angle-right" />
+              </TouchableOpacity>
+            <SettingsDividerShort/>
+              <TouchableOpacity
+                style={{
+                  height: 48,
+                  backgroundColor: '#fff',
+                }}
+                onPress={() => this._update(this.state.update ? this.state.update.isAvailable ? 1 : -1 : 0)}>
+                <Text style={ styles.settingsText }>
+                  {!this.state.update ? 
+                    'Check for Updates'
+                    :
+                      this.state.update.isAvailable ? 
+                        'Download Update'
+                        :
+                        'You are up to date'
+                  }
+                </Text>
+                {this.state.loading ?
+                  <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 12, right: 13, height: 22, width: 22}}>
+                    <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
+                  </Animated.View>
+                  :
+                  !this.state.update ?
+                    <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
+                      name="angle-right" />
+                      :
+                      this.state.update.isAvailable ?
+                      <Icon.Foundation style={{ position: 'absolute', right: 13, fontSize: 22, color: '#c41313', top: 12}} name="burst-new" />
+                    :
+                    <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}} 
+                    name="angle-right" />
+
+                }
               </TouchableOpacity>
       </ScrollView>
     );

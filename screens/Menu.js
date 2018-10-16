@@ -888,7 +888,6 @@ export default class Menu extends React.Component {
       synced: true,
       todayUpd: false,
       todayOpactity: new Animated.Value(0),
-      modal: false,
       added: false,
     };
     this._bootstrapAsync();

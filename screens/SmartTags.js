@@ -354,15 +354,14 @@ export default class SmartTags extends React.Component {
                         style={[ styles.listContainer, {display: this.state.list ? 'none' : 'flex'} ]}
                         keyExtractor={item => item.id.toString()}
                         extraData={this._getTasks}
-                        ListFooterComponent={<View style={{height: 90, marginTop: -15, width: screenWidth, overflow: 'visible'}}>
-                            <FlatList
-                                scrollEnabled={false}
-                                data={emptySet}
-                                style={styles.listContainer}
-                                keyExtractor={item => item.id.toString()}
-                                renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} />}
-                            /></View>}
-                        // onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+                        // ListFooterComponent={<View style={{height: 90, marginTop: -15, width: screenWidth, overflow: 'visible'}}>
+                        //     <FlatList
+                        //         scrollEnabled={false}
+                        //         data={emptySet}
+                        //         style={styles.listContainer}
+                        //         keyExtractor={item => item.id.toString()}
+                        //         renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} />}
+                        //     /></View>}
                         renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} update={this._getTasks} done={this._listIDone} tag={this.state.tag} />}
                     />
                     
@@ -469,7 +468,7 @@ const light = StyleSheet.create({
         fontSize: 28,
     },
     headerCnt: {
-        top: 5,
+        paddingTop: 3,
         height: 90,
         marginBottom: 5,
         borderBottomColor: '#ccc',
@@ -492,7 +491,7 @@ const light = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         backgroundColor: '#fff',
-        height: 50,
+        height: 35,
         width: 70,
         zIndex: 9,
     },
@@ -612,8 +611,8 @@ const dark = StyleSheet.create({
         bottom: 0,
         height: 48,
         width: screenWidth,
-        backgroundColor: 'rgba(39,39,39,0.95)',
-        borderTopColor: '#222',
+        backgroundColor: 'rgba(35,35,35,0.95)',
+        borderTopColor: '#191919',
         borderTopWidth: 0.5,
     },
     themeSwitch: {
@@ -631,11 +630,11 @@ const dark = StyleSheet.create({
         color: '#FBB300'
     },
     headerCnt: {
-        top: 5,
+        paddingTop: 3,
         height: 90,
         marginBottom: 5,
-        backgroundColor: '#282828',
-        borderBottomColor: '#222',
+        backgroundColor: 'rgba(35,35,35,0.95)',
+        borderBottomColor: '#111',
         borderBottomWidth: 0.5,
     },
     header: {
@@ -654,8 +653,8 @@ const dark = StyleSheet.create({
         fontWeight: 'normal',
         fontSize: 16,
         textAlign: 'center',
-        backgroundColor: '#292929',
-        height: 50,
+        backgroundColor: 'rgba(35,35,35,0.95)',
+        height: 35,
         width: 70
     },
     saveBtn: {
@@ -677,7 +676,6 @@ const dark = StyleSheet.create({
         flexDirection: 'row',
         borderBottomColor: '#FBB300',
         borderBottomWidth: 0.5,
-        
     },
     text: {
         position: 'absolute',

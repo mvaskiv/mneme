@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { LayoutAnimation } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
-import { Icon, SQLite, Notifications, Permissions, Contacts } from 'expo';
+import { Icon, SQLite, Notifications, Permissions, Contacts, LinearGradient } from 'expo';
 import { Fab } from 'native-base';
 import { MaterialIcons, Ionicons, Foundation, SimpleLineIcons } from '@expo/vector-icons';
 import DateTimePicker from 'react-native-modal-datetime-picker';
@@ -145,8 +145,14 @@ export class Popup extends React.Component {
       tag: [],
       day: '',
       time: '',
+      timepicker: false,
+      chosenDate: new Date()
     }
     this.contacts = [];
+  }
+
+  setDate = (newDate) => {
+    this.setState({chosenDate: newDate})
   }
 
   async componentDidMount() {
@@ -240,9 +246,9 @@ export class Popup extends React.Component {
       this.setState({tag: a});
     } else if (this.state.tag.length < 3 && this.state.text) {
       if (this.state.text.toLowerCase().includes('buy') && (!this.state.tag || !this.state.tag.join(' ').includes('Buy'))) {
-        this.state.tag.push('Buy');
+        this.state.tag.push('buy');
       } else if (this.state.text.toLowerCase().includes('call') && (!this.state.tag || !this.state.tag.join(' ').includes('Call'))) {
-        this.state.tag.push('Call');
+        this.state.tag.push('cbuy all');
       } 
     }
   }
@@ -300,13 +306,21 @@ export class Popup extends React.Component {
         visible={this.props.visible}
         onRequestClose={this.props.close}>
         <TouchableOpacity style={{flex: 1}} onPress={this.props.close} activeOpacity={1} />
+        {/* <View style={{top: 160, backgroundColor: '#fff', height: 150, overflow: 'hidden'}}>
+                <DatePickerIOS
+                style={{backgroundColor: '#aaa', height: 150}}
+                date={this.state.chosenDate}
+                onDateChange={this.setDate}
+              />
+              </View> */}
           <View style={{
             position: 'relative',
             bottom: 0,
             height: screenHeight > 800 ? 365 : 328,
             width: screenWidth,
             borderColor: '#ccc',
-            borderRadius: 11,
+            // borderRadius: 11,
+            // borderTopRightRadius: 0,
             shadowColor: '#999',
             padding: 5,
             // shadowOffset: 2,
@@ -315,7 +329,23 @@ export class Popup extends React.Component {
             borderWidth: 1,
             backgroundColor: '#fff'
           }}>
-            
+          <DateTimePicker
+              isVisible={this.state.timepicker}
+              mode='datetime'
+              onConfirm={(d) => this.setState({picked: d, timepicker: false})}
+              onCancel={() => this.setState({timepicker: false})}
+            />
+             
+            <TouchableOpacity onPress={() => this.setState({timepicker: !this.state.timepicker})} style={{position: 'absolute', right: -25, top: 76, width: 80} }>
+                <Text
+                  style={[styles.tag, {paddingLeft: 8, marginVertical: 3, color: this.state.time ? '#fff' : '#c41313', borderWidth: 1, borderColor: '#c41313', backgroundColor: this.state.time ? '#c41313' : '#fff'}]}
+                  >Time</Text>
+            </TouchableOpacity>
+            {/* <TouchableOpacity style={{position: 'absolute', right: -30, top: 15, width: 80} }>
+                <Text
+                  style={[styles.tag, {paddingLeft: 8, marginVertical: 3, color: '#fff', borderWidth: 1, borderColor: '#c41313', backgroundColor: '#c41313'}]}
+                  >Add</Text>
+            </TouchableOpacity> */}
             <TextInput
               placeholder='Type it in'
               maxLength={60}
@@ -342,13 +372,6 @@ export class Popup extends React.Component {
                     top:5,
                     fontSize: 20,
                   }} />
-                  {/* <Text
-                    style={{
-                      position: 'absolute',
-                      color: '#fff',
-                      top:5,
-                      fontSize: 15,
-                    }}> A </Text> */}
               </RkButton>
               <View
                 style={{display: 'flex', width: screenWidth, flexDirection: 'row'}}>
@@ -374,9 +397,12 @@ export class Popup extends React.Component {
                     }}>{this.state.text.length}/60</Text>
                 </RkButton> */}
               </View>
-              <ScrollView keyboardShouldPersistTaps='always' keyboardDismissMode='none' horizontal={true} style={{position: 'relative', zIndex: 1104, height: 50, top: 0, paddingTop: 5, paddingRight: 20}}>
+              <LinearGradient start={[1,1]} end={[0,1]} locations={[0.4, 1]} style={{position: 'absolute', right: 50, top: 70, width: 25, height: 35, zIndex: 1205}} colors={['#fff', 'rgba(255,255,255,0)']} />
+              <ScrollView contentContainerStyle={{paddingRight: 10}}  keyboardShouldPersistTaps='always' keyboardDismissMode='none' horizontal={true} style={styles.tagRow}>
               { Taglist }
+              
             </ScrollView>
+            
           </View>
       </Modal>
     );
@@ -1337,7 +1363,16 @@ const styles = StyleSheet.create({
     color: '#2e78b7',
   },
 
-
+  tagRow: {
+    position: 'relative', 
+    zIndex: 1104, 
+    height: 25,
+    top: 0,
+    paddingTop: 5,
+    marginRight: 70,
+    width: screenWidth - 65,
+    marginHorizontal: 0,
+  },
   tag: {
     // position: 'absolute',
     overflow: 'hidden',
@@ -1353,6 +1388,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     margin: 0,
     marginHorizontal: 5,
+    
   },
   tagPlace: {
     top: -4,
