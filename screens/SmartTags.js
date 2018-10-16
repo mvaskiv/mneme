@@ -340,6 +340,7 @@ export default class SmartTags extends React.Component {
                         <Text style={styles.header}>{this.state.tag.name}</Text>
                         {this.state.changes && <Text onPress={this._done} style={styles.counter}>DONE</Text>}
                     </View>
+                    {this.state.dataSource[0] ? 
                     <FlatList
                         refreshControl={
                             <RefreshControl
@@ -364,7 +365,8 @@ export default class SmartTags extends React.Component {
                         //     /></View>}
                         renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} update={this._getTasks} done={this._listIDone} tag={this.state.tag} />}
                     />
-                    
+                    : <Text style={ styles.empty }>Nothing here yet</Text>
+                    }
                     <View style={styles.footer}>
                         <Icon.MaterialCommunityIcons
                             onPress={() => {
@@ -469,7 +471,7 @@ const light = StyleSheet.create({
     },
     headerCnt: {
         paddingTop: 3,
-        height: 90,
+        height: 94,
         marginBottom: 5,
         borderBottomColor: '#ccc',
         borderBottomWidth: 0.5,
@@ -598,6 +600,13 @@ const light = StyleSheet.create({
         fontWeight: '700',
         fontSize: 16,
         marginHorizontal: screenWidth/2 - 30,
+    },
+    empty: {
+        top: 30,
+        fontSize: 22,
+        color: '#b1b1b1',
+        fontWeight: '400',
+        textAlign: 'center'
     }
 })
 
@@ -631,7 +640,7 @@ const dark = StyleSheet.create({
     },
     headerCnt: {
         paddingTop: 3,
-        height: 90,
+        height: 94,
         marginBottom: 5,
         backgroundColor: 'rgba(35,35,35,0.95)',
         borderBottomColor: '#111',
@@ -784,6 +793,13 @@ const dark = StyleSheet.create({
         color: '#292929',
         fontWeight: 'bold',
         fontSize: 27,
+    },
+    empty: {
+        top: 30,
+        fontSize: 22,
+        color: '#1b1b1b',
+        fontWeight: '400',
+        textAlign: 'center'
     }
 })
 
