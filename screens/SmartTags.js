@@ -604,7 +604,7 @@ const light = StyleSheet.create({
     empty: {
         top: 30,
         fontSize: 22,
-        color: '#b1b1b1',
+        color: '#a1a1a1',
         fontWeight: '400',
         textAlign: 'center'
     }
@@ -797,7 +797,7 @@ const dark = StyleSheet.create({
     empty: {
         top: 30,
         fontSize: 22,
-        color: '#1b1b1b',
+        color: '#6a6a6a',
         fontWeight: '400',
         textAlign: 'center'
     }

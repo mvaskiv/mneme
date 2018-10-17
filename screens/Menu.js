@@ -605,7 +605,7 @@ class Today extends React.Component {
             </Text> */}
             {this.state.weatherIcon
               ? <Image style={{position: 'absolute', top: 9, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } />
-              : <TouchableOpacity onPress={() => {this._getWeather()}} style={{position: 'absolute', top: 9, right: 0, height: 22, width: 22}}>
+              : <TouchableOpacity onPress={() => this._getWeather()} style={{position: 'absolute', top: 9, right: 0, height: 22, width: 22}}>
                   <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 0, right: 0, height: 22, width: 22}}>
                     <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
                   </Animated.View>
@@ -728,7 +728,7 @@ class MenuItem extends React.Component {
   _getSetDate = () => {
     let today = new Date();
 
-    if (!this.state.lastItem) {return 'New'}
+    if (!this.state.lastItem) {return 'Empty'}
     if (today.getDay() == this.state.lastItem.day && today.getMonth() == this.state.lastItem.month) {
       let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
       let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
@@ -911,7 +911,7 @@ export default class Menu extends React.Component {
     });
   }
 
-  _toogleModal = async => {
+  _toogleModal = () => {
     this.setState({modal: !this.state.modal});
   }
 

@@ -15,6 +15,7 @@ import NewNote from '../screens/NewNote';
 import Settings from '../screens/SettingsScreen';
 import Subfolder from '../screens/SubfolderScreen';
 import SmartTags from '../screens/SmartTags';
+import QRScaner from '../screens/QRScaner'; 
 
 
 // const SubfolderStack = createStackNavigator({
@@ -192,6 +193,13 @@ export default createStackNavigator({
     title: 'Settings',
     navigationOptions: {
       headerBackTitle: null,
+    }
+  },
+  Scanner: {
+    screen: QRScaner,
+    navigationOptions: {
+      title: 'Sync',
+      headerTintColor: '#c43131',
     }
   }
 },

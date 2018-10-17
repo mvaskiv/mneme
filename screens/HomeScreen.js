@@ -35,6 +35,22 @@ const db = SQLite.openDatabase('mneme.db');
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
+
+const TimePickerAnimation = {
+  duration: 350,
+  create: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.easeOut,
+  },
+  update: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.easeOut,
+  },
+  delete: {
+    property: LayoutAnimation.Properties.opacity,
+    type: LayoutAnimation.Types.easeOut,
+  },
+}
 const ListItemAnimation = {
   duration: 175,
   create: {
@@ -51,18 +67,18 @@ const ListItemAnimation = {
   },
 };
 const SwipeItemAnimation = {
-  duration: 235,
+  duration: 330,
   create: {
     property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
+    type: LayoutAnimation.Types.easeOut,
   },
   update: {
     property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
+    type: LayoutAnimation.Types.easeOut,
   },
   delete: {
     property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
+    type: LayoutAnimation.Types.easeOut,
   },
 };
 const SwipeOutItemAnimation = {
@@ -245,10 +261,10 @@ export class Popup extends React.Component {
       a.push(tag);
       this.setState({tag: a});
     } else if (this.state.tag.length < 3 && this.state.text) {
-      if (this.state.text.toLowerCase().includes('buy') && (!this.state.tag || !this.state.tag.join(' ').includes('Buy'))) {
+      if (this.state.text.toLowerCase().includes('buy') && (!this.state.tag || !this.state.tag.join(' ').includes('buy'))) {
         this.state.tag.push('buy');
-      } else if (this.state.text.toLowerCase().includes('call') && (!this.state.tag || !this.state.tag.join(' ').includes('Call'))) {
-        this.state.tag.push('cbuy all');
+      } else if (this.state.text.toLowerCase().includes('call') && (!this.state.tag || !this.state.tag.join(' ').includes('call'))) {
+        this.state.tag.push('call');
       } 
     }
   }
@@ -305,17 +321,20 @@ export class Popup extends React.Component {
         transparent={true}
         visible={this.props.visible}
         onRequestClose={this.props.close}>
-        <TouchableOpacity style={{flex: 1}} onPress={this.props.close} activeOpacity={1} />
-        {/* <View style={{top: 160, backgroundColor: '#fff', height: 150, overflow: 'hidden'}}>
-                <DatePickerIOS
-                style={{backgroundColor: '#aaa', height: 150}}
-                date={this.state.chosenDate}
-                onDateChange={this.setDate}
-              />
-              </View> */}
+        <TouchableOpacity style={{flex: 1}} onPress={() => {this.setState({timepicker: false}); this.props.close()}} activeOpacity={1} />
+        <View style={{position: 'absolute', bottom: this.state.timepicker ? 0 : -100, borderColor: '#ccc', shadowColor: '#999', shadowOpacity: 0.2, shadowRadius: 5,
+          borderWidth: 1, backgroundColor: '#fff', height: 270, width: screenWidth, overflow: 'hidden', zIndex: 2010}}>
+            {this.state.timepicker && <DatePickerIOS
+              style={{backgroundColor: 'transparent', height: 170}}
+              date={this.state.chosenDate}
+              onDateChange={this.setDate}
+            />}
+            <TouchableOpacity onPress={() => {this.taskIn.focus(); LayoutAnimation.configureNext(TimePickerAnimation); this.setState({timepicker: false})}} style={{position: 'absolute', bottom: 25, left: 70}}><Text style={{fontSize: 20, color: '#999'}}>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity style={{position: 'absolute', bottom: 25, right: 70}}><Text style={{fontSize: 20, color: '#c41313'}}>Confirm</Text></TouchableOpacity>
+          </View>
           <View style={{
             position: 'relative',
-            bottom: 0,
+            bottom: this.state.timepicker ? -60 : 0,
             height: screenHeight > 800 ? 365 : 328,
             width: screenWidth,
             borderColor: '#ccc',
@@ -323,20 +342,21 @@ export class Popup extends React.Component {
             // borderTopRightRadius: 0,
             shadowColor: '#999',
             padding: 5,
+            // paddingTop: this.state.timepicker ? 100 : 0,
             // shadowOffset: 2,
             shadowOpacity: 0.2,
             shadowRadius: 5,
             borderWidth: 1,
             backgroundColor: '#fff'
           }}>
-          <DateTimePicker
+          {/* <DateTimePicker
               isVisible={this.state.timepicker}
               mode='datetime'
               onConfirm={(d) => this.setState({picked: d, timepicker: false})}
               onCancel={() => this.setState({timepicker: false})}
-            />
+            /> */}
              
-            <TouchableOpacity onPress={() => this.setState({timepicker: !this.state.timepicker})} style={{position: 'absolute', right: -25, top: 76, width: 80} }>
+            <TouchableOpacity onPress={() => {Keyboard.dismiss(); LayoutAnimation.configureNext(TimePickerAnimation); this.setState({timepicker: !this.state.timepicker})}} style={{position: 'absolute', right: -25, top: 76, width: 80} }>
                 <Text
                   style={[styles.tag, {paddingLeft: 8, marginVertical: 3, color: this.state.time ? '#fff' : '#c41313', borderWidth: 1, borderColor: '#c41313', backgroundColor: this.state.time ? '#c41313' : '#fff'}]}
                   >Time</Text>
@@ -347,6 +367,7 @@ export class Popup extends React.Component {
                   >Add</Text>
             </TouchableOpacity> */}
             <TextInput
+              ref={ref => this.taskIn = ref}
               placeholder='Type it in'
               maxLength={60}
               selectionColor='#c41313'

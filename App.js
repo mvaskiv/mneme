@@ -64,11 +64,6 @@ export default class App extends React.Component {
     }
   }
 
-  // async componentWillMount() {
-  //   console.log(this.state.authorised);
-  //   this.state.lock ?  : null;
-  // }
-
   render() {
     if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen 
       || this.state.lock ? !this.state.authorised : 0) {
