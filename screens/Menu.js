@@ -32,6 +32,25 @@ import {
 import HomeScreen, {Popup} from './HomeScreen';
 import SmartTags from './SmartTags';
 
+import PouchDB from 'pouchdb-react-native'
+PouchDB.plugin(require('pouchdb-find'));
+const dba = new PouchDB('mydb')
+const remoteDB = new PouchDB('http://localhost:5984/db/tasks')
+// use PouchDB
+dba.sync(remoteDB, {
+  live: true,
+  retry: true
+})
+// .on('change', function (change) {
+//   console.log('change')
+// }).on('paused', function (info) {
+//   console.log('pause')
+// }).on('active', function (info) {
+//   console.log('resume')
+// }).on('error', function (err) {
+//   console.log('fucked')
+// });
+
 const db = SQLite.openDatabase('mneme.db');
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
@@ -536,16 +555,30 @@ class Today extends React.Component {
     return(arr);
   }
 
-  _getTasks = () => {
-    let today = new Date().getDate();
-    db.transaction(tx => {
-        tx.executeSql(`select * from tasks where completed = 0 and due between ? and ? order by id desc;`, [today, today + 1],
-        (_, { rows: { _array } }) => {
-          // Expo.Notifications.setBadgeNumberAsync(_array.length);
-          this.setState({ dataSource: this._sortTasks(_array, today) });
-        }
-      );
-    });
+  _getTasks = async () => {
+    let today = await new Date().getDate();
+    dba.createIndex({
+      index: {fields: ['completed']}
+    })
+    dba.find({
+      selector: {completed: 0},
+      fields: ['_id', 'text'],
+      sort: ['_id']
+    }).then((res) => this.setState({ dataSource: res.docs.reverse() }));
+
+    // await dba.allDocs({include_docs: true, descending: true}).then(({ rows }) => {
+    //   this.setState({ dataSource: rows });
+    // })
+    
+    // db.transaction(tx => {
+    //     tx.executeSql(`select * from tasks`, [today, today + 1],
+    //     (_, { rows: { _array } }) => {
+    //       // Expo.Notifications.setBadgeNumberAsync(_array.length);
+    //       console.log(_array)
+    //       this.setState({ dataSource: this._sortTasks(_array, today) });
+    //     }
+    //   );
+    // });
   }
 
   _expand = () => {
@@ -618,9 +651,10 @@ class Today extends React.Component {
         scrollEnabled={!this.state.isSwiping}
         // onRefresh={() => null}
         // refreshing={false}
+        
         data={this.state.dataSource}
         style={[ styles.listContainer, { height: screenHeight - 263, overflow: 'hidden', backgroundColor:'#fff'} ]}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={item => item._id.toString()}
         extraData={this._getUpdate}
         onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
         renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._todayIDone} swiping={this._swipeHandler} />}
@@ -943,35 +977,44 @@ export default class Menu extends React.Component {
   }
 
   _addItem = async (text, due, tags, time) => {
-    console.log(due);
     await this._toogleModal();
     let date = await new Date();
     let dueDate = due === '' ? null :
-    due === 'Tomorrow' ? date.getDate() + 1 :
-      due === 'Today' ? date.getDate() : null;
-    let thisID = 0;
-    console.log(dueDate);
-    await db.transaction(async tx => {
-        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
-          (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
-            text,
-            time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1,
-            time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1,
-            dueDate ? dueDate : null,
-            date.getDate(),
-            date.getMonth(),
-            dueDate,
-            tags,
-          ], async (_, res) => {
-            thisID = await res['insertId'];
-            // console.log(date.getHours(), time.getHours(), date.getMinutes(), time.getMinutes())
-            if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
-              this._scheduleNotification(dueDate, time, text);
-            }
-          }
-        );
-      }
-    );
+      due === 'Tomorrow' ? date.getDate() + 1 :
+        due === 'Today' ? date.getDate() : null;
+    let hr = time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1;
+    let min = time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1;
+    dba.put({
+      '_id': date.getTime().toString(),
+      'text': text,
+      'hours': hr, 'minutes': min,
+      'day': dueDate ? dueDate : null, 'date': date.getDate(), 'month': date.getMonth(),
+      'due': dueDate, 'tag': tags,
+      'completed': 0, 'reminder': null })
+    if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
+      this._scheduleNotification(dueDate, time, text);
+    }
+    // await db.transaction(async tx => {
+    //     await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
+    //       (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
+    //         text,
+    //         time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1,
+    //         time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1,
+    //         dueDate ? dueDate : null,
+    //         date.getDate(),
+    //         date.getMonth(),
+    //         dueDate,
+    //         tags,
+    //       ], async (_, res) => {
+    //         thisID = await res['insertId'];
+    //         // console.log(date.getHours(), time.getHours(), date.getMinutes(), time.getMinutes())
+    //         if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
+    //           this._scheduleNotification(dueDate, time, text);
+    //         }
+    //       }
+    //     );
+    //   }
+    // );
     this._updateToday();
     this.todosBtn._getCount();
     LayoutAnimation.configureNext( ExpandAnimation );
