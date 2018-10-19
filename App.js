@@ -2,8 +2,20 @@ import React from 'react';
 import { Platform, StatusBar, StyleSheet, View, AsyncStorage } from 'react-native';
 import Expo, { AppLoading, Asset, Font, Icon, Permissions, SQLite } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
+import PouchDB from 'pouchdb-react-native'
+PouchDB.plugin(require('pouchdb-find'));
+const db = new PouchDB('mydb')
+// .on('change', function (change) {
+//   console.log('change')
+// }).on('paused', function (info) {
+//   console.log('pause')
+// }).on('active', function (info) {
+//   console.log('resume')
+// }).on('error', function (err) {
+//   console.log('fucked')
+// });
 
-const db = SQLite.openDatabase('mneme.db');
+// const db = SQLite.openDatabase('mneme.db');
 
 export default class App extends React.Component {
   constructor() {
@@ -20,27 +32,41 @@ export default class App extends React.Component {
   
   // }
 
-  _bootstrapAsync = () => {
-    setTimeout(() => db.transaction(tx => {
-      tx.executeSql(
-        `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, reminder text, tag text);`
-      );
-    }), 0);
-    setTimeout(() => db.transaction(tx => {
-      tx.executeSql(
-        `create table if not exists notes (id integer primary key not null, header text, text text, hours int, minutes int, day int, date int, month int, due int, folder int, deleted int default 0, archive int default 0);`
-      );
-    }), 200);
-    setTimeout(() => db.transaction(tx => {
-      tx.executeSql(
-        // `create table if not exists folders (id integer primary key not null, name text, type int, route text, size int);`
-        `create table if not exists img (id integer primary key not null, src text, note int);`
-      );
-    }), 400);
+  _dbSync = (uuid) => {
+    const remoteDB = new PouchDB('https://mneme-app.herokuapp.com/db/' + uuid)
+    db.sync(remoteDB, {
+      live: true,
+      retry: true
+    })
+  }
+
+  _bootstrapAsync = async () => {
+    await AsyncStorage.getItem('uuid').then((uuid) => {
+      if (!uuid) {
+        fetch('https://mneme-app.herokuapp.com/init', {method: 'GET'})
+        .then((response) => response.json())
+        .then((res) => {
+          if (res.uuid) {
+            AsyncStorage.setItem('uuid', res.uuid)
+            this._dbSync(res.uuid)
+          }
+        })
+      } else {
+        console.log(uuid)
+        this._dbSync(uuid.toString())
+      }
+    })
+    
+    
+    // setTimeout(() => db.transaction(tx => {
+    //   tx.executeSql(
+    //     `create table if not exists tasks (id integer primary key not null, text text, hours int, minutes int, day int, date int, month int, due int, completed int default 0, reminder text, tag text);`
+    //   );
+    // }), 0);
+    
     AsyncStorage.getItem('biometry')
       .then((res) => {
         if (res && res === '1') {
-          console.log('biometry: ' + res);
           this._biometrics();
           this.setState({lock: true});
         }
@@ -77,8 +103,8 @@ export default class App extends React.Component {
     } else {
       return (
         <View style={styles.container}>
-          {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-          <AppNavigator auth={this.state.authorised} />
+          {Platform.OS === 'ios' && <StatusBar barStyle="dark-content" />}
+          <AppNavigator auth={this.state.authorised} zaza={'zaza'} />
         </View>
       );
     }

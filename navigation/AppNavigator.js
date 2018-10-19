@@ -112,6 +112,11 @@ const MenuN = createMaterialTopTabNavigator({
     },
     MenuS: {
       screen: Menu,
+      state: {
+        params: {
+          zaza: 'zaza'
+        }
+      },
       navigationOptions: {
       // headerLeft: <Text style={{ color: '#c43131', fontWeight: 'bold', fontSize: 28, paddingHorizontal: 12, paddingTop: 12 }}>Folders</Text>,
       // headerRight: <SettingsBtn />,

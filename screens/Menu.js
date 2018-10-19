@@ -26,30 +26,16 @@ import {
   LayoutAnimation,
   Animated,
   Easing,
+  StatusBar,
   AlertIOS,
   RefreshControl
 } from 'react-native';
 import HomeScreen, {Popup} from './HomeScreen';
 import SmartTags from './SmartTags';
-
 import PouchDB from 'pouchdb-react-native'
-PouchDB.plugin(require('pouchdb-find'));
+// PouchDB.plugin(require('pouchdb-find'));
+
 const dba = new PouchDB('mydb')
-const remoteDB = new PouchDB('http://localhost:5984/db/tasks')
-// use PouchDB
-dba.sync(remoteDB, {
-  live: true,
-  retry: true
-})
-// .on('change', function (change) {
-//   console.log('change')
-// }).on('paused', function (info) {
-//   console.log('pause')
-// }).on('active', function (info) {
-//   console.log('resume')
-// }).on('error', function (err) {
-//   console.log('fucked')
-// });
 
 const db = SQLite.openDatabase('mneme.db');
 const Dimensions = require('Dimensions');
@@ -528,7 +514,6 @@ class Today extends React.Component {
     .then((res) =>
     {
       if (res) {
-        // console.log(new Date(res.daily.data[0].sunsetTime).getUTCHours());
         this.setState({weather: res});
         this._animationLoop();
         setTimeout(() => {LayoutAnimation.configureNext(WeatherAnimation); this.setState({weatherIcon: weatherIcons[res.currently.icon]})}, 500);
@@ -540,19 +525,19 @@ class Today extends React.Component {
   }
 
   _sortTasks(stash, today) {
-    let arr = [];
-
+    let today_t = [];
+    let tomor = [];
+    let rest = [];
     stash.map(e => {
       if (e.due === today) {
-        arr.push(e);
+        today_t.push(e);
+      } else if (e.due === today + 1) {
+        tomor.push(e);
+      } else {
+        rest.push(e);
       }
     })
-    stash.map(e => {
-      if (e.due === today + 1) {
-        arr.push(e);
-      }
-    })
-    return(arr);
+    return(today_t.concat(tomor.concat(rest)));
   }
 
   _getTasks = async () => {
@@ -561,32 +546,20 @@ class Today extends React.Component {
       index: {fields: ['completed']}
     })
     dba.find({
-      selector: {completed: 0},
-      fields: ['_id', 'text'],
-      sort: ['_id']
-    }).then((res) => this.setState({ dataSource: res.docs.reverse() }));
-
-    // await dba.allDocs({include_docs: true, descending: true}).then(({ rows }) => {
-    //   this.setState({ dataSource: rows });
-    // })
-    
-    // db.transaction(tx => {
-    //     tx.executeSql(`select * from tasks`, [today, today + 1],
-    //     (_, { rows: { _array } }) => {
-    //       // Expo.Notifications.setBadgeNumberAsync(_array.length);
-    //       console.log(_array)
-    //       this.setState({ dataSource: this._sortTasks(_array, today) });
-    //     }
-    //   );
-    // });
+      selector: {
+        completed: 0,
+        // due: today
+      },
+      // fields: ['_id', 'text', 'due'],
+      sort: ['_id'],
+      // limit: 20
+    }).then((res) => this.setState({ dataSource: this._sortTasks(res.docs.reverse(), today) }));
   }
 
   _expand = () => {
     this._getTasks();
-    // this.props.updateCounter._getCount();
     LayoutAnimation.configureNext( ExpandAnimation );
     this.setState({expanded: !this.state.expanded});
-    // this._expandAnimation(1);
   }
 
   render() {
@@ -595,13 +568,6 @@ class Today extends React.Component {
       inputRange: [0, 1],
       outputRange: ['0deg', '360deg']
     });
-
-    // const open = this.state.open.interpolate({
-    //   inputRange: [1, 1.1, 1],
-    //   outputRange: [1, 1.1, 1],
-    //   extrapolate: 'clamp',
-    //   useNativeDriver: true,
-    // })
 
     return (
       <View style={{top: 5, height: this.state.expanded ? 'auto' : 94, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
@@ -653,7 +619,7 @@ class Today extends React.Component {
         // refreshing={false}
         
         data={this.state.dataSource}
-        style={[ styles.listContainer, { height: screenHeight - 263, overflow: 'hidden', backgroundColor:'#fff'} ]}
+        style={[ styles.listContainer, { height: screenHeight - 223, overflow: 'hidden', backgroundColor:'#fff'} ]}
         keyExtractor={item => item._id.toString()}
         extraData={this._getUpdate}
         onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
@@ -986,7 +952,7 @@ export default class Menu extends React.Component {
     let min = time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1;
     dba.put({
       '_id': date.getTime().toString(),
-      'text': text,
+      'type': 'task', 'text': text,
       'hours': hr, 'minutes': min,
       'day': dueDate ? dueDate : null, 'date': date.getDate(), 'month': date.getMonth(),
       'due': dueDate, 'tag': tags,
@@ -1067,7 +1033,6 @@ export default class Menu extends React.Component {
       // useNativeDriver: true,
     });
 
-
     return (
       <View style={{flex:1, backgroundColor:'#fff'}}>
         <Popup visible={true} visible={this.state.modal}
@@ -1088,6 +1053,7 @@ export default class Menu extends React.Component {
           showsVerticalScrollIndicator={false}
           snapToInterval={300}
           snapToAlignment='start'
+          stickyHeaderIndices={[0]}
           decelerationRate='fast'
           style={{position: 'absolute', top: 0, width: screenWidth, height: screenHeight + 322, zIndex: 99, overflow: 'visible'}}
           onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])}
@@ -1096,7 +1062,7 @@ export default class Menu extends React.Component {
           <Animated.View style={{
             transform: [{scale: todayScale}],
             opacity: todayOpactity,
-            top: todayShift,
+            // top: todayShift,
             zIndex: 1,
             backgroundColor: '#fff',
             }}>
@@ -1108,7 +1074,7 @@ export default class Menu extends React.Component {
             updateCounter={this.todosBtn}
             />
           </Animated.View>
-          <View style={{width: screenWidth, height: screenHeight, paddingTop: 30, zIndex:99, overflow: 'visible'}}>
+          <View style={{width: screenWidth, height: screenHeight - 40, paddingTop: 0, top: -10, zIndex:99, overflow: 'visible'}}>
             <MenuItem
               navigation={this.props.navigation}
               caption={"Add"}

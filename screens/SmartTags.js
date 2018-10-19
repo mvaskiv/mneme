@@ -28,6 +28,7 @@ import {
   Easing,
   AlertIOS,
   RefreshControl,
+  StatusBar,
   Linking
 } from 'react-native';
 const Dimensions = require('Dimensions');
@@ -335,6 +336,7 @@ export default class SmartTags extends React.Component {
         let today = new Date();
         return (
             <View style={styles.container}>
+                {/* {Platform.OS === 'ios' && <StatusBar barStyle="light-content" />} */}
                 <View style={[styles.container, {opacity: this.state.modal ? 0.05 : 1} ]}>
                     <View style={ styles.headerCnt }>
                         <Text style={styles.header}>{this.state.tag.name}</Text>

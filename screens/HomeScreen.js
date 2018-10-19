@@ -1,36 +1,29 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { LayoutAnimation } from 'react-native';
 import { RkButton } from 'react-native-ui-kitten';
 import { Icon, SQLite, Notifications, Permissions, Contacts, LinearGradient } from 'expo';
-import { Fab } from 'native-base';
 import { MaterialIcons, Ionicons, Foundation, SimpleLineIcons } from '@expo/vector-icons';
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import { Calendar, CalendarList, Agenda } from 'react-native-calendars';
-// import Swipeout from 'react-native-swipeout';
-import CountdownCircle from 'react-native-countdown-circle'
 import Swipeable from 'react-native-swipeable';
 import {
-  Image,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   FlatList,
   TextInput,
-  KeyboardAvoidingView,
   TouchableOpacity,
   TouchableHighlight,
   Modal,
   TouchableWithoutFeedback,
   View,
   Keyboard,
-  CheckBox,
-  AsyncStorage,
-  Animated,
   AlertIOS,
   DatePickerIOS,
 } from 'react-native';
-const db = SQLite.openDatabase('mneme.db');
+import PouchDB from 'pouchdb-react-native'
+const dba = new PouchDB('mydb')
 
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
@@ -459,7 +452,7 @@ class ListItem extends React.Component {
   }
 
   componentWillReceiveProps() {
-    if (this.props.expanded && this.props.id === this.props.expanded) {
+    if (this.props.expanded && this.props._id === this.props.expanded) {
       this.setState({edit: false});
     }
   }
@@ -527,7 +520,7 @@ class ListItem extends React.Component {
   // }
 
   _expand = () => {
-    this.props.expand(this.state.edit ? null : this.props.id);
+    this.props.expand(this.state.edit ? null : this.props._id);
     LayoutAnimation.configureNext( ListItemAnimation );
     this.setState({edit: !this.state.edit});
   }
@@ -536,13 +529,13 @@ class ListItem extends React.Component {
     const leftContent = [
       <TouchableHighlight
         style={{
-        flex: 1,
-        right: this.state.swipeOpen ? 0 : 110,
-        padding: 15,
-        backgroundColor: '#fff',
+          flex: 1,
+          right: this.state.swipeOpen ? 0 : 110,
+          padding: 15,
+          backgroundColor: '#fff',
         }}
         underlayColor={ '#fff'}
-        onPress={() => {this.swipeable.recenter(); this.props.done(this.props.id)}}
+        onPress={() => {this.swipeable.recenter(); this.props.done(this.props._id)}}
         >
        <Icon.MaterialIcons
           style={{
@@ -560,7 +553,7 @@ class ListItem extends React.Component {
       //   backgroundColor: this.state.swipeOpen ? '#31a2ac' : '#890202',
       //   }}
       //   underlayColor={this.state.swipeOpen ? '#31a2ac' : '#890202'}
-      //   onPress={() => this.props.hide(this.props.id)}
+      //   onPress={() => this.props.hide(this.props._id)}
       //   >
       //   {!this.state.swipeOpen ? 
       //   <Icon.MaterialIcons
@@ -603,7 +596,7 @@ class ListItem extends React.Component {
             await LayoutAnimation.configureNext(SwipeItemAnimation);
             await setTimeout(() => this.setState({removed: true}), 0);
             // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
-            await setTimeout(() => this.props.done(this.props.id), 300);
+            await setTimeout(() => this.props.done(this.props._id), 300);
             // await setTimeout(() => this.setState({removed: false}), 150);
           }}
           >
@@ -620,11 +613,11 @@ class ListItem extends React.Component {
                       autoCorrect={false}
                       returnKeyType='done'
                       name="newText"
-                      onSubmitEditing={() => {if (this.state.newText) {this.props.editItem(this.props.id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
+                      onSubmitEditing={() => {if (this.state.newText) {this.props.editItem(this.props._id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
                       underlineColorAndroid="#fff"
                       onChangeText={(newText) => this.setState({newText})}
                       blurOnSubmit={true}
-                      onBlur={() => {if (this.state.newText) {this.props.editItem(this.props.id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
+                      onBlur={() => {if (this.state.newText) {this.props.editItem(this.props._id, this.state.newText)} this.setState({editText: false}); this.props.expand(false)} }
                       style={{
                         top: 2,
                         marginLeft: 1,
@@ -670,7 +663,7 @@ class ListItem extends React.Component {
                   {/* { this.state.editText ?
                     <View style={{flex: 1, flexDirection: 'row', left: -80}}>
                       <RkButton style={{width: 50, backgroundColor: 'transparent'}}
-                        onPress={ async () => {await this.props.editItem(this.props.id, this.state.newText); this.setState({editText: false})} }>
+                        onPress={ async () => {await this.props.editItem(this.props._id, this.state.newText); this.setState({editText: false})} }>
                       <Icon.Ionicons
                         style={[ styles.editTextBtn, {color: '#2869d3'} ]}
                         name="ios-checkmark-circle-outline" />
@@ -691,7 +684,7 @@ class ListItem extends React.Component {
                 {this.state.edit &&
                 <View style={ styles.itemOpt }>
                    <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.done(this.props.id); this.props.expand(false)}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.done(this.props._id); this.props.expand(false)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn ]}
                       name="md-checkmark" />
@@ -710,14 +703,14 @@ class ListItem extends React.Component {
                   </RkButton>
                   
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.schedule(this.props.text, this.props.id); this.props.expand(false)}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.schedule(this.props.text, this.props._id); this.props.expand(false)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn]}
                       name="ios-alarm-outline" />
                   </RkButton>
                   
                   <RkButton style={ styles.edit }
-                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.delete(this.props.id)}}>
+                    onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.props.delete(this.props._id)}}>
                     <Icon.Ionicons
                       style={[ styles.editBtn ]}
                       name="ios-trash-outline" />
@@ -828,37 +821,35 @@ export default class HomeScreen extends React.Component {
     await this._toogleModal();
     let date = await new Date();
     let dueDate = due === '' ? null :
-    due === 'Tomorrow' ? date.getDay() + 1 :
-      due === 'Today' ? date.getDay() : 7;
-    let thisID = 0;
-    await db.transaction(async tx => {
-        await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
-          (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
-            text,
-            time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1,
-            time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1,
-            dueDate ? dueDate : null,
-            date.getDate(),
-            date.getMonth(),
-            dueDate,
-            tags,
-          ], async (_, res) => {
-            thisID = await res['insertId'];
-          }
-        );
-      }
-    );
+      due === 'Tomorrow' ? date.getDate() + 1 :
+        due === 'Today' ? date.getDate() : null;
+    let hr = time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1;
+    let min = time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1;
+    dba.put({
+      '_id': date.getTime().toString(),
+      'type': 'task', 'text': text,
+      'hours': hr, 'minutes': min,
+      'day': dueDate ? dueDate : null, 'date': date.getDate(), 'month': date.getMonth(),
+      'due': dueDate, 'tag': tags,
+      'completed': 0, 'reminder': null })
+    if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
+      this._scheduleNotification(dueDate, time, text);
+    }
     await this._getUpdate();
     LayoutAnimation.configureNext( ListItemAnimation );
-    await this.setState({deleted: false});    
-    await this.setState({updated: true});
+    await this.setState({deleted: false, updated: true});
   }
 
   _getUpdate = () => {
-    db.transaction(tx => {
-        tx.executeSql(`select * from tasks where completed = 0 order by id desc;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
-      );
-    });
+    dba.createIndex({
+      index: {fields: ['completed']}
+    })
+    dba.find({
+      selector: {
+        completed: 0,
+      },
+      sort: ['_id'],
+    }).then((res) => this.setState({ dataSource: res.docs.reverse() }));
   }
 
   _delete = async (id) => {
@@ -1001,7 +992,7 @@ export default class HomeScreen extends React.Component {
           onRefresh={this._update}
           data={this.state.dataSource}
           style={ styles.container }
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={item => item._id.toString()}
           // extraData={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           renderItem={({ item }) => <ListItem {...item} delete={this._delete} editItem={this._edit} today={today} done={this._done} hide={this._archive} swiping={this._swipeHandler} schedule={this._toogleTimePicker} expand={(i) => this.setState({expanded: i})} expanded={this.state.expanded} showCal={() => this.setState({showCal: !this.state.showCal})} />}
