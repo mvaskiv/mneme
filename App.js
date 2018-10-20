@@ -32,12 +32,26 @@ export default class App extends React.Component {
   
   // }
 
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.navigation.state.params.refresh) {
+      this._bootstrapAsync();
+    }
+  }
+
   _dbSync = (uuid) => {
     const remoteDB = new PouchDB('https://mneme-app.herokuapp.com/db/' + uuid)
     db.sync(remoteDB, {
       live: true,
       retry: true
     })
+    db.changes({
+      since: 'now',
+      live: true,
+      include_docs: true
+    }).on('change', () => this.forceUpdate())
+    .on('error', function (err) {
+      console.error(err);
+    });
   }
 
   _bootstrapAsync = async () => {

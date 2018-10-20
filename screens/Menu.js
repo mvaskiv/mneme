@@ -33,6 +33,12 @@ import {
 import HomeScreen, {Popup} from './HomeScreen';
 import SmartTags from './SmartTags';
 import PouchDB from 'pouchdb-react-native'
+
+
+
+
+
+
 // PouchDB.plugin(require('pouchdb-find'));
 
 const dba = new PouchDB('mydb')

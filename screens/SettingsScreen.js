@@ -28,6 +28,7 @@ import {
   Vibration,
 } from 'react-native';
 import HomeScreen from './HomeScreen';
+import PouchDB from 'pouchdb-react-native';
 
 const db = SQLite.openDatabase('mneme.db');
 
@@ -544,8 +545,21 @@ export default class Settings extends React.Component {
                     height: 48,
                     backgroundColor: '#fff',
                   }}
-                  onPress={this._dropDB}>
+                  onPress={() => {
+                    new PouchDB('mydb').destroy()
+                  }}>
                   <Text style={ styles.settingsText }>Drop all databases</Text>
+                  <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
+                    name="angle-right" />
+                </TouchableOpacity>
+              <SettingsDividerShort/>
+                <TouchableOpacity
+                  style={{
+                    height: 48,
+                    backgroundColor: '#fff',
+                  }}
+                  onPress={() => AsyncStorage.clear()}>
+                  <Text style={ styles.settingsText }>Clear Storage</Text>
                   <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
                     name="angle-right" />
                 </TouchableOpacity>
