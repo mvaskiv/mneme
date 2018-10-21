@@ -367,65 +367,70 @@ export default class Settings extends React.Component {
     ]);
   }
 
-  _registerAnon = () => {
-    fetch('http://localhost:8001/init', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded' 
-      },
-    })
-    .then((response) => response.json())
-    .then((res) => {
-      if (res.uuid) {
-        AsyncStorage.setItem('uuid', res.uuid).then(() => this._sync(res.uuid))
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-    })
+
+  _sync = () => {
+    this.props.navigation.navigate('MenuS', { smth: 'zaza' });
   }
 
-  _sync = (uuid) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        `select * from notes;`, [], async (_, { rows: { _array } }) => {
-          let formBody = [];
-          for (let key in _array) {
-              let encodedKey = encodeURIComponent(key);
-              let encodedValue = JSON.stringify(_array[key]);
-              formBody.push(encodedKey + "=" + encodedValue);
-          }
-          formBody.push(encodeURIComponent('uuid') + "=" + uuid);
-          formBody = formBody.join("&");
-          await fetch('http://localhost:8001/sync', {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/x-www-form-urlencoded' 
-            },
-            body: formBody
-          })
-          .then((response) => response.json())
-          .then((res) => {
-            if (res.error === 'uuid') {
-              this._registerAnon();
-            } else {
-              fetch('http://localhost:8001/notes_update/' + uuid + '/' + new Date().getTime(), {
-                method: 'GET',
+  // _registerAnon = () => {
+  //   fetch('http://localhost:8001/init', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Accept': 'application/json',
+  //       'Content-Type': 'application/x-www-form-urlencoded' 
+  //     },
+  //   })
+  //   .then((response) => response.json())
+  //   .then((res) => {
+  //     if (res.uuid) {
+  //       AsyncStorage.setItem('uuid', res.uuid).then(() => this._sync(res.uuid))
+  //     }
+  //   })
+  //   .catch((error) => {
+  //     console.error(error);
+  //   })
+  // }
+
+  // _sync = (uuid) => {
+  //   db.transaction(tx => {
+  //     tx.executeSql(
+  //       `select * from notes;`, [], async (_, { rows: { _array } }) => {
+  //         let formBody = [];
+  //         for (let key in _array) {
+  //             let encodedKey = encodeURIComponent(key);
+  //             let encodedValue = JSON.stringify(_array[key]);
+  //             formBody.push(encodedKey + "=" + encodedValue);
+  //         }
+  //         formBody.push(encodeURIComponent('uuid') + "=" + uuid);
+  //         formBody = formBody.join("&");
+  //         await fetch('http://localhost:8001/sync', {
+  //           method: 'POST',
+  //           headers: {
+  //             'Accept': 'application/json',
+  //             'Content-Type': 'application/x-www-form-urlencoded' 
+  //           },
+  //           body: formBody
+  //         })
+  //         .then((response) => response.json())
+  //         .then((res) => {
+  //           if (res.error === 'uuid') {
+  //             this._registerAnon();
+  //           } else {
+  //             fetch('http://localhost:8001/notes_update/' + uuid + '/' + new Date().getTime(), {
+  //               method: 'GET',
               
-              }).then((response) => response.json())
-              .then((res) => {
-                console.log(res);
-              })
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-          })
-        });
-    });
-  }
+  //             }).then((response) => response.json())
+  //             .then((res) => {
+  //               console.log(res);
+  //             })
+  //           }
+  //         })
+  //         .catch((error) => {
+  //           console.error(error);
+  //         })
+  //       });
+  //   });
+  // }
 
   _test = async () => {
     let uuid = await AsyncStorage.getItem('uuid');
@@ -521,23 +526,12 @@ export default class Settings extends React.Component {
                     height: 48,
                     backgroundColor: '#fff',
                   }}
-                  onPress={() => this.props.navigation.navigate('Scanner')}>
+                  onPress={() => this.props.navigation.navigate('Scanner', { refresh: this._sync })}>
                   <Text style={ styles.settingsText }>{this.state.bardata ? this.state.bardata : 'Sync with desktop'}</Text>
                   <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
                     name="angle-right" />
                 </TouchableOpacity>
-              <SettingsDividerShort/>
-                <TouchableOpacity
-                  style={{
-                    height: 48,
-                    backgroundColor: '#fff',
-                  }}
-                  onPress={this._test}>
-                  <Text style={ styles.settingsText }>test</Text>
-                  <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
-                    name="angle-right" />
-                </TouchableOpacity>
-
+              
             <SettingsCategoryHeader title={'Development'} />
               <SettingsDividerLong android={false}/>
                 <TouchableOpacity

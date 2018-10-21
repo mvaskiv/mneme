@@ -1,6 +1,7 @@
 import React from 'react';
-import { Platform, StatusBar, StyleSheet, View, AsyncStorage } from 'react-native';
-import Expo, { AppLoading, Asset, Font, Icon, Permissions, SQLite } from 'expo';
+import { Platform, Animated,
+  Easing, Text, StatusBar, StyleSheet, View, AsyncStorage } from 'react-native';
+import Expo, { AppLoading, Asset, Font, Icon, Permissions, SQLite, Ionicons } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
 import PouchDB from 'pouchdb-react-native'
 PouchDB.plugin(require('pouchdb-find'));
@@ -24,18 +25,45 @@ export default class App extends React.Component {
       isLoadingComplete: false,
       lock: false,
       authorised: false,
+      spin: new Animated.Value(0),
+      syncing: false,
     }
     this._bootstrapAsync();
+  }
+
+  _animationLoop = () => {
+    this.state.spin.setValue(0);
+    Animated.timing(this.state.spin, {
+      toValue: 1,
+      duration: 1500,
+      easing: Easing.linear,
+      useNativeDriver: true
+    }).start(() => {
+      this.setState({weatherLoad: this.state.weatherLoad + 1});
+      if (this.state.weatherLoad < 5) {
+        this._animationLoop()
+      }
+    });
   }
 
   // componentDidMount() {
   
   // }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.navigation.state.params.refresh) {
-      this._bootstrapAsync();
-    }
+  // _newUuid = async () => {
+  //   this._bootstrapAsync().then(() => {
+  //     this._fullSync()
+  //   })
+  // }
+
+  _fullSync = () => {
+    db.changes({
+      since: 0,
+      include_docs: true
+    }).on('change', () => this.setState({syncing: false}))
+    .on('error', function (err) {
+      console.error(err);
+    });
   }
 
   _dbSync = (uuid) => {
@@ -55,6 +83,7 @@ export default class App extends React.Component {
   }
 
   _bootstrapAsync = async () => {
+    // await AsyncStorage.setItem('uuid', '2ce029af-4452-493e-9f06-98d2a4e46675');
     await AsyncStorage.getItem('uuid').then((uuid) => {
       if (!uuid) {
         fetch('https://mneme-app.herokuapp.com/init', {method: 'GET'})

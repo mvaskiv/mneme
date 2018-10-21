@@ -34,11 +34,6 @@ import HomeScreen, {Popup} from './HomeScreen';
 import SmartTags from './SmartTags';
 import PouchDB from 'pouchdb-react-native'
 
-
-
-
-
-
 // PouchDB.plugin(require('pouchdb-find'));
 
 const dba = new PouchDB('mydb')
@@ -906,6 +901,12 @@ export default class Menu extends React.Component {
     }
   };
 
+  async componentWillReceiveProps() {
+    let a = await this.props.navigation.state;
+    console.log(a)
+    // if (this.navigation.state)
+  }
+
   _bootstrapAsync = async () => {
     return new Promise(
       resolve => {
@@ -962,7 +963,8 @@ export default class Menu extends React.Component {
       'hours': hr, 'minutes': min,
       'day': dueDate ? dueDate : null, 'date': date.getDate(), 'month': date.getMonth(),
       'due': dueDate, 'tag': tags,
-      'completed': 0, 'reminder': null })
+      'completed': 0, 'reminder': null,
+      'origin': 'Mobile' })
     if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
       this._scheduleNotification(dueDate, time, text);
     }
