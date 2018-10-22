@@ -368,13 +368,13 @@ class NoteItem extends React.Component {
         // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
         >
           <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
-            <Icon.Ionicons
+            <Icon.MaterialIcons
               onPress={() => {
                 this.props.done(this.state.done ? 0 : 1, this.props.id)
                   .then(this.setState({done: !this.state.done}));
               }}
-              style={styles.checkmark}
-              name={this.state.done ? "ios-checkmark-circle-outline" : "ios-radio-button-off"} />
+              style={[styles.checkmark, {color: !this.state.done ? '#c41313' : '#bbb'}]}
+              name="done" />
             <Text
               numberOfLines={1}
               style={ this.state.done ? styles.headerDone : styles.header }>
@@ -420,6 +420,7 @@ class Today extends React.Component {
       open: new Animated.Value(1),
     };
     this._getTasks();
+    
   }
 
   componentWillMount() {
@@ -430,6 +431,14 @@ class Today extends React.Component {
 
   componentDidMount() {
     // this._animationLoop();
+    dba.changes({
+      since: 'now',
+      live: true,
+      include_docs: true
+    }).on('change', () => {
+      console.log('change')
+      this._getTasks()
+    })
   }
 
   componentWillReceiveProps() {
@@ -618,7 +627,8 @@ class Today extends React.Component {
         scrollEnabled={!this.state.isSwiping}
         // onRefresh={() => null}
         // refreshing={false}
-        
+        // ListEmptyComponent={}
+        extraData={this.state}
         data={this.state.dataSource}
         style={[ styles.listContainer, { height: screenHeight - 223, overflow: 'hidden', backgroundColor:'#fff'} ]}
         keyExtractor={item => item._id.toString()}
@@ -1243,24 +1253,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
   },
+
   header: {
     position: 'absolute',
-    maxWidth: screenWidth - 170,
+    width: screenWidth - 70,
     top: 0,
-    left: 24,
-    fontWeight: "400",
-    fontSize: 16,
+    left: 25,
+    fontWeight: "200",
+    fontSize: 18,
     color: '#444',
   },
   headerDone: {
     position: 'absolute',
-    maxWidth: screenWidth - 170,
+    width: screenWidth - 70,
     top: 0,
-    left: 24,
-    fontWeight: "400",
-    fontSize: 16,
+    left: 25,
+    fontWeight: "200",
+    fontSize: 18,
     // color: '#444',
     color: '#bbb',
     textDecorationLine: 'line-through',
@@ -1268,9 +1279,9 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     position: 'absolute',
-    top: -3.9,
-    left: -8,
-    fontSize: 26,
+    top: -4,
+    left: -12,
+    fontSize: 29,
   },
   // text: {
   //   marginTop: 10,

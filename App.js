@@ -72,11 +72,11 @@ export default class App extends React.Component {
       live: true,
       retry: true
     })
-    db.changes({
-      since: 'now',
-      live: true,
-      include_docs: true
-    }).on('change', () => this.forceUpdate())
+    // db.changes({
+    //   since: 'now',
+    //   live: true,
+    //   include_docs: true
+    // }).on('change', () => this.forceUpdate())
     .on('error', function (err) {
       console.error(err);
     });
