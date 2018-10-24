@@ -973,8 +973,7 @@ export default class Menu extends React.Component {
       'hours': hr, 'minutes': min,
       'day': dueDate ? dueDate : null, 'date': date.getDate(), 'month': date.getMonth(),
       'due': dueDate, 'tag': tags,
-      'completed': 0, 'reminder': null,
-      'origin': 'Mobile' })
+      'completed': 0, 'reminder': null, 'origin': 'Mobile' })
     if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
       this._scheduleNotification(dueDate, time, text);
     }

@@ -847,9 +847,13 @@ export default class HomeScreen extends React.Component {
     dba.find({
       selector: {
         completed: 0,
+        type: 'task',
       },
       sort: ['_id'],
-    }).then((res) => this.setState({ dataSource: res.docs.reverse() }));
+    }).then((res) => {
+      console.log(res.docs)
+      this.setState({ dataSource: res.docs.reverse() })
+    });
   }
 
   _delete = async (id) => {
@@ -1045,7 +1049,7 @@ export default class HomeScreen extends React.Component {
                 </Text>
             </RkButton>
           </View>
-          <CalendarList
+          {/* <CalendarList
             style={{position: 'absolute', bottom: 0}}
             horizontal={true}
             pagingEnabled={true}
@@ -1081,7 +1085,7 @@ export default class HomeScreen extends React.Component {
               selectedDayBackgroundColor: '#c43131',
               todayTextColor: '#c43131',
             }}
-          />
+          /> */}
           </Modal>
       </View>
     );

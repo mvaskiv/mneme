@@ -27,8 +27,8 @@ import {
   AsyncStorage,
   Animated,
 } from 'react-native';
-
-const db = SQLite.openDatabase('mneme.db');
+import PouchDB from 'pouchdb-react-native'
+const db = new PouchDB('mydb')
 
 // const localNoti = {
 //   title: 'Hello',
@@ -246,55 +246,28 @@ export default class NewNote extends React.Component {
   } 
 
   _addItem = async () => {
-    console.log(this.props.navigation.state.params.folder);
-    let date = await new Date();
-    let thisID = 0;
-    // await this._toogleModal();
     if (this.state.header || this.state.text) {
-      await db.transaction(async tx => {
-          await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, folder, deleted, archive) values
-            (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
-              this.state.header,
-              this.state.text,
-              date.getHours(),
-              date.getMinutes(),
-              date.getDay(),
-              date.getDate(),
-              date.getMonth(),
-              this.props.navigation.state.params.folder
-            ], async (_, res) => {
-              thisID = await res['insertId'];
-            }
-          );
-        }
-      );
-      await db.transaction(async tx => {
-        if (this.state.img) {
-          this.state.img.map((pic, i) => {
-            tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
-              async (_, res) => {
-                console.log(res);
-              }
-            );
-          });
-        }
-      });
-      // await this._getUpdate();
+      let date = await new Date();
+      db.put({
+        '_id': date.getTime().toString(),
+        'type': 'note', 'text': this.state.text,
+        'header': this.state.header,
+        'hours': date.getHours(), 'minutes': date.getMinutes(),
+        'day': date.getDay(), 'date': date.getDate(), 'month': date.getMonth(),
+        'tag': null, 'archive': 0, 'origin': 'Mobile' })
       LayoutAnimation.configureNext( ListItemAnimation );
     }
-    // await this.setState({deleted: false});    
-    // await this.setState({updated: true});
   }
 
-  _editNote = () => {
-    if (this.state.header != this.data.caption || this.state.text != this.data.text) {
-      db.transaction(tx => {
-          tx.executeSql(`update notes set header = ?, text = ? where id = ?`,[this.state.header, this.state.text, this.data.id]
-        );
-      });
-    }
-    this.setState({editText: false});
-  }
+  // _editNote = () => {
+  //   if (this.state.header != this.data.caption || this.state.text != this.data.text) {
+  //     db.transaction(tx => {
+  //         tx.executeSql(`update notes set header = ?, text = ? where id = ?`,[this.state.header, this.state.text, this.data.id]
+  //       );
+  //     });
+  //   }
+  //   this.setState({editText: false});
+  // }
 
   _selectImage = async () => {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);

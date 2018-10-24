@@ -31,8 +31,8 @@ import {
   SectionList,
   Animated,
 } from 'react-native';
-
-const db = SQLite.openDatabase('mneme.db');
+import PouchDB from 'pouchdb-react-native'
+const db = new PouchDB('mydb')
 
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
@@ -171,36 +171,36 @@ class Popup extends React.Component {
     // }
   }
 
-  _getPictures = async () => {
-    let id = await this.props.id;
-    if (id) {
-        db.transaction(tx => {
-          tx.executeSql(`select * from img where note = ?`, [id],
-            async (_, { rows: { _array } }) => {
-              if (_array) {
-                _array.map(async (pic) => {
-                  console.log(JSON.parse(pic.src));
-                  await this.state.img.push(JSON.parse(pic.src));
-                  LayoutAnimation.configureNext( ListItemAnimation );
-                  await this.setState({updated: true});
-                })
-              }
-            }
-        );
-     });
-    }
-    await this.setState({updated: true});
-  }
+  // _getPictures = async () => {
+  //   let id = await this.props.id;
+  //   if (id) {
+  //       db.transaction(tx => {
+  //         tx.executeSql(`select * from img where note = ?`, [id],
+  //           async (_, { rows: { _array } }) => {
+  //             if (_array) {
+  //               _array.map(async (pic) => {
+  //                 console.log(JSON.parse(pic.src));
+  //                 await this.state.img.push(JSON.parse(pic.src));
+  //                 LayoutAnimation.configureNext( ListItemAnimation );
+  //                 await this.setState({updated: true});
+  //               })
+  //             }
+  //           }
+  //       );
+  //    });
+  //   }
+  //   await this.setState({updated: true});
+  // }
 
-  _editNote = () => {
-    if (this.state.header != this.props.caption || this.state.text != this.props.text) {
-      db.transaction(tx => {
-          tx.executeSql(`update notes set header = ?, text = ? where id = ?`,[this.state.header, this.state.text, this.props.id]
-        );
-      });
-    }
-    this.setState({editText: false});
-  }
+  // _editNote = () => {
+  //   if (this.state.header != this.props.caption || this.state.text != this.props.text) {
+  //     db.transaction(tx => {
+  //         tx.executeSql(`update notes set header = ?, text = ? where id = ?`,[this.state.header, this.state.text, this.props.id]
+  //       );
+  //     });
+  //   }
+  //   this.setState({editText: false});
+  // }
 
   _selectImage = async () => {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);
@@ -644,13 +644,13 @@ class MenuItem extends React.Component {
   }
 
   _getCount = () => {
-    db.transaction(async tx => {
-        tx.executeSql(`select count(*) from ` + this.props.route + `;`, [],
-            (_, { rows: { _array } }) => {
-                this.setState({count: _array[0]['count(*)']})
-            }
-        );
-    });
+    // db.transaction(async tx => {
+    //     tx.executeSql(`select count(*) from ` + this.props.route + `;`, [],
+    //         (_, { rows: { _array } }) => {
+    //             this.setState({count: _array[0]['count(*)']})
+    //         }
+    //     );
+    // });
   }
 
   render() {
@@ -753,65 +753,19 @@ export default class Notes extends React.Component {
     this._getUpdate();
   }
 
-  _getUpdate = async (route) => {
-    let data = [];
-    let array = [];
-    let date = "";
-    if (this.props.navigation.state.params.folder) {
-      db.transaction(tx => {
-          tx.executeSql(`select * from notes where folder = ? and deleted = 0 order by id desc;`,[this.props.navigation.state.params.folder], (_, { rows: { _array } }) => {
-            // this.setState({ dataSource: _array })
-            this.setState({searchData: _array});            
-            _array.map((note) => {
-              let day = note.date < 10 ? '0' + note.date : note.date;
-              let last_date = Month[note.month].name + ', ' + day;
-              if (array[0] && last_date != date) {
-                data.push({title: date, data: array});
-                array = [];
-              }
-              if (date !== last_date) {
-                date = last_date;
-              }
-              array.push(note);
-            });
-          }
-        );
-      });
-    } else {
-      db.transaction(tx => {
-          tx.executeSql(`select * from notes where deleted = 0 order by id desc;`,[], (_, { rows: { _array } }) => {
-            // this.setState({ dataSource: _array })
-            this.setState({searchData: _array});
-            _array.map((note) => {
-              let day = note.date < 10 ? '0' + note.date : note.date;
-              let last_date = Month[note.month].name + ', ' + day;
-              if (array[0] && last_date != date) {
-                data.push({title: date, data: array});
-                array = [];
-              }
-              if (date !== last_date) {
-                date = last_date;
-              }
-              array.push(note);
-            });
-          }
-        );
-      });
-    }
-    setTimeout(() => {
-      if (array && date) {
-        data.push({title: date, data: array});
-      }
-      if (data) {
-        LayoutAnimation.configureNext(ListItemAnimation);
-        this.setState({dataSource: data});
-      } else {
-        this.setState({dataSource: false});
-      }
-      // this.forceUpdate();
-    }, 330);
-    
-    // this._getTrash();
+  _getUpdate = async () => {
+    db.createIndex({
+      index: {fields: ['type']}
+    })
+    db.find({
+      selector: {
+        'type': 'note',
+      },
+      sort: ['_id'],
+    }).then((res) => {
+      console.log(res.docs)
+      this.setState({ searchData: res.docs.reverse() })
+    });
   }
 
   // _getTrash = () => {
@@ -828,14 +782,14 @@ export default class Notes extends React.Component {
   //   }
   // }
 
-  _delete = async (id) => {
-    db.transaction(tx => {
-      tx.executeSql(`update notes set deleted = 1 where id = ?`, [id]);
-    });
-    LayoutAnimation.configureNext( SwipeOutItemAnimation );
-    this._getUpdate(); 
-    await this.setState({updated: true});
-  }
+  // _delete = async (id) => {
+  //   db.transaction(tx => {
+  //     tx.executeSql(`update notes set deleted = 1 where id = ?`, [id]);
+  //   });
+  //   LayoutAnimation.configureNext( SwipeOutItemAnimation );
+  //   this._getUpdate(); 
+  //   await this.setState({updated: true});
+  // }
 
   _selectImage = async () => {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);
@@ -914,7 +868,7 @@ export default class Notes extends React.Component {
             </View>
           </SlideDownPanel> */}
           {this.props.navigation.state.params.searchVisible && <NotesSearch go={this._search} />}
-        { this.state.searchCriteria
+        {/* { this.state.searchCriteria
         ?
          <SectionList
             scrollEnabled={!this.state.isSwiping}
@@ -925,28 +879,24 @@ export default class Notes extends React.Component {
             sections={this.state.dataSource}
             renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
             style={ styles.listContainer }
-            keyExtractor={item => item.id.toString()}
+            keyExtractor={item => item._id.toString()}
             extraData={this._getUpdate}
             onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
             renderItem={({ item }) => <NoteItem {...item} search={this.state.searchCriteria} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
           />
-        :
+        : */}
         <FlatList
           scrollEnabled={!this.state.isSwiping}
-          // onRefresh={() => null}
-          // refreshing={false}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
-          // sections={this.state.dataSource}
           data={this.state.searchData}
-          // renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
           style={ styles.listContainer }
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={item => item._id.toString()}
           extraData={this._getUpdate}
           onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
           renderItem={({ item }) => <NoteItem {...item} search={this.state.searchCriteria} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
           />
-        }
+        
           {this.state.dataSource === false && 
             <View
               style={ styles.welcomeView }>
