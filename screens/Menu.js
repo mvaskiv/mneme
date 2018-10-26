@@ -358,49 +358,88 @@ class NoteItem extends React.Component {
   render() {
     let creationDate = this._getSetDate();
 
-    return (
-      <TouchableWithoutFeedback
-        underlayColor={'rgba(29, 29, 29, 0.3)'}
-        onPress={() => this.props.done(this.props.id)}
-        
-        // onPress={() => this.props.viewNote(options)}
+    if (this.props.type === 'task') {
+      return (
+        <TouchableWithoutFeedback
+          underlayColor={'rgba(29, 29, 29, 0.3)'}
+          onPress={() => this.props.done(this.props.id)}
+          
+          // onPress={() => this.props.viewNote(options)}
 
-        // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
-        >
-          <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
-            <Icon.MaterialIcons
-              onPress={() => {
-                this.props.done(this.state.done ? 0 : 1, this.props.id)
-                  .then(this.setState({done: !this.state.done}));
-              }}
-              style={[styles.checkmark, {color: !this.state.done ? '#c41313' : '#bbb'}]}
-              name="done" />
-            <Text
-              numberOfLines={1}
-              style={ this.state.done ? styles.headerDone : styles.header }>
-              { this.props.header ? this.props.header : this.props.text }
-            </Text>
-            {/* <Text
-              numberOfLines={1}
-              style={ this.props.text ? styles.text : styles.textDone }>
-              { this.props.text ? this.props.text : 'No additional data' }
-            </Text> */}
-            <Text style={[styles.time]}>
-              { creationDate }
-            </Text>
-            {this.state.view && <Popup
-              caption={this.props.header}
-              text={this.props.text}
-              view={true}
-              id={this.props.id}
-              created={creationDate}
-              updated={null}
-              delete={this.props.delete}
-              hide={this._hideNote}
-              change={this._onChange} />}
-          </View>
-      </TouchableWithoutFeedback>
-    );
+          // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
+          >
+            <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
+              <Icon.MaterialIcons
+                onPress={() => {
+                  this.props.done(this.state.done ? 0 : 1, this.props.id)
+                    .then(this.setState({done: !this.state.done}));
+                }}
+                style={[styles.checkmark, {color: this.state.done ? '#c41313' : '#bbb'}]}
+                name="done" />
+              <Text
+                numberOfLines={1}
+                style={ this.state.done ? styles.headerDone : styles.header }>
+                { this.props.header ? this.props.header : this.props.text }
+              </Text>
+              {/* <Text
+                numberOfLines={1}
+                style={ this.props.text ? styles.text : styles.textDone }>
+                { this.props.text ? this.props.text : 'No additional data' }
+              </Text> */}
+              <Text style={[styles.time]}>
+                { creationDate }
+              </Text>
+              {this.state.view && <Popup
+                caption={this.props.header}
+                text={this.props.text}
+                view={true}
+                id={this.props.id}
+                created={creationDate}
+                updated={null}
+                delete={this.props.delete}
+                hide={this._hideNote}
+                change={this._onChange} />}
+            </View>
+        </TouchableWithoutFeedback>
+      );
+    // } else {
+    //   return (
+    //     <TouchableWithoutFeedback
+    //       underlayColor={'rgba(29, 29, 29, 0.3)'}
+    //       onPress={() => this.props.done(this.props.id)}
+          
+    //       // onPress={() => this.props.viewNote(options)}
+
+    //       // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
+    //       >
+    //         <View style={[ styles.noteItemNote, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
+    //           <Text
+    //             numberOfLines={1}
+    //             style={ this.state.done ? styles.headerDone : styles.header }>
+    //             { this.props.header ? this.props.header : this.props.text }
+    //           </Text>
+    //           {/* <Text
+    //             numberOfLines={1}
+    //             style={ this.props.text ? styles.text : styles.textDone }>
+    //             { this.props.text ? this.props.text : 'No additional data' }
+    //           </Text> */}
+    //           <Text style={[styles.time]}>
+    //             { creationDate }
+    //           </Text>
+    //           {this.state.view && <Popup
+    //             caption={this.props.header}
+    //             text={this.props.text}
+    //             view={true}
+    //             id={this.props.id}
+    //             created={creationDate}
+    //             updated={null}
+    //             delete={this.props.delete}
+    //             hide={this._hideNote}
+    //             change={this._onChange} />}
+    //         </View>
+    //     </TouchableWithoutFeedback>
+    //   )
+    }
   }
 }
 
@@ -557,7 +596,8 @@ class Today extends React.Component {
     })
     dba.find({
       selector: {
-        completed: 0,
+        'type': 'task',
+        'completed': 0,
         // due: today
       },
       // fields: ['_id', 'text', 'due'],
@@ -1243,6 +1283,23 @@ const styles = StyleSheet.create({
     // borderRadius: 10,
     height: 'auto',
   },
+  noteItemNote: {
+    flex: 1,
+    padding: 22,
+    margin: 0,
+    marginTop: 10,
+    top: -10,
+    minHeight: 66,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(29, 29, 29, 0.04)',
+    borderColor: '#eee',
+    shadowColor: '#eee',
+    shadowOpacity: 0.5,
+    shadowOffset: {top: 2},
+    shadowRadius: 4,
+    borderRadius: 10,
+    borderWidth: 0.5,
+  },
   noteItem: {
     flex: 1,
     padding: 12,
@@ -1251,8 +1308,8 @@ const styles = StyleSheet.create({
     minHeight: 30,
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderBottomColor: '#eee',
-    borderBottomWidth: 0,
+    borderBottomColor: '#f5f5f5',
+    borderBottomWidth: 1,
   },
 
   header: {

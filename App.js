@@ -83,7 +83,7 @@ export default class App extends React.Component {
   }
 
   _bootstrapAsync = async () => {
-    // await AsyncStorage.setItem('uuid', '2ce029af-4452-493e-9f06-98d2a4e46675');
+    await AsyncStorage.setItem('uuid', '2ce029af-4452-493e-9f06-98d2a4e46675');
     await AsyncStorage.getItem('uuid').then((uuid) => {
       if (!uuid) {
         fetch('https://mneme-app.herokuapp.com/init', {method: 'GET'})
