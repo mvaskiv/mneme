@@ -1,33 +1,15 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { LayoutAnimation } from 'react-native';
-import { RkButton, RkModalImg } from 'react-native-ui-kitten';
-import ImageViewer from 'react-native-image-zoom-viewer';
-import Expo, { Icon, SQLite, Notifications, Permissions, Camera, BlurView } from 'expo';
-import { Fab } from 'native-base';
-import { MaterialIcons } from '@expo/vector-icons';
-import Swipeout from 'react-native-swipeout';
+import { RkButton } from 'react-native-ui-kitten';
+import Expo, { Icon, SQLite, Permissions } from 'expo';
 import Swipeable from 'react-native-swipeable';
-// import Modal from 'react-native-modalbox';
-import CountdownCircle from 'react-native-countdown-circle';
-import SlideDownPanel from "react-native-slide-down-panel";
 import {
-  Image,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   FlatList,
-  TextInput,
-  KeyboardAvoidingView,
   TouchableOpacity,
   TouchableHighlight,
-  Modal,
-  TouchableWithoutFeedback,
   View,
-  Keyboard,
-  CheckBox,
-  AsyncStorage,
-  Animated,
 } from 'react-native';
 
 const db = SQLite.openDatabase('mneme.db');
@@ -35,21 +17,7 @@ const db = SQLite.openDatabase('mneme.db');
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
-const ListItemAnimation = {
-  duration: 175,
-  create: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-};
+
 const SwipeItemAnimation = {
   duration: 235,
   create: {

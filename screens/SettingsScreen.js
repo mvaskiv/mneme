@@ -1,10 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { LayoutAnimation, AlertIOS } from 'react-native';
-import { RkButton } from 'react-native-ui-kitten';
-import { SQLite, Icon, Updates, BarCodeScanner, Permissions, Camera } from 'expo';
+import { Icon, Permissions } from 'expo';
 import { Fab } from 'native-base';
-import { MaterialIcons, FontAwesome, Foundation } from '@expo/vector-icons';
-import {SettingsDividerShort, SettingsDividerLong, SettingsEditText, SettingsCategoryHeader, SettingsSwitch, SettingsPicker} from 'react-native-settings-components';
+import {SettingsDividerShort, SettingsDividerLong, SettingsCategoryHeader, SettingsSwitch, SettingsPicker} from 'react-native-settings-components';
 import Swipeable from 'react-native-swipeable';
 import {
   Image,
@@ -12,44 +10,21 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  FlatList,
-  TextInput,
-  KeyboardAvoidingView,
   TouchableOpacity,
   TouchableHighlight,
-  Modal,
   TouchableWithoutFeedback,
   View,
-  Keyboard,
-  CheckBox,
   Easing,
   AsyncStorage,
   Animated,
   Vibration,
 } from 'react-native';
-import HomeScreen from './HomeScreen';
+import { Header } from '../constants/header';
 import PouchDB from 'pouchdb-react-native';
-
-const db = SQLite.openDatabase('mneme.db');
 
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
-const ListItemAnimation = {
-  duration: 175,
-  create: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-};
+
 const SwipeItemAnimation = {
   duration: 235,
   create: {
@@ -450,99 +425,18 @@ export default class Settings extends React.Component {
     });
  
       return (
-        <ScrollView style={{flex: 1, backgroundColor: '#fff'}}>
-          <Text style={styles.header}>
-            Settings
-          </Text>
-          <SettingsCategoryHeader title={'History'} />
-            <SettingsDividerLong android={false}/>
-              <TouchableOpacity
-                style={{
-                  height: 48,
-                  backgroundColor: '#fff',
-                }}
-                onPress={() => this.props.navigation.navigate('History')}>
-                <Text style={ styles.settingsText }>History</Text>
-                <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
-                  name="angle-right" />
-              </TouchableOpacity>
-            <SettingsDividerShort/>
-              <TouchableOpacity
-                style={{
-                  height: 48,
-                  backgroundColor: '#fff',
-                }}
-                onPress={() => null}>
-                <Text style={ styles.settingsText }>Completed</Text>
-                <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
-                  name="angle-right" />
-              </TouchableOpacity>
-            <SettingsCategoryHeader title={'Preferences'} />
-              <SettingsDividerLong android={false}/>
-                <SettingsPicker
-                  title="Default reminder time"
-                  dialogDescription={'If not specified otherwise.'}
-                  possibleValues={[
-                      {label: '9 am', value: '9:00'},
-                      {label: '10 am', value: '10:00'},
-                      {label: '11 am', value: '11:00'},
-                      {label: 'Noon', value: '12:00'}
-                  ]}
-                  negativeButtonTitle={'Cancel'}
-                  modalButtonsTitleNegativeStyle={{fontWeight: '400', color: '#444'}}
-                  // buttonRightTitle={'Save'}
-                  positiveButtonTitle={'Save'}
-                  modalButtonsTitlePositiveStyle={{right: -10}}
-                  onSaveValue={value => {
-                      console.log('reminder time:', value);
-                      this.setState({
-                          gender: value
-                      });
-                  }}
-                  value={this.state.gender}
-                  styleModalButtonsText={{color: '#c43131', fontWeight: '400'}}                
-                />
-            <SettingsCategoryHeader title={'Privacy'} />
-              <SettingsDividerLong android={false}/>
-                <SettingsSwitch
-                  title={'Allow Push Notifications'}
-                  onSaveValue={(value) => {
-                      console.log('allow push notifications:', value);
-                      this.setState({
-                          allowPushNotifications: value
-                      });
-                  }}
-                  value={this.state.allowPushNotifications}
-                />
-              <SettingsDividerShort/>
-                <SettingsSwitch
-                  title={'Enable Touch ID / Face ID'}
-                  onSaveValue={(value) => this._biometrySet(value)}
-                  value={this.state.biometry}
-                />
-              <SettingsDividerShort/>
-                <TouchableOpacity
-                  style={{
-                    height: 48,
-                    backgroundColor: '#fff',
-                  }}
-                  onPress={() => this.props.navigation.navigate('Scanner', { refresh: this._sync })}>
-                  <Text style={ styles.settingsText }>{this.state.bardata ? this.state.bardata : 'Sync with desktop'}</Text>
-                  <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
-                    name="angle-right" />
-                </TouchableOpacity>
-              
-            <SettingsCategoryHeader title={'Development'} />
+        <View style={{flex: 1}}>
+          <Header title='Settings' border={true} />
+          <ScrollView style={{flex: 1, backgroundColor: '#fff'}}>
+            <SettingsCategoryHeader title={'History'} />
               <SettingsDividerLong android={false}/>
                 <TouchableOpacity
                   style={{
                     height: 48,
                     backgroundColor: '#fff',
                   }}
-                  onPress={() => {
-                    new PouchDB('mydb').destroy()
-                  }}>
-                  <Text style={ styles.settingsText }>Drop all databases</Text>
+                  onPress={() => this.props.navigation.navigate('History')}>
+                  <Text style={ styles.settingsText }>History</Text>
                   <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
                     name="angle-right" />
                 </TouchableOpacity>
@@ -552,46 +446,127 @@ export default class Settings extends React.Component {
                     height: 48,
                     backgroundColor: '#fff',
                   }}
-                  onPress={() => AsyncStorage.clear()}>
-                  <Text style={ styles.settingsText }>Clear Storage</Text>
+                  onPress={() => null}>
+                  <Text style={ styles.settingsText }>Completed</Text>
                   <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
                     name="angle-right" />
                 </TouchableOpacity>
-              <SettingsDividerShort/>
-                <TouchableOpacity
-                  style={{
-                    height: 48,
-                    backgroundColor: '#fff',
-                  }}
-                  onPress={() => this._update(this.state.update ? this.state.update.isAvailable ? 1 : -1 : 0)}>
-                  <Text style={ styles.settingsText }>
-                    {!this.state.update ? 
-                      'Check for Updates'
-                      :
-                        this.state.update.isAvailable ? 
-                          'Download Update'
-                          :
-                          'You are up to date'
-                    }
-                  </Text>
-                  {this.state.loading ?
-                    <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 12, right: 13, height: 22, width: 22}}>
-                      <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
-                    </Animated.View>
-                    :
-                    !this.state.update ?
-                      <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
-                        name="angle-right" />
-                        :
-                        this.state.update.isAvailable ?
-                        <Icon.Foundation style={{ position: 'absolute', right: 13, fontSize: 22, color: '#c41313', top: 12}} name="burst-new" />
-                      :
-                      <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}} 
+              <SettingsCategoryHeader title={'Preferences'} />
+                <SettingsDividerLong android={false}/>
+                  <SettingsPicker
+                    title="Default reminder time"
+                    dialogDescription={'If not specified otherwise.'}
+                    possibleValues={[
+                        {label: '9 am', value: '9:00'},
+                        {label: '10 am', value: '10:00'},
+                        {label: '11 am', value: '11:00'},
+                        {label: 'Noon', value: '12:00'}
+                    ]}
+                    negativeButtonTitle={'Cancel'}
+                    modalButtonsTitleNegativeStyle={{fontWeight: '400', color: '#444'}}
+                    // buttonRightTitle={'Save'}
+                    positiveButtonTitle={'Save'}
+                    modalButtonsTitlePositiveStyle={{right: -10}}
+                    onSaveValue={value => {
+                        console.log('reminder time:', value);
+                        this.setState({
+                            gender: value
+                        });
+                    }}
+                    value={this.state.gender}
+                    styleModalButtonsText={{color: '#c43131', fontWeight: '400'}}                
+                  />
+              <SettingsCategoryHeader title={'Privacy'} />
+                <SettingsDividerLong android={false}/>
+                  <SettingsSwitch
+                    title={'Allow Push Notifications'}
+                    onSaveValue={(value) => {
+                        console.log('allow push notifications:', value);
+                        this.setState({
+                            allowPushNotifications: value
+                        });
+                    }}
+                    value={this.state.allowPushNotifications}
+                  />
+                <SettingsDividerShort/>
+                  <SettingsSwitch
+                    title={'Enable Touch ID / Face ID'}
+                    onSaveValue={(value) => this._biometrySet(value)}
+                    value={this.state.biometry}
+                  />
+                <SettingsDividerShort/>
+                  {/* <TouchableOpacity
+                    style={{
+                      height: 48,
+                      backgroundColor: '#fff',
+                    }}
+                    onPress={() => this.props.navigation.navigate('Scanner', { refresh: this._sync })}>
+                    <Text style={ styles.settingsText }>{this.state.bardata ? this.state.bardata : 'Sync with desktop'}</Text>
+                    <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
                       name="angle-right" />
+                  </TouchableOpacity> */}
+                
+              <SettingsCategoryHeader title={'Development'} />
+                <SettingsDividerLong android={false}/>
+                  <TouchableOpacity
+                    style={{
+                      height: 48,
+                      backgroundColor: '#fff',
+                    }}
+                    onPress={() => {
+                      new PouchDB('mydb').destroy()
+                    }}>
+                    <Text style={ styles.settingsText }>Drop all databases</Text>
+                    <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
+                      name="angle-right" />
+                  </TouchableOpacity>
+                <SettingsDividerShort/>
+                  <TouchableOpacity
+                    style={{
+                      height: 48,
+                      backgroundColor: '#fff',
+                    }}
+                    onPress={() => AsyncStorage.clear()}>
+                    <Text style={ styles.settingsText }>Clear Storage</Text>
+                    <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
+                      name="angle-right" />
+                  </TouchableOpacity>
+                <SettingsDividerShort/>
+                  <TouchableOpacity
+                    style={{
+                      height: 48,
+                      backgroundColor: '#fff',
+                    }}
+                    onPress={() => this._update(this.state.update ? this.state.update.isAvailable ? 1 : -1 : 0)}>
+                    <Text style={ styles.settingsText }>
+                      {!this.state.update ? 
+                        'Check for Updates'
+                        :
+                          this.state.update.isAvailable ? 
+                            'Download Update'
+                            :
+                            'You are up to date'
+                      }
+                    </Text>
+                    {this.state.loading ?
+                      <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 12, right: 13, height: 22, width: 22}}>
+                        <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
+                      </Animated.View>
+                      :
+                      !this.state.update ?
+                        <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}}
+                          name="angle-right" />
+                          :
+                          this.state.update.isAvailable ?
+                          <Icon.Foundation style={{ position: 'absolute', right: 13, fontSize: 22, color: '#c41313', top: 12}} name="burst-new" />
+                        :
+                        <Icon.FontAwesome style={{ position: 'absolute', right: 13, fontSize: 22, color: '#aaa', top: 12}} 
+                        name="angle-right" />
 
-                  }
-                </TouchableOpacity>
-        </ScrollView>
+                    }
+                  </TouchableOpacity>
+          </ScrollView>
+        </View>
       );
     
   }

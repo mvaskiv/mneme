@@ -1,31 +1,18 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { LayoutAnimation } from 'react-native';
-import { RkButton } from 'react-native-ui-kitten';
 import { Icon } from 'expo';
 import { Fab } from 'native-base';
-import { MaterialIcons, SimpleLineIcons } from '@expo/vector-icons';
-import Swipeout from 'react-native-swipeout';
 import Swipeable from 'react-native-swipeable';
 import {
-  Image,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   FlatList,
-  TextInput,
-  KeyboardAvoidingView,
-  TouchableOpacity,
   TouchableHighlight,
-  Modal,
   TouchableWithoutFeedback,
   View,
-  Keyboard,
-  CheckBox,
   AsyncStorage,
-  Animated,
 } from 'react-native';
-import HomeScreen from './HomeScreen';
 
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;

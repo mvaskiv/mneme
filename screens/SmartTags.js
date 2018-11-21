@@ -1,40 +1,26 @@
-import React, { Component } from 'react';
-import { RkButton } from 'react-native-ui-kitten';
-import { SQLite, Icon, Permissions, Location, Contacts } from 'expo';
-import { Fab } from 'native-base';
-import { MaterialIcons, SimpleLineIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import Swipeout from 'react-native-swipeout';
-import Swipeable from 'react-native-swipeable';
-import { WeekDay, Month, weatherIcons } from '../constants/Dates-Weather';
+import React from 'react';
+import { Icon, Contacts } from 'expo';
 import {
-  Image,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   FlatList,
   TextInput,
-  KeyboardAvoidingView,
   TouchableOpacity,
-  TouchableHighlight,
   Modal,
-  TouchableWithoutFeedback,
   View,
-  Keyboard,
-  CheckBox,
-  AsyncStorage,
   LayoutAnimation,
-  Animated,
-  Easing,
   AlertIOS,
   RefreshControl,
-  StatusBar,
   Linking
 } from 'react-native';
+import { Header } from '../constants/header';
 const Dimensions = require('Dimensions');
-const db = SQLite.openDatabase('mneme.db');
-const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
+
+import PouchDB from 'pouchdb-react-native'
+const db = new PouchDB('mydb')
+
+const screenWidth = Dimensions.get('window').width;
 
 const ThemeAnimation = {
     duration: 225,
@@ -120,28 +106,17 @@ class SmartListItem extends React.Component {
     }
 
     _addItem = async () => {
-
         let date = await new Date();
-        let thisID = 0;
-        await db.transaction(async tx => {
-            await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
-            (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
-                this.props.tag.key.replace(/^\w/, c => c.toUpperCase()) + ' ' + this.state.text,
-                -1,
-                -1,
-                null,
-                date.getDate(),
-                date.getMonth(),
-                null,
-                this.props.tag.key,
-            ], async (_, res) => {
-                thisID = await res['insertId'];
-            }
-            );
-        }
-        );
+        db.put({
+          '_id': date.getTime().toString(),
+          'type': 'task', 'text': this.props.tag.key.replace(/^\w/, c => c.toUpperCase()) + ' ' + this.state.text,
+          'hours': -1, 'minutes': -1,
+          'day': null, 'date': date.getDate(), 'month': date.getMonth(),
+          'due': null, 'tag': this.props.tag.key,
+          'completed': 0, 'reminder': null, 'origin': 'Mobile' })
         LayoutAnimation.configureNext( ExpandAnimation );
         await this.setState({updated: true});
+        this.props.updateToday()
     }
 
     _onChange = (e) => {
@@ -190,7 +165,7 @@ class SmartListItem extends React.Component {
         <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.4 : 1} ]}>
             <Icon.Ionicons
                 onPress={() => {
-                    this.props.done(this.state.done ? 0 : 1, this.props.id)
+                    this.props.done(this.state.done ? 0 : 1, this.props._id.toString())
                     .then(this.setState({done: !this.state.done}));
                 }}
                 style={styles.checkmark}
@@ -201,7 +176,7 @@ class SmartListItem extends React.Component {
                     value={this.state.text}
                     onChangeText={this._onChange}
                     onSubmitEditing={() => this.props.addMore()}
-                    onBlur={this.state.text ? this._addItem : () => {LayoutAnimation.configureNext( ExpandAnimation );this.props.refresh()}}
+                    onBlur={this.state.text ? this._addItem : () => { LayoutAnimation.configureNext( ExpandAnimation );this.props.refresh() }}
                     blurOnSubmit={true}
                     maxLength={60}
                     numberOfLines={1}
@@ -233,28 +208,28 @@ class SmartListItem extends React.Component {
   }
 
 const emptySet = [
-    {id: -1},
-    {id: -2},
-    {id: -3},
-    {id: -4},
-    {id: -5},
-    {id: -6},
-    {id: -7},
-    {id: -8},
-    {id: -9},
-    {id: -10},
-    {id: -11},
-    {id: -12},
-    {id: -13},
-    {id: -14},
-    {id: -15},
-    {id: -16},
-    {id: -17},
-    {id: -18},
-    {id: -19},
-    {id: -20},
-    {id: -21},
-    {id: -22},
+    {_id: -1},
+    {_id: -2},
+    {_id: -3},
+    {_id: -4},
+    {_id: -5},
+    {_id: -6},
+    {_id: -7},
+    {_id: -8},
+    {_id: -9},
+    {_id: -10},
+    {_id: -11},
+    {_id: -12},
+    {_id: -13},
+    {_id: -14},
+    {_id: -15},
+    {_id: -16},
+    {_id: -17},
+    {_id: -18},
+    {_id: -19},
+    {_id: -20},
+    {_id: -21},
+    {_id: -22},
 ]
 
 export default class SmartTags extends React.Component {
@@ -262,37 +237,58 @@ export default class SmartTags extends React.Component {
         super();
         this.state = {
             dataSource: [],
-            dark: true,
+            dark: false,
             refreshing: false,
             list: false,
             changes: false,
             modal: false,
             tag: {key: 'buy', name: 'Shopping'}
         }
-        this._getTasks();
+        this._getTasks(null);
     }
 
     componentDidMount() {
-        let time = new Date().getHours();
+        // console.log()
+        // let time = new Date().getHours();
         // if (time > )
     }
 
+    _sortTasks(stash, today) {
+        let today_t = [];
+        let tomor = [];
+        let rest = [];
+        stash.map(e => {
+          if (e.due === today) {
+            today_t.push(e);
+          } else if (e.due === today + 1) {
+            tomor.push(e);
+          } else {
+            rest.push(e);
+          }
+        })
+        return (today_t.concat(tomor.concat(rest)));
+    }
+
     _getTasks = async (key) => {
-        let today = new Date().getDay();
-        let tag = key ? key : this.state.tag.key;
-        db.transaction(tx => {
-            tx.executeSql(`select * from tasks where completed = 0 and tag like ? order by id desc;`, [
-                '%'+tag+'%'
-            ],
-            (_, { rows: { _array } }) => {
-                // if (_array.length < 11) {
-                //     for(let i = 1; _array.length < 11; i++) { _array.push({id: -i}) }
-                // }
-                LayoutAnimation.configureNext(ChangeAnimation);
-                this.setState({ dataSource: _array, changes: false });
-                }
-            );
+        let criteria = await key ? key : this.state.tag.key
+        let selector = {
+            'type': 'task',
+            'tag': {$regex: '.*' + criteria + '.*'},
+            'completed': 0,
+          }
+        //   db.createIndex({
+        //     index: {fields: ['type']},
+        //   })
+          db.find({
+            selector: selector,
+            sort: ['_id'],
+          }).then((res) => {
+            LayoutAnimation.configureNext(ChangeAnimation);
+            this.setState({ dataSource: this._sortTasks(res.docs.reverse(), new Date().getDate()) }, () => {
+              this.setState({loaded: true}, () => this.forceUpdate())
+            })
         });
+        
     }
 
     _refresh = () => {
@@ -303,14 +299,11 @@ export default class SmartTags extends React.Component {
 
     _listIDone = async (i, id) => {
         this.setState({changes: true});
-        return new Promise(
-          resolve => {
-            db.transaction(tx => {
-              tx.executeSql(`update tasks set completed = ? where id = ?`,[i, id]
-            );
-          });
-          resolve('yes');
-        });
+        db.get(id).then(async (doc) => {
+            console.log(doc)
+            doc.completed = i;
+            db.put(doc);
+        })
     }
 
     _done = () => {
@@ -319,9 +312,9 @@ export default class SmartTags extends React.Component {
     }
 
     _addItem = () => {
-        let i = this.state.dataSource[0] ? this.state.dataSource[0].id + 1 : 0;
+        let i = this.state.dataSource[0] ? this.state.dataSource[0]._id + 1 : 0;
         LayoutAnimation.configureNext(ThemeAnimation);
-        this.state.dataSource.unshift({text: 'New', id: i, create: true, addMore: this._addItem, refresh: this._getTasks})
+        this.state.dataSource.unshift({text: 'New', _id: i, create: true, addMore: this._addItem, refresh: this._getTasks})
         this.setState({updated: true});
     }
 
@@ -332,16 +325,13 @@ export default class SmartTags extends React.Component {
 
     render() {
         let styles = this.state.dark ? dark : light;
-        // const footer = this.
         let today = new Date();
+
         return (
             <View style={styles.container}>
-                {/* {Platform.OS === 'ios' && <StatusBar barStyle="light-content" />} */}
                 <View style={[styles.container, {opacity: this.state.modal ? 0.05 : 1} ]}>
-                    <View style={ styles.headerCnt }>
-                        <Text style={styles.header}>{this.state.tag.name}</Text>
-                        {this.state.changes && <Text onPress={this._done} style={styles.counter}>DONE</Text>}
-                    </View>
+                    <Header title={ this.state.tag.name } headerRight={this.state.changes && <Text onPress={this._done} style={styles.counter}>DONE</Text>} />
+               
                     {this.state.dataSource[0] ? 
                     <FlatList
                         refreshControl={
@@ -355,29 +345,21 @@ export default class SmartTags extends React.Component {
                         }
                         data={this.state.dataSource}
                         style={[ styles.listContainer, {display: this.state.list ? 'none' : 'flex'} ]}
-                        keyExtractor={item => item.id.toString()}
+                        keyExtractor={item => item._id.toString()}
                         extraData={this._getTasks}
-                        // ListFooterComponent={<View style={{height: 90, marginTop: -15, width: screenWidth, overflow: 'visible'}}>
-                        //     <FlatList
-                        //         scrollEnabled={false}
-                        //         data={emptySet}
-                        //         style={styles.listContainer}
-                        //         keyExtractor={item => item.id.toString()}
-                        //         renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} />}
-                        //     /></View>}
-                        renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} update={this._getTasks} done={this._listIDone} tag={this.state.tag} />}
+                        renderItem={({ item }) => <SmartListItem {...item} dark={this.state.dark} today={today} update={this._getTasks} done={this._listIDone} tag={this.state.tag} updateToday={() => this.props.navigation.state.params.updateToday()} />}
                     />
                     : <Text style={ styles.empty }>Nothing here yet</Text>
                     }
                     <View style={styles.footer}>
-                        <Icon.MaterialCommunityIcons
+                        {/* <Icon.MaterialCommunityIcons
                             onPress={() => {
                                 LayoutAnimation.configureNext(ThemeAnimation);
                                 this.setState({dark: !this.state.dark})
                             }}
                             style={styles.themeSwitch}
-                            name="theme-light-dark" />
-                        <Text style={[styles.moreBtn, {bottom: this.state.modal ? -40 : 12}]} onPress={() => this.setState({modal: !this.state.modal})}>more</Text>
+                            name="theme-light-dark" /> */}
+                        <Text style={[styles.moreBtn, {bottom: this.state.modal ? -40 : 9}]} onPress={() => this.setState({modal: !this.state.modal})}>more</Text>
                         <Icon.Ionicons
                             onPress={this._addItem}
                             style={styles.tagsList}
@@ -389,7 +371,7 @@ export default class SmartTags extends React.Component {
                     visible={this.state.modal}
                     animationType='slide'>
                     <TouchableOpacity style={{flex: 1}} onPress={() => this.setState({modal: false})}/>
-                    <View style={{overflow: 'visible'}}>
+                    <View style={{overflow: 'visible', bottom: screenHeight > 800 ? 29 : 0}}>
                         <FlatList
                             data={Tags}
                             style={[styles.listContainer, {overflow: 'visible'}]}
@@ -408,18 +390,6 @@ export default class SmartTags extends React.Component {
 
                     </View>
                 </Modal>
-
-                {/* <View style={ styles.list }>
-                    <View style={ styles.listItem }>
-                        <Text style={[ styles.listText, {color: '#FBB300'} ]}>S</Text>
-                    </View>
-                    <View style={ styles.listItem }>   
-                        <Text style={ styles.listText }>C</Text>
-                    </View>
-                    <View style={ styles.listItem }>   
-                        <Text style={ styles.listText }>V</Text>
-                    </View>
-                </View> */}
             </View>
         );
     }
@@ -448,14 +418,14 @@ const TagsView = (props) => (
 const light = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: 'rgb(244,244,247)',
     },
     footer: {
         position: 'absolute',
         bottom: 0,
-        height: 48,
+        height: 45,
         width: screenWidth,
-        backgroundColor: 'rgba(250,250,250,0.95)',
+        backgroundColor: 'rgba(250,250,253,0.95)',
         borderTopColor: '#ccc',
         borderTopWidth: 0.5,
     },
@@ -494,9 +464,8 @@ const light = StyleSheet.create({
         fontWeight: 'normal',
         fontSize: 16,
         textAlign: 'center',
-        backgroundColor: '#fff',
-        height: 35,
-        width: 70,
+        height: 20,
+        width: 60,
         zIndex: 9,
     },
     saveBtn: {
@@ -516,27 +485,27 @@ const light = StyleSheet.create({
         top: 0,
         minHeight: 35,
         flexDirection: 'row',
-        borderBottomColor: '#aaa',
-        borderBottomWidth: 0.5,
+        // borderBottomColor: '#ccc',
+        // borderBottomWidth: 0.5,
     },
     text: {
         position: 'absolute',
         maxWidth: screenWidth - 70,
         top: 0,
-        left: 52,
-        lineHeight: 30,
-        letterSpacing: 0.5,
+        left: 47,
+        lineHeight: 31.5,
+        // letterSpacing: 0.3,
         fontWeight: "400",
         fontSize: 24,
-        color: '#292929',
+        color: '#444',
     },
     textDone: {
         position: 'absolute',
         maxWidth: screenWidth - 70,
         top: 0,
-        left: 52,
-        lineHeight: 30,
-        letterSpacing: 0.5,
+        left: 47,
+        lineHeight: 31.5,
+        // letterSpacing: 0.5,
         fontWeight: "400",
         fontSize: 24,
         color: '#777',
@@ -548,10 +517,10 @@ const light = StyleSheet.create({
         top: 0,
         left: 0,
         fontSize: 32,
-        color: '#555',
+        color: '#888',
         width: 50,
         textAlign: 'center',
-        backgroundColor: '#fff'
+        backgroundColor: 'rgb(244,244,247)'
     },
     editNote: {
         position: 'absolute',
@@ -598,7 +567,7 @@ const light = StyleSheet.create({
         bottom: 12,
         width: 60,
         textAlign: 'center',
-        color: '#292929',
+        color: '#393939',
         fontWeight: '700',
         fontSize: 16,
         marginHorizontal: screenWidth/2 - 30,

@@ -21,13 +21,10 @@ import {
         }
     }
     _handleBarCodeScanned = async ({ type, data }) => {
-        this.setState({scanned: true});
+        await this.setState({scanned: true});
         Vibration.vibrate();
-        await AsyncStorage.setItem('uuid', data).then(() => {
-            this._newUuid(data).then(() => {
-                setTimeout(() => this.props.navigation.state.params.refresh(), 3300);
-                setTimeout(() => this.setState({syncing: false}), 3300);
-            })
+        AsyncStorage.setItem('uuid', data).then(() => {
+            this._newUuid(data)
         })
       }
 
@@ -46,27 +43,35 @@ import {
         });
     }
 
-    _newUuid = async () => {
-        console.log('Syncing');
-        await this.setState({syncing: true});
-        this._dbSync().then(() => {
-        this._fullSync()
-        })
+    _newUuid = (uuid) => {
+        this.setState({syncing: true}, () => this._dbSync(uuid));
     }
 
-    _fullSync = () => {
-        db.changes({
-            since: 0,
-            include_docs: true
-        })
-    }
+    // _fullSync = async () => {
+    //     await db.changes({
+    //         since: 0,
+    //         include_docs: true
+    //     }).on('complete', () => {
+    //         this.props.navigation.state.params.refresh()
+    //     })
+    // }
 
     _dbSync = async (uuid) => {
-        const remoteDB = new PouchDB('https://mneme-app.herokuapp.com/db/' + uuid)
-        db.sync(remoteDB, {
-            live: true,
+        const remoteDB = await new PouchDB('https://mneme-app.herokuapp.com/db/' + uuid)
+        await db.sync(remoteDB, {
+            // live: true,
+            live: false,
             retry: true
+        }).on('complete', () => {
+            db.changes({
+                since: 0,
+                live: false,
+                include_docs: true
+            }).on('complete', () => {
+                this.props.navigation.state.params.refresh()
+            })
         })
+        return true
     }
 
     render() {

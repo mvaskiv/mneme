@@ -1,44 +1,22 @@
-import React, { Component } from 'react';
-import { RkButton } from 'react-native-ui-kitten';
-import { SQLite, Icon, Permissions, Location } from 'expo';
-import { Fab } from 'native-base';
-import { MaterialIcons, SimpleLineIcons } from '@expo/vector-icons';
-import Swipeout from 'react-native-swipeout';
-import Swipeable from 'react-native-swipeable';
-import { WeekDay, Month, weatherIcons } from '../constants/Dates-Weather';
+import React from 'react';
+import { Icon, Permissions } from 'expo';
+import { WeekDay, Month } from '../constants/Dates-Weather';
 import {
-  Image,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   FlatList,
-  TextInput,
-  KeyboardAvoidingView,
-  TouchableOpacity,
   TouchableHighlight,
-  Modal,
   TouchableWithoutFeedback,
   View,
-  Keyboard,
-  CheckBox,
-  AsyncStorage,
   LayoutAnimation,
-  Animated,
-  Easing,
-  StatusBar,
-  AlertIOS,
-  RefreshControl
+  Animated
 } from 'react-native';
-import HomeScreen, {Popup} from './HomeScreen';
-import SmartTags from './SmartTags';
+import { Popup } from './HomeScreen';
 import PouchDB from 'pouchdb-react-native'
-
-// PouchDB.plugin(require('pouchdb-find'));
 
 const dba = new PouchDB('mydb')
 
-const db = SQLite.openDatabase('mneme.db');
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -58,38 +36,6 @@ const FadeItemAnimation = {
     type: LayoutAnimation.Types.linear,
   },
 };
-
-const WeatherAnimation = {
-  duration: 335,
-  create: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-}
-
-const IntroAnimation = {
-  duration: 305,
-  create: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-}
 const ExpandAnimation = {
   duration: 175,
   create: {
@@ -105,208 +51,6 @@ const ExpandAnimation = {
     type: LayoutAnimation.Types.linear,
   },
 }
-// class SmallFolder extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       count: '',
-//       lastItem: '',
-//     };
-//     this._getCount();
-//   }
-
-//   _getCount = () => {
-//     db.transaction(async tx => {
-//         tx.executeSql(`select count(*) from ` + this.props.route + `;`, [],
-//             (_, { rows: { _array } }) => {
-//                 this.setState({count: _array[0]['count(*)']})
-//             }
-//         );
-//     });
-//     db.transaction(async tx => {
-//         tx.executeSql(`select * from ` + this.props.route + ` order by id desc limit 1;`, [],
-//             (_, { rows: { _array } }) => {
-//                 this.setState({lastItem: _array[0]})
-//             }
-//         )
-//     });
-//   }
-
-//   _getSetDate = () => {
-//     let today = new Date();
-
-//     if (!this.state.lastItem) {return 'New'}
-//     if (today.getDay() == this.state.lastItem.day && today.getMonth() == this.state.lastItem.month) {
-//       let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
-//       let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-//       return 'Last modified at ' + hr + ':' + min;
-//     } else if (this.state.lastItem.day === 6 ? today.getDay() === 0 : today.getDay() - 1 === this.state.lastItem.day && today.getMonth() == this.state.lastItem.month) {
-//       let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
-//       let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-//       return 'Last modified yesterday at ' + hr + ':' + min;
-//     } else {
-//       let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
-//       let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-//       let day = this.state.lastItem.date < 10 ? '0' + this.state.lastItem.date : this.state.lastItem.date;
-//       let month = this.state.lastItem.month < 10 ? '0' + this.state.lastItem.month : this.state.lastItem.month;
-//       return 'Last modified ' + day + '/' + month + ' at ' + hr + ':' + min;
-//     }
-//   }
-
-//   render() {
-//     if (this.props.caption === 'Add') {
-//       return (
-//         <TouchableHighlight
-//             style={[ styles.smallMenuBtn , {backgroundColor: '#efefef'} ]}
-//             underlayColor={'rgba(29, 29, 29, 0.11)'}
-//             onPress={() => this.props.navigation.navigate(this.props.route)}>
-//             <Icon.Ionicons
-//                 style={ styles.addIcon }
-//                 name="ios-add" />
-//         </TouchableHighlight>
-//       )
-//     } else {
-//       return (
-//         <TouchableHighlight
-//             style={ styles.smallMenuBtn }
-//             underlayColor={'rgba(29, 29, 29, 0.1)'}
-//             onPress={() => this.props.navigation.navigate(this.props.route, {update: this._getCount})}>
-//             <View>
-//                 <Text
-//                     style={ styles.folderHeader }>
-//                     {this.props.caption} {this.state.count > 0 && <Text style={{color: '#888', fontSize: 16, fontWeight: 'normal', paddingBottom: 2}}>({this.state.count})</Text>}
-//                 </Text>
-//                 <Text
-//                     style={ styles.lastModif }>
-//                     {this._getSetDate()}
-//                 </Text>
-//                 {!this.props.size && <Icon.SimpleLineIcons
-//                     style={ styles.enterIcon }
-//                   name="arrow-right" /> }
-//             </View>
-//         </TouchableHighlight>
-//       );
-//     }
-//   }
-// }
-
-// class Popup extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       text: '',
-//       dueDate: '',
-//     }
-//   }
-
-//   _addDueDate(d) {
-//     if (d === this.state.dueDate) {
-//       this.setState({dueDate: ''})
-//     } else if (d === 'today') {
-//       this.setState({dueDate: 'today'});
-//     } else if (d === 'tomorrow') {
-//       this.setState({dueDate: 'tomorrow'});
-//     } else if (d === 'week') {
-//       this.setState({dueDate: 'week'});
-//     }
-//   }
-
-//   render() {
-//     return (
-//       <Modal
-//         animationType="slide"
-//         transparent={true}
-//         visible={this.props.visible}
-//         onRequestClose={this.props.close}>
-//         <TouchableOpacity style={{flex: 1}} onPress={this.props.close} activeOpacity={1}>
-//           <View style={{
-//             position: 'absolute',
-//             bottom: 0,
-//             height: screenHeight > 800 ? 365 : 292,
-//             width: screenWidth,
-//             borderColor: '#ccc',
-//             borderRadius: 11,
-//             shadowColor: '#999',
-//             padding: 5,
-//             shadowOpacity: 0.2,
-//             shadowRadius: 5,
-//             borderWidth: 1,
-//             backgroundColor: '#fff'
-//           }}>
-//             <TextInput
-//               placeholder="New folder's name"
-//               maxLength={30}
-//               autoCorrect={false}
-//               name="text"
-//               underlineColorAndroid="#fff"
-//               onChangeText={(text) => {LayoutAnimation.configureNext( SwipeItemAnimation ); this.setState({text})}}
-//               blurOnSubmit={false}
-//               style={{fontSize: 16, padding: 11, paddingRight: 40}}
-//               autoFocus={true} />
-//               <RkButton
-//                 style={styles.submitBtn}
-//                 onPress={async () => {
-//                   await this.state.text ? this.props.add(this.state.text, this.state.dueDate) : null;
-//                   this.setState({text: ''});
-//                 }}
-//                 rkType='rounded'>
-//                 <Icon.MaterialIcons
-//                   name='add'
-//                   style={{
-//                     position: 'absolute',
-//                     color: '#fff',
-//                     top:5,
-//                     fontSize: 20,
-//                   }} />
-//               </RkButton>
-//               <View
-//                 style={{flexDirection: 'row'}}>
-//                 <RkButton
-//                   style={ styles.dueDate }
-//                   onPress={() => this._addDueDate('today')} >
-//                 <Text
-//                   style={{
-//                     top: -8,
-//                     color: this.state.dueDate === 'today' ? '#c43131' : '#555',
-//                     fontSize: 16,
-//                     }}>
-//                     Tasks
-//                   </Text>
-//                 </RkButton>
-//                 <RkButton
-//                   style={ styles.dueDate }
-//                   onPress={() => this._addDueDate('tomorrow')} >
-//                 <Text
-//                   style={{
-//                     top: -8,
-//                     color: this.state.dueDate === 'tomorrow' ? '#c43131' : '#555',
-//                     fontSize: 16,
-//                     }}>
-//                     Notes
-//                   </Text>
-//                 </RkButton>
-//                 <RkButton
-//                   style={{top: -5,
-//                     width: 110,
-//                     flexDirection: 'column',
-//                     backgroundColor: '#fff',
-//                     left: this.state.text.length > 0 ? -20 : 50
-//                     }}>
-//                   <Text
-//                     style={{
-//                       top: -8,
-//                       left: -22,
-//                       color: this.state.text.length >= 30 ? '#c43131' : '#555',
-//                       fontSize: 13,
-//                     }}>{this.state.text.length}/30</Text>
-//                 </RkButton>
-//               </View>
-//           </View>
-//         </TouchableOpacity>
-//       </Modal>
-//     );
-//   }
-// }
 
 class NoteItem extends React.Component {
   constructor(props) {
@@ -326,19 +70,7 @@ class NoteItem extends React.Component {
   }
 
   _getSetDate = () => {
-    if (this.props.today.getDay() == this.props.day && this.props.today.getMonth() == this.props.month) {
-      if (this.props.hours >= 0 && this.props.minutes >= 0) {
-        let hr = this.props.hours < 10 ? '0' + this.props.hours : this.props.hours;
-        let min = this.props.minutes < 10 ? '0' + this.props.minutes : this.props.minutes;
-        return hr + ':' + min;
-      } else {
-        return '';
-      }
-    } else if (this.props.today.getDay() + 1 == this.props.day && this.props.today.getMonth() == this.props.month) {
-      return 'Tomorrow';
-    } else {
-      return '';
-    }
+    return Month[this.props.month].name + ' ' + this.props.date
   }
 
   _hideNote = () => {
@@ -358,88 +90,46 @@ class NoteItem extends React.Component {
   render() {
     let creationDate = this._getSetDate();
 
-    if (this.props.type === 'task') {
-      return (
-        <TouchableWithoutFeedback
-          underlayColor={'rgba(29, 29, 29, 0.3)'}
-          onPress={() => this.props.done(this.props.id)}
-          
-          // onPress={() => this.props.viewNote(options)}
+    return (
+      <TouchableWithoutFeedback
+        underlayColor={'rgba(29, 29, 29, 0.3)'}
+        onPress={() => this.props.done(this.props.id)}
+        
+        // onPress={() => this.props.viewNote(options)}
 
-          // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
-          >
-            <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
-              <Icon.MaterialIcons
-                onPress={() => {
-                  this.props.done(this.state.done ? 0 : 1, this.props.id)
-                    .then(this.setState({done: !this.state.done}));
-                }}
-                style={[styles.checkmark, {color: this.state.done ? '#c41313' : '#bbb'}]}
-                name="done" />
-              <Text
-                numberOfLines={1}
-                style={ this.state.done ? styles.headerDone : styles.header }>
-                { this.props.header ? this.props.header : this.props.text }
-              </Text>
-              {/* <Text
-                numberOfLines={1}
-                style={ this.props.text ? styles.text : styles.textDone }>
-                { this.props.text ? this.props.text : 'No additional data' }
-              </Text> */}
-              <Text style={[styles.time]}>
-                { creationDate }
-              </Text>
-              {this.state.view && <Popup
-                caption={this.props.header}
-                text={this.props.text}
-                view={true}
-                id={this.props.id}
-                created={creationDate}
-                updated={null}
-                delete={this.props.delete}
-                hide={this._hideNote}
-                change={this._onChange} />}
-            </View>
-        </TouchableWithoutFeedback>
+        // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
+        >
+          <View style={[ styles.noteItem, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
+            <Icon.MaterialIcons
+              onPress={() => {
+                this.props.done(this.state.done ? 0 : 1, this.props._id)
+                  .then(this.setState({done: !this.state.done}));
+              }}
+              style={[styles.checkmark, {color: this.state.done ? '#c41313' : '#f6f5f5'}]}
+              name="done" />
+            <Text
+              style={ this.state.done ? styles.headerDone : styles.header }>
+              { this.props.header ? this.props.header : this.props.text }
+            </Text>
+            <Text style={[styles.time, 
+              // {color: this.state.done ? '#bbb' : '#c41313'}
+              ]}>
+              { creationDate }
+            </Text>
+            {this.state.view && <Popup
+              caption={this.props.header}
+              text={this.props.text}
+              view={true}
+              id={this.props.id}
+              created={creationDate}
+              updated={null}
+              delete={this.props.delete}
+              hide={this._hideNote}
+              change={this._onChange} />}
+          </View>
+      </TouchableWithoutFeedback>
       );
-    // } else {
-    //   return (
-    //     <TouchableWithoutFeedback
-    //       underlayColor={'rgba(29, 29, 29, 0.3)'}
-    //       onPress={() => this.props.done(this.props.id)}
-          
-    //       // onPress={() => this.props.viewNote(options)}
-
-    //       // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
-    //       >
-    //         <View style={[ styles.noteItemNote, {opacity: this.props.due === this.props.today.getDay() + 1 ? 0.5 : 1} ]}>
-    //           <Text
-    //             numberOfLines={1}
-    //             style={ this.state.done ? styles.headerDone : styles.header }>
-    //             { this.props.header ? this.props.header : this.props.text }
-    //           </Text>
-    //           {/* <Text
-    //             numberOfLines={1}
-    //             style={ this.props.text ? styles.text : styles.textDone }>
-    //             { this.props.text ? this.props.text : 'No additional data' }
-    //           </Text> */}
-    //           <Text style={[styles.time]}>
-    //             { creationDate }
-    //           </Text>
-    //           {this.state.view && <Popup
-    //             caption={this.props.header}
-    //             text={this.props.text}
-    //             view={true}
-    //             id={this.props.id}
-    //             created={creationDate}
-    //             updated={null}
-    //             delete={this.props.delete}
-    //             hide={this._hideNote}
-    //             change={this._onChange} />}
-    //         </View>
-    //     </TouchableWithoutFeedback>
-    //   )
-    }
+    
   }
 }
 
@@ -448,439 +138,71 @@ class Today extends React.Component {
     super(props);
     this.state = {
       today: false,
-      location: false,
-      weather: false,
-      weatherLoad: 0,
-      weatherIcon: false,
-      expanded: true,
-      propOpen: this.props.open,
-      dataSource: false,
-      spin: new Animated.Value(0),
-      open: new Animated.Value(1),
     };
-    this._getTasks();
-    
   }
 
   componentWillMount() {
-    this._getLocationAsync();
     this._todayInit();
-    LayoutAnimation.configureNext(IntroAnimation);
-  }
-
-  componentDidMount() {
-    // this._animationLoop();
-    dba.changes({
-      since: 'now',
-      live: true,
-      include_docs: true
-    }).on('change', () => {
-      console.log('change')
-      this._getTasks()
-    })
-  }
-
-  componentWillReceiveProps() {
-    this._getTasks();
   }
 
   _todayInit = () => {
     let today = new Date();
-
     this.setState({today: {
       'Day': WeekDay[today.getDay()],
       'Date': Month[today.getMonth()].name + ' ' + today.getDate()
     }});
   }
 
-  _animationLoop = () => {
-    this.state.spin.setValue(0);
-    Animated.timing(this.state.spin, {
-      toValue: 1,
-      duration: 1500,
-      easing: Easing.linear,
-      useNativeDriver: true
-    }).start(() => {
-      this.setState({weatherLoad: this.state.weatherLoad + 1});
-      if (this.state.weatherLoad < 5) {
-        this._animationLoop()
-      }
-    });
-  }
-
-  _expandAnimation = (i) => {
-    Animated.timing(this.state.open, {
-      toValue: 10,
-      duration: 240,
-      easing: Easing.linear,
-      useNativeDriver: true
-    }).start(() => {
-      Animated.timing(this.state.open, {
-        toValue: 1,
-        duration: 100,
-        easing: Easing.linear,
-        useNativeDriver: true
-      }).start();
-    });
-  }
-
-  _viewNote = (options) => {
-    this.props.navigation.navigate('Note', options);
-  }
-
-  _todayIDone = async (i, id) => {
-    return new Promise(
-      resolve => {
-        db.transaction(tx => {
-          tx.executeSql(`update tasks set completed = ? where id = ?`,[i, id]
-        );
-      });
-      resolve('yes');
-    });
-  }
-
-  _getLocationAsync = async () => {
-    let { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== 'granted') {
-      this.setState({
-        errorMessage: 'Permission to access location was denied',
-      });
-    }
-
-    await Location.getCurrentPositionAsync({})
-    .then((location) => {
-      this.setState({ location });
-      this._getWeather();
-    })
-  };
-
-  _getWeather = async () => {
-    this.setState({weatherLoad: 0});
-    await fetch('https://api.darksky.net/forecast/9356b07d5c4d535014e4593c241c3431/' + this.state.location.coords.latitude + ',' + this.state.location.coords.longitude + '?units=auto&exclude=minutely,hourly,alerts,flags', {
-      method: 'GET',
-    })
-    .then((response) => response.json())
-    .then((res) =>
-    {
-      if (res) {
-        this.setState({weather: res});
-        this._animationLoop();
-        setTimeout(() => {LayoutAnimation.configureNext(WeatherAnimation); this.setState({weatherIcon: weatherIcons[res.currently.icon]})}, 500);
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  }
-
-  _sortTasks(stash, today) {
-    let today_t = [];
-    let tomor = [];
-    let rest = [];
-    stash.map(e => {
-      if (e.due === today) {
-        today_t.push(e);
-      } else if (e.due === today + 1) {
-        tomor.push(e);
-      } else {
-        rest.push(e);
-      }
-    })
-    return(today_t.concat(tomor.concat(rest)));
-  }
-
-  _getTasks = async () => {
-    let today = await new Date().getDate();
-    dba.createIndex({
-      index: {fields: ['completed']}
-    })
-    dba.find({
-      selector: {
-        'type': 'task',
-        'completed': 0,
-        // due: today
-      },
-      // fields: ['_id', 'text', 'due'],
-      sort: ['_id'],
-      // limit: 20
-    }).then((res) => this.setState({ dataSource: this._sortTasks(res.docs.reverse(), today) }));
-  }
-
-  _expand = () => {
-    this._getTasks();
-    LayoutAnimation.configureNext( ExpandAnimation );
-    this.setState({expanded: !this.state.expanded});
-  }
-
   render() {
-    let today = new Date();
-    const spin = this.state.spin.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['0deg', '360deg']
-    });
-
     return (
-      <View style={{top: 5, height: this.state.expanded ? 'auto' : 94, overflow: 'hidden', paddingBottom: 10, backgroundColor: 'rgba(255,255,255,0)'}}>
-        <TouchableHighlight
-          style={[ styles.todayView, {height: 75, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0)'} ]}
-          underlayColor={'rgba(255,255,255,0.2)'}
-          // onPress={this.state.dataSource[0] ? this._expand : null}
-          >
-          <View style={{backgroundColor: 'rgba(255,255,255,0)',
-            // opacity: this.state.expanded ? 0.5 : 1
-            }}>
-            <Text
-                style={[ styles.folderHeader, {fontSize: 35} ]}>
-                {this.state.today ? this.state.today['Day'] : 'Today'}
-            </Text>
-            {this.state.today &&
-              <Text style={styles.monthNdate}>
-                {this.state.today['Date']}
-              </Text>
-            }
-            <Text
-              style={[ styles.lastModif, {position: 'absolute', right: 35, top: -5, textAlign: 'right', lineHeight: 15, fontSize: 12} ] }>
-              {this.state.weather ? this.state.weather.currently.summary + ' ' + Math.round(this.state.weather.currently.apparentTemperature) + '\u2103' + '\n' : null}
-              {this.state.weather ? Math.round(this.state.weather.daily.data[0].temperatureMax) + '\u00b0' + ' / ' + Math.round(this.state.weather.daily.data[0].temperatureMin) + '\u00b0' : null}
-            </Text>
-            {/* {this.state.dataSource[0] && <Icon.SimpleLineIcons
-              style={[ styles.enterIcon, { color: '#aaa', top: 75 } ]}
-              name={this.state.expanded ? 'arrow-up' : "arrow-down"} />} */}
-
-            {/* <Text
-                style={[ styles.lastModif, {position: 'absolute', left: 0, top: 67, opacity: this.state.expanded ? 0.5 : 1} ]}>
-                {!this.state.dataSource[0] ? 'No tasks for today' :
-                  'Next: ' + this.state.dataSource[0].text}
-            </Text> */}
-            {this.state.weatherIcon
-              ? <Image style={{position: 'absolute', top: 9, right: 0, height: 25, width: 25}} source={ this.state.weatherIcon } />
-              : <TouchableOpacity onPress={() => this._getWeather()} style={{position: 'absolute', top: 9, right: 0, height: 22, width: 22}}>
-                  <Animated.View style={{transform: [{rotate: spin}], position: 'absolute', top: 0, right: 0, height: 22, width: 22}}>
-                    <Icon.Ionicons style={{position: 'absolute', top: 0, right: 0, fontSize: 22}} name="ios-sync" />
-                  </Animated.View>
-                </TouchableOpacity>
-            }
-          </View>
-      </TouchableHighlight>
-      {this.state.dataSource[0] ?
-      <FlatList
-        scrollEnabled={!this.state.isSwiping}
-        // onRefresh={() => null}
-        // refreshing={false}
-        // ListEmptyComponent={}
-        extraData={this.state}
-        data={this.state.dataSource}
-        style={[ styles.listContainer, { height: screenHeight - 223, overflow: 'hidden', backgroundColor:'#fff'} ]}
-        keyExtractor={item => item._id.toString()}
-        extraData={this._getUpdate}
-        onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-        renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._todayIDone} swiping={this._swipeHandler} />}
-      />
-      :
-      <View style={[ styles.listContainer, { height: screenHeight - 263, overflow: 'hidden', backgroundColor:'#fff'} ]}>
-        <Text style={{textAlign: 'center', color: '#999', fontSize: 25, fontWeight: '200', paddingTop: 10}}>No tasks for Today</Text>
-      </View>
-      }
+      <View style={{zIndex: 3000, top: 0, height: 64, borderBottomColor: '#eeeeee', borderBottomWidth: 1, overflow: 'hidden', paddingTop: 10, paddingLeft: 12, paddingBottom: 7, backgroundColor: 'rgba(250,250,253,1)',
+    }}>
+        <Text
+            style={[ styles.folderHeader, {fontSize: 24, fontWeight: '700'} ]}>
+            {this.state.today ? this.state.today['Day'].toUpperCase() : 'Today'}
+        </Text>
+        {this.state.today &&
+          <Text style={styles.monthNdate}>
+            {this.state.today['Date'].toUpperCase()}
+          </Text>
+        }      
     </View>
     )
   }
 }
 
-class MenuItem extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      count: '',
-      lastItem: '',
-      edit: false,
-    };
-    this._getCount();
-  }
+const HomeAddBtn = (props) => (
+  <View style={{height: 99}}>
+    <Icon.Feather name='minus' style={{position: 'absolute', zIndex: 101, width: 50, textAlign: 'center', left: screenWidth / 2 - 25, fontSize: 50, fontWeight: 900, top: -32, color: '#b9b9cc', height: 30 }} />
+    <TouchableHighlight
+        style={ styles.menuBtn }
+        underlayColor={'#efefef'}
+        onLongPress={() => props.navigation.navigate('NewNoteM', {caption: "Notes", updateToday: props.updateToday})}
+        onPress={props._toogleModal}>
+        <Icon.Ionicons
+            style={ styles.addIcon }
+            name="ios-add" />
+    </TouchableHighlight>
+  </View>
+)
 
-  _getCount = () => {
-    let selection = this.props.route === 'tasks' ? ' where completed = 0;' : ' where deleted = 0;';
-    let route = this.props.route === 'tasks' ? 'tasks' : 'notes';
-    route = this.props.id ? "notes where folder = ?" : route;
-    selection = this.props.id ? " and deleted = 0" : selection;
-    db.transaction(async tx => {
-        tx.executeSql(`select count(*) from ` + route + selection, [this.props.id],
-            (_, { rows: { _array } }) => {
-                this.setState({count: _array[0]['count(*)']})
-            }
-        );
-    });
-    db.transaction(async tx => {
-        tx.executeSql(`select * from ` + route + ` order by id desc limit 1;`, [this.props.id],
-            (_, { rows: { _array } }) => {
-                this.setState({lastItem: _array[0]})
-            }
-        )
-    });
-  }
-
-  _newFolder = () => {
-    AlertIOS.prompt('New Folder', "", [
-      {
-        text: 'Cancel',
-        // onPress: () => null,
-        style: 'cancel',
-      },
-      {
-        text: 'Add',
-        onPress: name => {
-          name ? this._addFolder(
-          name,
-          this.props.small ? 1 : 0
-        ) : null},
-      },
-    ]);
-  }
-
-  _addFolder = async (name, size) => {
-    LayoutAnimation.configureNext( FadeItemAnimation );
-    await db.transaction(tx => {
-      tx.executeSql(`insert into folders (name, type, route, size) values (?, ?, ?, ?);`,[
-          name,
-          0,
-          name,
-          size
-        ], () => this.props.update()
-      );
-    });
-  }
-
-  _deleteFolder = () => {
-    LayoutAnimation.configureNext( FadeItemAnimation );
-    AlertIOS.alert(
-      'Delete the folder',
-      'Including the notes inside',
-      [
-        {
-          text: 'Cancel',
-          onPress: () => this.setState({edit: false}),
-          style: 'cancel'
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await db.transaction(tx => {
-              tx.executeSql(`delete from folders where id = ?`,[
-                  this.props.id
-                ], () => this.props.update()
-              );
-            });
-          }
-        },
-      ]
-    );
-  }
-
-  _getSetDate = () => {
-    let today = new Date();
-
-    if (!this.state.lastItem) {return 'Empty'}
-    if (today.getDay() == this.state.lastItem.day && today.getMonth() == this.state.lastItem.month) {
-      let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
-      let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-      return 'Last added Today';
-    } else if (this.state.lastItem.day === 6 ? today.getDay() === 0 : today.getDay() - 1 === this.state.lastItem.day && today.getMonth() == this.state.lastItem.month) {
-      let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
-      let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-      return 'Last added Yesterday';
-    } else {
-      let hr = this.state.lastItem.hours < 10 ? '0' + this.state.lastItem.hours : this.state.lastItem.hours;
-      let min = this.state.lastItem.minutes < 10 ? '0' + this.state.lastItem.minutes : this.state.lastItem.minutes;
-      let day = this.state.lastItem.date < 10 ? '0' + this.state.lastItem.date : this.state.lastItem.date;
-      let month = this.state.lastItem.month < 10 ? '0' + this.state.lastItem.month : this.state.lastItem.month;
-      return 'Last added ' + day + '/' + month;
-    }
-  }
-
-  render() {
-
-    if (this.props.caption === 'Add') {
-      return (
-        <View style={{height: 99}}>
-          <TouchableHighlight
-              style={[ this.props.small ? styles.smallMenuBtn : styles.menuBtn , {backgroundColor: '#efefef'} ]}
-              underlayColor={'rgba(29, 29, 29, 0.11)'}
-              onLongPress={() => this.props.navigation.navigate('NewNoteM', {update: this.props.notes, folder: 0, caption: "Notes", updateToday: this.props.updateToday})}
-              onPress={this.props._toogleModal}>
-              <Icon.Ionicons
-                  style={ styles.addIcon }
-                  name="ios-add" />
-          </TouchableHighlight>
-          {/* <RkButton
-            style={{ zIndex: 101, backgroundColor: 'transparent', position: 'absolute', width: 26, height: 26, bottom: -5, right: 14 }}
-            onPress={() => this.props.navigation.navigate('Settings')}>
-            <Icon.Ionicons
-              style={ styles.settings }
-              name='ios-settings' />
-          </RkButton> */}
-        </View>
-      )
-    } else {
-      return (
+const HomeMenuBtn = (props) => (
+  <View>
+    <TouchableHighlight
+      style={ styles.smallMenuBtn }
+      underlayColor={'rgba(29, 29, 29, 0.1)'}
+      onPress={() => props.navigation.navigate(props.route, {updateToday: props.updateToday})}>
         <View>
-          {this.state.edit && <View style={{position: 'absolute', right: 0, top:40, flexDirection: 'row'}}>
-            {/* <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})}}>
-              <Icon.Ionicons
-                style={ styles.editBtn }
-                name="ios-arrow-dropleft-outline" />
-            </RkButton>
-            <RkButton style={ styles.edit }
-              onPress={() => {LayoutAnimation.configureNext(FadeItemAnimation); this.setState({editText: true}); this.setState({edit: false})}}>
-              <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#4286f4'} ]}
-                name="ios-create-outline" />
-            </RkButton> */}
-            <RkButton style={ styles.edit }
-              onPress={() => this._deleteFolder()}>
-              <Icon.Ionicons
-                style={[ styles.editBtn, {color: '#c43131'} ]}
-                name="ios-trash-outline" />
-            </RkButton>
-          </View> }
-          <TouchableHighlight
-            onLongPress={this.props.custom ? () => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})} : () => null}
-            style={[ this.props.small ? styles.smallMenuBtn : styles.menuBtn, this.state.edit && { width: screenWidth / 1.5 } ]}
-            underlayColor={this.state.edit ? 'transparent' : 'rgba(29, 29, 29, 0.1)'}
-            onPress={this.state.edit ? () => {LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: false})} : () => this.props.route === 'tasks' ? this.props.navigation.navigate('tasks', {update: this._getCount, updateToday: this.props.updateToday}) : this.props.navigation.navigate('notes', {update: this._getCount, folder: this.props.id, caption: this.props.caption, updateToday: this.props.updateToday})}>
-            { this.props.small
-            ?
-              <View>
-                <Text
-                    style={ styles.folderHeader }>
-                    {this.props.caption}
-                </Text>
-                <Text
-                  style={{color: '#888', fontSize: 14, fontWeight: 'normal', paddingBottom: 2, top: 12}}>
-                   { this.state.count > 0 ? this.state.count + this.state.count > 1 ? ' Items' : 'Item' : 'Empty' }
-                </Text>
-              </View>
-            :
-              <View>
-                <Text
-                    style={ styles.folderHeader }>
-                    {this.props.caption} {this.state.count > 0 && <Text style={{color: '#888', fontSize: 16, fontWeight: 'normal', paddingBottom: 2}}>({this.state.count})</Text>}
-                </Text>
-                <Text
-                    style={ styles.lastModif }>
-                    {this._getSetDate()}
-                </Text>
-                <Icon.SimpleLineIcons
-                    style={ styles.enterIcon }
-                  name="arrow-right" />
-              </View>
-            }
-          </TouchableHighlight>
+          <Text style={ styles.folderHeader }>
+              {props.caption}
+          </Text>
+          <Icon.SimpleLineIcons
+              style={ styles.enterIcon }
+            name="arrow-right" />
         </View>
-      );
-    }
-  }
-}
+    </TouchableHighlight>
+  </View>
+)
 
 const SettingsBtn = (props) => (
     <Icon.Ionicons
@@ -941,31 +263,28 @@ export default class Menu extends React.Component {
       todayOpactity: new Animated.Value(0),
       added: false,
     };
-    this._bootstrapAsync();
   }
 
   static navigationOptions = ({ navigation }) => {
     return {
       header: null
-      // headerRight: <SettingsBtn nav={navigation}  />
     }
   };
 
   async componentWillReceiveProps() {
     let a = await this.props.navigation.state;
     console.log(a)
-    // if (this.navigation.state)
   }
 
   _bootstrapAsync = async () => {
-    return new Promise(
-      resolve => {
-          db.transaction(tx => {
-            tx.executeSql(`select * from folders;`,[], (_, { rows: { _array } }) => {this.setState({ dataSource: _array })}
-        );
-      });
-      resolve('yes');
-    });
+  }
+
+
+  _updateToday = () => {
+    return new Promise(resolve => {
+      this.setState({todayUpd: !this.state.todayUpd});
+      resolve('done');
+    })
   }
 
   _toogleModal = () => {
@@ -1009,37 +328,15 @@ export default class Menu extends React.Component {
     let min = time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1;
     dba.put({
       '_id': date.getTime().toString(),
-      'type': 'task', 'text': text,
+      'type': 'task', 'text': text.trim(),
       'hours': hr, 'minutes': min,
       'day': dueDate ? dueDate : null, 'date': date.getDate(), 'month': date.getMonth(),
       'due': dueDate, 'tag': tags,
-      'completed': 0, 'reminder': null, 'origin': 'Mobile' })
+      'completed': 0, 'reminder': null, 'origin': 'Mobile' }).catch(err => console.warn(err))
     if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
       this._scheduleNotification(dueDate, time, text);
     }
-    // await db.transaction(async tx => {
-    //     await tx.executeSql(`insert into tasks (text, hours, minutes, day, date, month, due, tag) values
-    //       (?, ?, ?, ?, ?, ?, ?, ?); select last_insert_rowid();`, [
-    //         text,
-    //         time ? time.getHours() ? time.getHours() : time.getHours() == 0 ? time.getHours() : -1 : -1,
-    //         time ? time.getMinutes() ? time.getMinutes() : time.getMinutes() == 0 ? time.getMinutes() : -1 : -1,
-    //         dueDate ? dueDate : null,
-    //         date.getDate(),
-    //         date.getMonth(),
-    //         dueDate,
-    //         tags,
-    //       ], async (_, res) => {
-    //         thisID = await res['insertId'];
-    //         // console.log(date.getHours(), time.getHours(), date.getMinutes(), time.getMinutes())
-    //         if (time && time.getHours() && (date.getHours() <= time.getHours() &&  date.getMinutes() < time.getMinutes())) {
-    //           this._scheduleNotification(dueDate, time, text);
-    //         }
-    //       }
-    //     );
-    //   }
-    // );
     this._updateToday();
-    this.todosBtn._getCount();
     LayoutAnimation.configureNext( ExpandAnimation );
     await this.setState({updated: true, added: true});
     setTimeout(() => {LayoutAnimation.configureNext( ExpandAnimation );this.setState({added: false})}, 1550);
@@ -1062,109 +359,144 @@ export default class Menu extends React.Component {
     this._updateToday();
   }
 
-  _updateToday = () => {
-    return new Promise(resolve => {
-      this.setState({todayUpd: !this.state.todayUpd});
-      resolve('done');
-    })
-  }
 
   render() {
-    let today = new Date();
-    const todayOpactity = this.state.todayOpactity.interpolate({
-      inputRange: [20, 155],
-      outputRange: [1, 0],
-      extrapolate: 'clamp',
-      // useNativeDriver: true,
-    });
-    const todayShift = this.state.todayOpactity.interpolate({
-      inputRange: [-250, -15, 30, 100],
-      outputRange: [15, 0, 0, 20],
-      extrapolate: 'clamp',
-      // useNativeDriver: true,
-    });
-    const todayScale = this.state.todayOpactity.interpolate({
-      inputRange: [-250, -10, 10, 30],
-      outputRange: [0.87, 1, 1, 0.94],
-      extrapolate: 'clamp',
-      // useNativeDriver: true,
-    });
-
     return (
       <View style={{flex:1, backgroundColor:'#fff'}}>
+        <Today />
         <Popup visible={true} visible={this.state.modal}
           close={this._toogleModal}
           add={this._addItem} />
         {this.state.added && <AddedItem />}
         <ScrollView
-          refreshControl={
-            <RefreshControl
-                onRefresh={this._refresh}
-                refreshing={this.state.refreshing}
-                tintColor='#fff'
-                title={this.state.refreshing ? 'Up to Date' : 'Pull to Update'}
-                titleColor='#c41313'
-            />
-          }
-          // onScrollEndDrag={() => {console.log('qwe')}}
           showsVerticalScrollIndicator={false}
-          snapToInterval={300}
-          snapToAlignment='start'
           stickyHeaderIndices={[0]}
+          snapToInterval={screenHeight > 800 ? 550 : 450}
+          snapToAlignment='end'
+          // bounces={false}
           decelerationRate='fast'
-          style={{position: 'absolute', top: 0, width: screenWidth, height: screenHeight + 322, zIndex: 99, overflow: 'visible'}}
-          onScroll={Animated.event([{nativeEvent: {contentOffset: {y: this.state.todayOpactity}}}])}
-          scrollEventThrottle={16}
-          contentContainerStyle={{justifyContent: 'flex-end', backgroundColor:'transparent'}}>
-          <Animated.View style={{
-            transform: [{scale: todayScale}],
-            opacity: todayOpactity,
-            // top: todayShift,
-            zIndex: 1,
-            backgroundColor: '#fff',
-            }}>
-
-          <Today
-            update={this._updateToday}
-            navigation={this.props.navigation}
-            clickable={this.state.todayOpactity === 1 ? true : false}
-            updateCounter={this.todosBtn}
-            />
-          </Animated.View>
-          <View style={{width: screenWidth, height: screenHeight - 40, paddingTop: 0, top: -10, zIndex:99, overflow: 'visible'}}>
-            <MenuItem
+          style={{position: 'absolute', bottom: 0, width: screenWidth, height: screenHeight > 800 ? screenHeight - 83 : screenHeight - 75, zIndex: 399, overflow: 'hidden'}}
+          contentContainerStyle={{position: 'absolute', top: screenHeight > 800 ? 49 : 0, backgroundColor:'transparent', height: screenHeight + 45}}>
+          <TasksToday ref={r => this.today = r} update={ this.state.todayUpd } navigation={ this.props.navigation } />
+          <View style={{position: 'absolute', bottom: 0, width: screenWidth, height: screenHeight > 800 ? 273 : 225, paddingTop: 0, zIndex:99, overflow: 'visible', borderWidth: 0.5,
+            backgroundColor: 'rgb(248,248,248)',
+            borderColor: '#eaeaeb',
+            borderRadius: 25,
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,}}>
+            <HomeAddBtn
               navigation={this.props.navigation}
-              caption={"Add"}
-              route={'Add'}
               update={this._bootstrapAsync}
-              notes={() => this.notesBtn._getCount()}
               _toogleModal={this._toogleModal} />
-            <MenuItem
-              ref={(c) => this.todosBtn = c}
+            <HomeMenuBtn
               updateToday={this._updateToday}
               navigation={this.props.navigation}
-              caption={"To Do's"}
+              caption={"Tasks"}
               route={'tasks'} />
-            <MenuItem
-              ref={(ref) => this.notesBtn = ref}
+            <HomeMenuBtn
               navigation={this.props.navigation}
               updateToday={this._updateToday}
               caption={"Notes"}
               route={'notes'} />
+            <View style={{backgroundColor: 'rgb(248,248,248)', height: 500}} />
           </View>
         </ScrollView>
-        {/* <Modal
-          transparent={true}
-          visible={true}>
-            <ScrollView
-              scrollEventThrottle={16}
-              onScroll={this._modalScroll}
-              style={{position: 'absolute', bottom: 0, height: screenHeight - 85, width: screenWidth, backgroundColor: '#fff', borderColor: '#bbb', borderWidth: 0.5, borderTopLeftRadius: 15, borderTopRightRadius: 15}}>
-              <View style={{height: screenHeight * 2, width: screenWidth, backgroundColor: '#aaa'}} />
-            </ScrollView>
-        </Modal> */}
+        <Footer navigate={this.props.navigation.navigate} _getTasks={() => this.today._getTasks() } />
       </View>
     );
+  }
+}
+
+const Footer = (props) => (
+  <View style={ styles.footer }>
+   <Icon.Ionicons
+        onPress={() => props.navigate('SmartTagsS', {updateToday: () => props._getTasks()})}
+        style={styles.tagsList}
+        name="ios-list" /> 
+    <Icon.Ionicons
+        onPress={() => props.navigate('SettingsS')}
+        style={styles.themeSwitch}
+        name="ios-settings" />
+  </View>
+)
+
+
+class TasksToday extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      dataSource: []
+    }
+    this._getTasks();
+  }
+
+  _sortTasks(stash, today) {
+    let today_t = [];
+    let tomor = [];
+    let rest = [];
+    stash.map(e => {
+      if (e.due === today) {
+        today_t.push(e);
+      } else if (e.due === today + 1) {
+        tomor.push(e);
+      } else {
+        rest.push(e);
+      }
+    })
+    return(today_t.concat(tomor.concat(rest)));
+  }
+
+  componentWillReceiveProps() {
+    this._getTasks();
+  }
+
+  _getTasks = async () => {
+    let today = await new Date().getDate();
+    // dba.createIndex({
+      // index: {fields: ['type']}
+    // })
+    dba.find({
+      selector: {
+        'type': 'task',
+        'completed': {$eq: 0}
+      },
+      sort: ['_id']
+    }).then((res) => {
+      this.setState({ dataSource: this._sortTasks(res.docs.reverse(), today) })
+    }).catch(err => console.warn(err))
+  }
+
+  _todayIDone = async (i, id) => {
+    dba.get(id).then((res) => {
+      res.completed = i;
+      dba.put(res)
+        // .then(() => this._getUpdate())
+        .catch(err => console.warn(err))
+    })
+  }
+
+  render() {
+    let today = new Date();
+    if (this.state.dataSource[0]) {
+      return (
+        <FlatList
+          scrollEnabled={!this.state.isSwiping}
+          extraData={this.state}
+          data={this.state.dataSource}
+          style={[ styles.listContainer, { height: screenHeight - 195, overflow: 'hidden', backgroundColor:'#fff'} ]}
+          keyExtractor={item => item._id.toString()}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
+          renderItem={({ item }) => <NoteItem {...item} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._todayIDone} swiping={this._swipeHandler} />}
+        />
+      )
+    } else {
+      return (
+        <View style={[ styles.listContainer, { height: screenHeight - 195, overflow: 'hidden', backgroundColor:'#fff'} ]}>
+          <Text style={{textAlign: 'center', color: '#999', fontSize: 25, fontWeight: '200', paddingTop: 10}}>No tasks for Today</Text>
+        </View>
+      )
+    }
   }
 }
 
@@ -1176,36 +508,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   menuBtn: {
-    width: screenWidth - 20,
+    position: 'relative',
+    width: screenWidth,
+    left: -0.5,
     padding: 14,
-    top: 4,
-    marginTop: 15,
-    marginHorizontal: 10,
-    borderWidth: 1,
-    shadowColor: '#999',
-    shadowOffset: {bottom: 20},
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderColor: '#eaeaea',
-    borderRadius: 10,
-    height: 85,
+    paddingTop: 4,
+    top: -15,
+    margin: 0,
+    borderWidth: 0.5,
+    shadowColor: 'rgba(150,150,153,0.95)',
+    shadowRadius: 14,
+    shadowOpacity: 0.12,
+    backgroundColor: 'rgba(250,250,253,1)',
+    borderColor: '#ddd',
+    borderRadius: 25,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomColor: screenHeight > 800 ? '#aaa' : '#ddd',
+    borderBottomWidth: 0.5,
+    height: 75,
   },
   smallMenuBtn: {
-    width: (screenWidth / 3) - 18,
+    position: 'relative',
+    width: screenWidth,
     padding: 14,
-    top: 4,
-    left: 8,
-    right: 8,
-    marginTop: 15,
-    marginHorizontal: 6,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 10,
-    height: (screenWidth / 3) - 18,
+    paddingTop: 19,
+    top: screenHeight > 800 ? -47 : -39,
+    margin: 0,
+    marginBottom: 0,
+    backgroundColor: 'rgba(245,245,248,0.95)',
+    borderColor: '#eaeaea',
+    borderBottomColor: '#e7e7e7',
+    borderBottomWidth: 0.5,
+    height: screenHeight > 800 ? 64 : 60,
   },
   folderHeader: {
-    color: '#c43131',
+    color: '#333',
     fontWeight: 'bold',
     fontSize: 21,
   },
@@ -1223,8 +561,9 @@ const styles = StyleSheet.create({
   addIcon: {
     marginLeft: 'auto',
     marginRight: 'auto',
-    fontSize: 55,
-    color: '#777',
+    fontSize: 38,
+    top: screenHeight > 800 ? 8 : 12,
+    color: '#555',
     marginTop: 'auto',
     marginBottom: 'auto'
   },
@@ -1271,13 +610,14 @@ const styles = StyleSheet.create({
     width: screenWidth / 1.5
   },
   listContainer: {
-    width: screenWidth - 20,
+    width: screenWidth,
+    left: 0,
     padding: 14,
     paddingBottom: 0,
-    top: 4,
+    top: 0,
     marginBottom: 5,
-    marginTop: 15,
-    marginHorizontal: 10,
+    marginTop: 8,
+    marginHorizontal: 0,
     // borderWidth: 1,
     // borderColor: '#eee',
     // borderRadius: 10,
@@ -1301,11 +641,14 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
   },
   noteItem: {
-    flex: 1,
-    padding: 12,
+    // flex: 1,
+    padding: 15,
+    paddingBottom: 5,
+    marginLeft: 0,
     marginTop: 10,
-    top: -10,
-    minHeight: 30,
+    top: -15,
+    // minHeight: 37,
+    height: 'auto',
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#f5f5f5',
@@ -1313,30 +656,38 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    position: 'absolute',
-    width: screenWidth - 70,
-    top: 0,
-    left: 25,
-    fontWeight: "200",
+    position: 'relative',
+    width: screenWidth - 60,
+    top: -14,
+    margin: 0,
+    padding: 0,
+    paddingBottom: 3,
+    left: -15,
+    lineHeight: 24,
+    fontWeight: "400",
     fontSize: 18,
     color: '#444',
   },
   headerDone: {
-    position: 'absolute',
-    width: screenWidth - 70,
-    top: 0,
-    left: 25,
-    fontWeight: "200",
+    position: 'relative',
+    width: screenWidth - 60,
+    top: -14,
+    margin: 0,
+    padding: 0,
+    paddingBottom: 3,
+    left: -15,
+    lineHeight: 24,
+    fontWeight: "400",
     fontSize: 18,
-    // color: '#444',
+
     color: '#bbb',
     textDecorationLine: 'line-through',
     textDecorationStyle: 'solid',
   },
   checkmark: {
     position: 'absolute',
-    top: -4,
-    left: -12,
+    top: 4,
+    right: 0,
     fontSize: 29,
   },
   // text: {
@@ -1367,10 +718,12 @@ const styles = StyleSheet.create({
   },
   time: {
     position: 'absolute',
-    top: 2,
-    right: -5,
-    fontSize: 12,
-    color: '#c43131',
+    bottom: 3.5,
+    left: 0.8,
+    fontSize: 13,
+    // color: '#c43131',
+    color: '#aaa',
+    fontWeight: '200'
   },
   emptyToday: {
     color: '#777'
@@ -1388,11 +741,12 @@ const styles = StyleSheet.create({
   },
   monthNdate: {
     // position: 'absolute',
-    // top: 47,
+    top: -2,
     fontSize: 16,
-    // color: '#c43131',
-    fontWeight: '100',
-    opacity: 0.8
+    color: '#c43131',
+    fontWeight: '700',
+    
+    // opacity: 0.8
   },
   settings: {
     position: 'absolute',
@@ -1400,5 +754,29 @@ const styles = StyleSheet.create({
     right: 2,
     color: '#c43131',
     fontSize: 26,
-  }
+  },
+  footer: {
+    width: screenWidth,
+    height: 45,
+    position: 'absolute',
+    bottom: 0,
+    borderTopWidth: 0.5,
+    backgroundColor: 'rgba(250,250,253,1)',
+    borderTopColor: '#ccc',
+    zIndex: 2001,
+  },
+  themeSwitch: {
+    position: 'absolute',
+    right: 14,
+    top: 10,
+    fontSize: 24,
+    color: '#667'
+  },
+  tagsList: {
+    position: 'absolute',
+    left: 17,
+    top: 5,
+    fontSize: 32,
+    color: '#444'
+  },
 });

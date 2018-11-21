@@ -1,36 +1,21 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { LayoutAnimation } from 'react-native';
 import { RkButton, RkModalImg, RkTextInput } from 'react-native-ui-kitten';
-import ImageViewer from 'react-native-image-zoom-viewer';
-import Expo, { Icon, SQLite, Notifications, Permissions, Camera, BlurView } from 'expo';
+import Expo, { Icon, Permissions } from 'expo';
 import { Fab } from 'native-base';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Month } from '../constants/Dates-Weather';
-import Swipeout from 'react-native-swipeout';
 import Swipeable from 'react-native-swipeable';
-// import Modal from 'react-native-modalbox';
-import CountdownCircle from 'react-native-countdown-circle';
-import SlideDownPanel from "react-native-slide-down-panel";
 import {
-  Image,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   FlatList,
   TextInput,
-  KeyboardAvoidingView,
   TouchableOpacity,
   TouchableHighlight,
   Modal,
-  TouchableWithoutFeedback,
   View,
-  Keyboard,
-  CheckBox,
-  AsyncStorage,
-  SectionList,
-  Animated,
 } from 'react-native';
+import { Header } from '../constants/header';
 import PouchDB from 'pouchdb-react-native'
 const db = new PouchDB('mydb')
 
@@ -38,7 +23,7 @@ const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 const ListItemAnimation = {
-  duration: 175,
+  duration: 125,
   create: {
     property: LayoutAnimation.Properties.opacity,
     type: LayoutAnimation.Types.linear,
@@ -82,21 +67,6 @@ const SwipeOutItemAnimation = {
     type: LayoutAnimation.Types.linear,
   },
 };
-const FadeItemAnimation = {
-  duration: 135,
-  create: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-};
 
 const RecoverBtn = ({onPress}) => (
   <Fab
@@ -106,28 +76,6 @@ const RecoverBtn = ({onPress}) => (
       position="bottomRight"
       onPress={onPress}>
       <Icon.MaterialIcons name={'restore'} />
-  </Fab>
-)
-
-const AddBtn = ({onPress}) => (
-  <Fab
-      direction="up"
-      containerStyle={{ }}
-      style={{ backgroundColor: '#c43131' }}
-      position="bottomRight"
-      onPress={onPress}>
-      <Icon.MaterialIcons name={'add'} />
-  </Fab>
-)
-
-const TestBtn = ({onPress}) => (
-  <Fab
-      direction="up"
-      containerStyle={{ }}
-      style={{ backgroundColor: '#c43131' }}
-      position="bottomLeft"
-      onPress={onPress}>
-      <Icon.MaterialIcons name={'add'} />
   </Fab>
 )
 
@@ -164,43 +112,8 @@ class Popup extends React.Component {
   }
 
   _closePrompt = () => {
-    // if (this.state.text || this.state.header) {
-    //   if (confirm("Your changes won't be saved. Are you sure you want to continue?")) {
-        this.props.close();
-    //   }
-    // }
+    this.props.close();
   }
-
-  // _getPictures = async () => {
-  //   let id = await this.props.id;
-  //   if (id) {
-  //       db.transaction(tx => {
-  //         tx.executeSql(`select * from img where note = ?`, [id],
-  //           async (_, { rows: { _array } }) => {
-  //             if (_array) {
-  //               _array.map(async (pic) => {
-  //                 console.log(JSON.parse(pic.src));
-  //                 await this.state.img.push(JSON.parse(pic.src));
-  //                 LayoutAnimation.configureNext( ListItemAnimation );
-  //                 await this.setState({updated: true});
-  //               })
-  //             }
-  //           }
-  //       );
-  //    });
-  //   }
-  //   await this.setState({updated: true});
-  // }
-
-  // _editNote = () => {
-  //   if (this.state.header != this.props.caption || this.state.text != this.props.text) {
-  //     db.transaction(tx => {
-  //         tx.executeSql(`update notes set header = ?, text = ? where id = ?`,[this.state.header, this.state.text, this.props.id]
-  //       );
-  //     });
-  //   }
-  //   this.setState({editText: false});
-  // }
 
   _selectImage = async () => {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);
@@ -237,12 +150,7 @@ class Popup extends React.Component {
         style={{flexDirection: 'column', maxWidth: screenWidth / 2.3}}
         key={String(i)} source={this.state.img} index={i} />
     }) : null;
-
-  // let imageMap = (
-  //   <Modal visible={true} transparent={true} >
-  //     <ImageViewer enableSwipeDown={true} imageUrls={this.state.img} />
-  //   </Modal>
-  // )    
+  
 
     return (
       <Modal
@@ -366,7 +274,7 @@ class Popup extends React.Component {
                   <Text
                     style={{
                       position: 'absolute',
-                      color: '#c43131',
+                      color: '#444',
                       top:5,
                       fontSize: 15,
                     }}> Save </Text>
@@ -404,7 +312,7 @@ class Popup extends React.Component {
               <RkButton style={ styles.editR }
                 onPress={() => {LayoutAnimation.configureNext(SwipeOutItemAnimation); this.props.delete(this.props.id)}}>
                 <Icon.Ionicons
-                  style={[ styles.editBtn, {color: '#c43131'} ]}
+                  style={[ styles.editBtn, {color: '#444'} ]}
                   name="ios-trash-outline" />
               </RkButton>
               </View>
@@ -447,26 +355,6 @@ class NoteItem extends React.Component {
     }
   } 
 
-  // _toogleModal = async => {
-  //   this.setState({view: !this.state.view});
-    
-  // }
-
-  // _initSeparator = () => {
-  //   let today = new Date();
-  //   let day = this.props.date < 10 ? '0' + this.props.date : this.props.date;
-  //   let last_date = Month[this.props.month].name + ', ' + day;
-  //   if (!date_separator || date_separator !== last_date) {
-  //     if (today.getDate() === this.props.date && today.getMonth() === this.props.month) {
-  //       date_separator = "Today";
-  //       this.newDate = 1;
-  //     } else {
-  //       date_separator = last_date;
-  //       this.newDate = 1;
-  //     }
-  //   }
-  // }
-
   _hideNote = () => {
     this.setState({view: false});
     this.props.update()
@@ -487,7 +375,7 @@ class NoteItem extends React.Component {
       caption: this.props.header,
       text: this.props.text,
       view: true,
-      id: this.props.id,
+      id: this.props._id,
       created: creationDate,
       updated: null,
       delete: this.props.delete,
@@ -548,7 +436,6 @@ class NoteItem extends React.Component {
     if (!this.props.search || (this.props.search && (this.props.text.match(search) || this.props.header.match(search)))) {
       return (
         <View>
-            {/* {this.newDate && <View style={ styles.dsCnt }><Text style={ styles.dsText }>{date_separator}</Text></View>} */}
           <Swipeable
             onRef={ref => this.swipeable = ref}
             swipeStartMinDistance={40}
@@ -563,19 +450,12 @@ class NoteItem extends React.Component {
             onRightActionRelease={async () => {
               await LayoutAnimation.configureNext(SwipeItemAnimation);
               await setTimeout(() => this.setState({removed: true}), 0);
-              // await setTimeout(() => LayoutAnimation.configureNext(SwipeOutItemAnimation), 500);
               await setTimeout(() => this.props.delete(this.props.id), 450);
-              // await setTimeout(() => this.setState({removed: false}), 150);
-              // await setTimeout(() => this.setState({swipeOpen: false}), 400);
             }}
             >
           <TouchableHighlight
             underlayColor={'rgba(29, 29, 29, 0.3)'}
-            // onPress={() => this.setState({view: true})}
-            onPress={() => this.props.viewNote(options)}
-            // onLongPress={() => { LayoutAnimation.configureNext( FadeItemAnimation ); this.setState({edit: true})}}>
-            >
-
+            onPress={() => this.props.viewNote(options)} >
               <View style={ styles.item }>
                 <Text
                   numberOfLines={1}
@@ -612,26 +492,15 @@ class NoteItem extends React.Component {
   }
 }
 
-const MoreBtn = (props) => (
+const SearchBtn = (props) => (
   <Icon.Ionicons
     onPress={() => props.search()}
     style={{
-      color: '#c43131',
+      color: '#444',
       fontSize: 22,
       paddingHorizontal: 15,
     }}
     name='ios-search' />
-)
-
-const MenuBtn = (props) => (  
-  <Icon.Ionicons
-    onPress={() => props.nav.goBack(null)}
-    style={{
-      color: '#c43131',
-      fontSize: 22,
-      paddingHorizontal: 15,
-    }}
-    name='ios-menu' />
 )
 
 class MenuItem extends React.Component {
@@ -644,13 +513,7 @@ class MenuItem extends React.Component {
   }
 
   _getCount = () => {
-    // db.transaction(async tx => {
-    //     tx.executeSql(`select count(*) from ` + this.props.route + `;`, [],
-    //         (_, { rows: { _array } }) => {
-    //             this.setState({count: _array[0]['count(*)']})
-    //         }
-    //     );
-    // });
+
   }
 
   render() {
@@ -677,7 +540,7 @@ class MenuItem extends React.Component {
 
 const NotesSearch = (props) => {
   return (
-    <View style={ styles.searchCnt }>
+    <View style={[ styles.searchCnt, {backgroundColor: 'rgba(247,247,250,0.95)', borderBottomColor: '#eeeeee', borderBottomWidth: 1} ]}>
       <RkTextInput
         rkType='rounded'
         returnKeyType='search'
@@ -690,9 +553,12 @@ const NotesSearch = (props) => {
         // caretHidden={true}
         style={{
           margin: 0,
+          marginBottom: 4,
+          bottom: 3,
           padding: 0,
           height: 40,
           paddingHorizontal: 10,
+          
         }}
         />
       {/* <TextInput style={ styles.searchInput } /> */}
@@ -720,12 +586,12 @@ export default class Notes extends React.Component {
     this._bootstrapAsync();
   }
   
-  static navigationOptions = ({ navigation }) => {
-    return {
-      headerRight: <MoreBtn search={() => {navigation.state.params.searchVisible ? navigation.state.params.searchVisible = false : navigation.state.params.searchVisible = true; navigation.state.params.updateNotes() }} />,
-      headerLeft: <MenuBtn nav={navigation} />,
-    }
-  };
+  // static navigationOptions = ({ navigation }) => {
+  //   return {
+  //     headerRight: <MoreBtn search={() => {navigation.state.params.searchVisible ? navigation.state.params.searchVisible = false : navigation.state.params.searchVisible = true; navigation.state.params.updateNotes() }} />,
+  //     headerLeft: <MenuBtn nav={navigation} />,
+  //   }
+  // };
 
   _bootstrapAsync = async () => {
     await this._getUpdate();
@@ -754,16 +620,15 @@ export default class Notes extends React.Component {
   }
 
   _getUpdate = async () => {
-    db.createIndex({
-      index: {fields: ['type']}
-    })
+    // db.createIndex({
+    //   index: {fields: ['type']}
+    // })
     db.find({
       selector: {
         'type': 'note',
       },
       sort: ['_id'],
     }).then((res) => {
-      console.log(res.docs)
       this.setState({ searchData: res.docs.reverse() })
     });
   }
@@ -827,6 +692,7 @@ export default class Notes extends React.Component {
 
     return (
       <View style={{flex: 1}}>
+        <Header title='Notes' border={!this.props.navigation.state.params.searchVisible} headerRight={<SearchBtn search={() => {this.props.navigation.state.params.searchVisible ? this.props.navigation.state.params.searchVisible = false : this.props.navigation.state.params.searchVisible = true; this.props.navigation.state.params.updateNotes() }} />} />
         <View style={{position: 'absolute', bottom: this.state.route ? - 100 : 0, backgroundColor: '#eee', width: screenWidth, height: 90, flexDirection: 'row'}}>
           <MenuItem
               navigation={this.props.navigation}
@@ -852,39 +718,9 @@ export default class Notes extends React.Component {
           bottom: this.state.folders ? this.state.route ? screenHeight - 110 : 90 : 0 } ]}>
             {this.state.folders && <TouchableOpacity style={{position: 'absolute', top: 0, height: screenHeight -60, width: screenWidth, zIndex: 99}} 
             onPress={() => {LayoutAnimation.configureNext(SwipeItemAnimation); this.setState({folders: false}); this.setState({route: false})}} />}
-        {/* <SlideDownPanel
-        handlerDefaultView={<Handler />}
-          >
-          <View
-              style={ styles.welcomeView }>
-              <Text
-                style={ styles.welcome }>
-                You can add a new note {'\n'} using the {' '}
-                <Icon.Ionicons
-                  style={ {color: '#999', fontSize: 25 } }
-                  name="ios-create-outline" />
-                {' '} button
-              </Text>
-            </View>
-          </SlideDownPanel> */}
+
           {this.props.navigation.state.params.searchVisible && <NotesSearch go={this._search} />}
-        {/* { this.state.searchCriteria
-        ?
-         <SectionList
-            scrollEnabled={!this.state.isSwiping}
-            // onRefresh={() => null}
-            // refreshing={false}
-            showsVerticalScrollIndicator={false}
-            ListFooterComponent={<View style={{height: 55, width: screenWidth}}/>}
-            sections={this.state.dataSource}
-            renderSectionHeader={ ({ section }) => <View style={ styles.dsCnt }><Text style={ styles.dsText }>{ section.title }</Text></View>}
-            style={ styles.listContainer }
-            keyExtractor={item => item._id.toString()}
-            extraData={this._getUpdate}
-            onContentSizeChange={() => this.state.updated ? this.setState({updated: !this.state.updated}) : null}
-            renderItem={({ item }) => <NoteItem {...item} search={this.state.searchCriteria} viewNote={this._viewNote} delete={this._delete} update={this._getUpdate} today={today} done={this._done} swiping={this._swipeHandler} />}
-          />
-        : */}
+       
         <FlatList
           scrollEnabled={!this.state.isSwiping}
           showsVerticalScrollIndicator={false}
@@ -910,17 +746,12 @@ export default class Notes extends React.Component {
               </Text>
             </View>
           }
-            {/* <Image source={this.state.img} /> */}
-          {/* <Popup visible={this.state.modal}
-            close={this._toogleModal}
-            add={this._addItem}
-            addImg={this._selectImage}
-            change={this._onChange} /> */}
+    
           <View style={ styles.editNote }>
               {!this.state.route && <RkButton style={ styles.editL }
                 onPress={() => this.props.navigation.navigate('NewNote', {update: this._getUpdate, folder: this.props.navigation.state.params.folder ? this.props.navigation.state.params.folder : 0})} >
                 <Icon.Ionicons
-                  style={[ styles.editBtn, {color: '#c43131'} ]}
+                  style={[ styles.editBtn, {color: '#444'} ]}
                   name="ios-create-outline" />
               </RkButton>}
               <Text style={ styles.subFolder }>
@@ -929,7 +760,7 @@ export default class Notes extends React.Component {
               {!this.state.route && <RkButton style={ styles.editR }
                 onPress={() => {LayoutAnimation.configureNext(ListItemAnimation); this.setState({folders: !this.state.folders})}}>
                 <Icon.Ionicons
-                    style={[ styles.editBtn, {color: '#c43131'} ]}
+                    style={[ styles.editBtn, {color: '#444'} ]}
                     name="ios-archive-outline" />
               </RkButton>}
           </View>
@@ -942,6 +773,9 @@ export default class Notes extends React.Component {
     );
   }
 }
+
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -980,7 +814,7 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     padding: 12,
-    minHeight: 75,
+    height: 90,
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomColor: '#eee',
@@ -991,27 +825,28 @@ const styles = StyleSheet.create({
     maxWidth: screenWidth - 130,
     top: 10,
     left: 15,
-    color: '#333',
-    fontWeight: "700",
-    fontSize: 18,
+    color: '#444',
+    fontWeight: "600",
+    fontSize: 19,
   },
   text: {
-    marginTop: 29,
-    left: -5,
+    marginTop: 21,
+    left: 0,
     paddingTop: 5,
     paddingBottom: 0,
-    marginLeft: 8,
+    marginLeft: 3,
     fontSize: 16,
-    color: '#191919',
+    color: '#555',
+    fontWeight: '200'
   },
   textDone: {
-    marginTop: 29,
-    left: -5,
+    marginTop: 21,
+    left: 0,
     paddingTop: 5,
     paddingBottom: 0,
-    marginLeft: 8,
+    marginLeft: 3,
     fontSize: 16,
-    color: '#999',
+    color: '#c5c5c5',
     fontWeight: '200'
   },
 
@@ -1021,14 +856,16 @@ const styles = StyleSheet.create({
     width: screenWidth,
     bottom: 0,
     height: 45,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(250,250,253,0.95)',
+    borderTopWidth: 0.5,
+    borderTopColor: '#ddd'
   },
   time: {
     position: 'absolute',
-    top: 15,
-    right: 10,
+    bottom: 10,
+    left: 15.5,
     fontSize: 12,
-    color: '#555',
+    color: '#999',
     fontWeight: '200'
   },
   due: {
@@ -1045,13 +882,13 @@ const styles = StyleSheet.create({
   editR: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 5,
+    bottom: 4,
     right: -35,
   },
   editL: {
     position: 'absolute',
     backgroundColor: 'transparent',
-    bottom: 5,
+    bottom: 4,
     left: -35,
   },
 
@@ -1075,7 +912,7 @@ const styles = StyleSheet.create({
   subFolder: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#c43131',
+    color: '#444',
     marginLeft: 'auto',
     marginRight: 'auto',
     bottom: -10
@@ -1139,12 +976,13 @@ const styles = StyleSheet.create({
   },
   dsText: {
     fontSize: 18,
-    color: '#c43131',
+    color: '#444',
     textAlign: 'right',
     fontWeight: '100',
 
   },
   searchCnt: {
+    
     paddingHorizontal: 12,
     height: 55,
   },

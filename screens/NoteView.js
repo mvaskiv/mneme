@@ -1,148 +1,20 @@
-import React, { Component } from 'react';
-import { LayoutAnimation } from 'react-native';
-import { RkButton, RkModalImg, RkGalleryImage, RkGallery } from 'react-native-ui-kitten';
-import ImageViewer from 'react-native-image-zoom-viewer';
-import Expo, { Icon, SQLite, Notifications, Permissions, Camera } from 'expo';
-import { Fab } from 'native-base';
-import { MaterialIcons } from '@expo/vector-icons';
-import Swipeout from 'react-native-swipeout';
-import Swipeable from 'react-native-swipeable';
-import CountdownCircle from 'react-native-countdown-circle'
+import React from 'react';
+import { RkButton } from 'react-native-ui-kitten';
+import Expo, { Icon, Permissions } from 'expo';
 import {
-  Image,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
-  FlatList,
   TextInput,
   KeyboardAvoidingView,
-  TouchableOpacity,
-  TouchableHighlight,
-  Modal,
-  TouchableWithoutFeedback,
-  View,
-  Keyboard,
-  CheckBox,
-  AsyncStorage,
-  Animated,
-  StatusBar,
+  View
 } from 'react-native';
-
-const db = SQLite.openDatabase('mneme.db');
-
-// const localNoti = {
-//   title: 'Hello',
-//   body: 'World',
-//   ios: {
-//     sound: true,
-//   },
-// }
-
-// let t = new Date();
-// t.setSeconds(t.getSeconds() + 5);
-
-// const schedulingOptions = {
-//   time: t,
-// }
-
+import { Header } from '../constants/header';
+import PouchDB from 'pouchdb-react-native'
+const db = new PouchDB('mydb')
 
 const Dimensions = require('Dimensions');
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
-const ListItemAnimation = {
-  duration: 175,
-  create: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.opacity,
-    type: LayoutAnimation.Types.linear,
-  },
-};
-const SwipeItemAnimation = {
-  duration: 235,
-  create: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-};
-const SwipeOutItemAnimation = {
-  duration: 435,
-  create: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-};
-const FadeItemAnimation = {
-  duration: 135,
-  create: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  update: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-  delete: {
-    property: LayoutAnimation.Properties.scaleXY,
-    type: LayoutAnimation.Types.linear,
-  },
-};
-
-const AttachmentRow = (props) => {
-  return (
-      <View
-          style={ styles.attRow } >
-          {/* <RkButton
-              style={styles.editBtnRow}
-              onPress={async () => props._callCamera()}
-              rkType='rounded'>
-              <Icon.Ionicons
-                  style={ styles.topIcon }
-                  name="md-mic" />
-          </RkButton> */}
-          <RkButton
-              style={styles.editBtnRow}
-              onPress={async () => props._selectImage()}
-              rkType='rounded'>
-              <Icon.Ionicons
-                  style={ styles.topIcon }
-                  name="md-attach" />
-          </RkButton>
-          {/* <RkButton
-              style={styles.editBtnRow}
-              onPress={async () => props._callCamera()}
-              rkType='rounded'>
-              <Icon.Ionicons
-                  style={ styles.topIcon }
-                  name="md-camera" />
-          </RkButton> */}
-          
-      </View>
-  )
-}
 
 export default class Note extends React.Component {
   constructor(props) {
@@ -152,6 +24,7 @@ export default class Note extends React.Component {
       refreshing: false,
       text: this.props.navigation.state.params.text ? this.props.navigation.state.params.text : '',
       header: this.props.navigation.state.params.caption ? this.props.navigation.state.params.caption : '',
+      id: this.props.navigation.state.params.id ? this.props.navigation.state.params.id : '',
       img: [],
       imgView: false,
       dueDate: '',
@@ -161,27 +34,12 @@ export default class Note extends React.Component {
     this._bootstrapAsync();
   }
 
-  // componentWillMount() {
-  //   this.props.navigation.setParams({
-  //       RightRow: <AttachmentRow />
-  //   });
-  // // this._getPictures();
-  // }
-
-  // static navigationOptions = ({ navigation }) => {
-  //     console.log(navigation)
-  //     return {
-  //           headerRight: navigation.state.params ? navigation.state.params.RightRow : null
-  //       }
-  // };
-
   _bootstrapAsync = async () => {
     this._getUpdate();
-    console.log(this.props);
   }
 
   componentDidMount() {
-   setTimeout(() => this._getPictures(), 500);
+    console.log(this.props.navigation.state.params)
   }
 
   componentDidUpdate() {
@@ -195,10 +53,19 @@ export default class Note extends React.Component {
   }
 
   _getUpdate = () => {
-    db.transaction(tx => {
-        tx.executeSql(`select * from notes;`,[], (_, { rows: { _array } }) => this.setState({ dataSource: _array })
-      );
-    });
+    // db.createIndex({
+    //   index: {fields: ['completed']}
+    // })
+    // db.find({
+    //   selector: {
+    //     completed: 0,
+    //     type: 'note',
+    //   },
+    //   sort: ['_id'],
+    // }).then((res) => {
+    //   console.log(res)
+    //   this.setState({ dataSource: res.docs.reverse() })
+    // });
   }
 
   _addDueDate(d) {
@@ -219,24 +86,7 @@ export default class Note extends React.Component {
   }
 
   _getPictures = async () => {
-    let array = [];
-    let id = await this.data.id;
-    if (id) {
-        db.transaction(tx => {
-          tx.executeSql(`select * from img where note = ?`, [id],
-            async (_, { rows: { _array } }) => {
-              if (_array) {
-                _array.map(async (pic) => {
-                  await array.push(JSON.parse(pic.src));
-                });
-                // LayoutAnimation.configureNext( ListItemAnimation );
-                await this.setState({img: array});
-              }
-            }
-        );
-     });
-    }
-    await this.setState({updated: true});
+
   }
 
   _getSetDate = () => {
@@ -258,55 +108,57 @@ export default class Note extends React.Component {
   } 
 
   _addItem = async (i, due, img) => {
-    let date = await new Date();
-    let thisID = 0;
+    // let date = await new Date();
+    // let thisID = 0;
   
-    await this._toogleModal();
-    await db.transaction(async tx => {
-        await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, deleted, archive) values
-          (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
-            i[0],
-            i[1],
-            date.getHours(),
-            date.getMinutes(),
-            date.getDay(),
-            date.getDate(),
-            date.getMonth(),
-            due === '' ? null :
-              due === 'tomorrow' ? date.getDay() + 1 :
-                due === 'today' ? date.getDay() : 7
-          ], async (_, res) => {
-            thisID = await res['insertId'];
-          }
-        );
-      }
-    );
-    await db.transaction(async tx => {
-      if (img) {
-        img.map((pic, i) => {
-          tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
-            async (_, res) => {
-              console.log(res);
-            }
-          );
-        });
-      }
-    });
-    await this._getUpdate();
-    LayoutAnimation.configureNext( ListItemAnimation );
-    await this.setState({deleted: false});    
-    await this.setState({updated: true});
+    // await this._toogleModal();
+    // await db.transaction(async tx => {
+    //     await tx.executeSql(`insert into notes (header, text, hours, minutes, day, date, month, due, deleted, archive) values
+    //       (?, ?, ?, ?, ?, ?, ?, ?, 0, 0); select last_insert_rowid();`, [
+    //         i[0],
+    //         i[1],
+    //         date.getHours(),
+    //         date.getMinutes(),
+    //         date.getDay(),
+    //         date.getDate(),
+    //         date.getMonth(),
+    //         due === '' ? null :
+    //           due === 'tomorrow' ? date.getDay() + 1 :
+    //             due === 'today' ? date.getDay() : 7
+    //       ], async (_, res) => {
+    //         thisID = await res['insertId'];
+    //       }
+    //     );
+    //   }
+    // );
+    // await db.transaction(async tx => {
+    //   if (img) {
+    //     img.map((pic, i) => {
+    //       tx.executeSql(`insert into img (src, note) values (?, ?);`, [JSON.stringify(pic), thisID],
+    //         async (_, res) => {
+    //           console.log(res);
+    //         }
+    //       );
+    //     });
+    //   }
+    // });
+    // await this._getUpdate();
+    // LayoutAnimation.configureNext( ListItemAnimation );
+    // await this.setState({deleted: false});    
+    // await this.setState({updated: true});
   }
 
   _editNote = () => {
     if (this.state.header != this.data.caption || this.state.text != this.data.text) {
-      db.transaction(tx => {
-          tx.executeSql(`update notes set header = ?, text = ? where id = ?`,[this.state.header, this.state.text, this.data.id]
-        );
-      });
-      this.data.update();
+      db.get(this.state.id).then((res) => {
+        res.header = this.state.header;
+        res.text = this.state.text;
+        db.put(res)
+          .then(() => this.data.update())
+          .catch(err => console.warn(err))
+      })
     }
-    this.setState({editText: false});
+    // this.setState({editText: false});
   }
 
   _selectImage = async () => {
@@ -328,44 +180,25 @@ export default class Note extends React.Component {
   }
   
 
-  _delete = async (id) => {
-    db.transaction(tx => {
-      tx.executeSql(`delete from notes where id = ?`, [id]);
-    });
-    // LayoutAnimation.configureNext( SwipeItemAnimation );
-    this.data.update();
+  _delete = async () => {
+    db.get(this.state.id).then((res) => {
+      db.remove(res)
+        .then(() => this.data.update())
+        .catch(err => console.warn(err))
+    })
     this.props.navigation.navigate('Notes');
-    // this._getUpdate(); 
-    // await this.setState({updated: true});
   }
 
   render() {
-    let today = new Date();
-    // let creationDate = this._getSetDate();
-    // let imageMap = this.state.img ? this.state.img.map((picture, i) => {
-    //     console.log('mapped', this.state.img[i]);
-    //     return <RkModalImg
-    //       // resizeMethod='scale'
-    //       style={{flexDirection: 'column', maxWidth: screenWidth / 3.2}}
-    //       key={String(i)} source={picture} index={i} />
-    //   }) : null;
-
     return (
         <View style={{
             flex: 1,
             height: this.data.view ? screenHeight - 55 : screenHeight - 140,
             width: screenWidth,
-            // borderBottomLeftRadius: 0,
-            // borderBottomRightRadius: 0,
-            // shadowColor: '#999',
-            padding: 5,
-            // shadowOffset: 2,
-            // shadowOpacity: 0.2,
-            // shadowRadius: 5,
-            // borderWidth: 1,
+            padding: 0,
             backgroundColor: '#fff'
           }}>
-          
+          <Header title={this.state.header} back={true} nav={this.props.navigation} />
           <KeyboardAvoidingView behavior='height' nes style={ styles.noteBody } keyboardVerticalOffset={70} enabled={true}>
             <TextInput
               placeholder='Caption'
@@ -382,7 +215,7 @@ export default class Note extends React.Component {
               onChangeText={(header) => {this.setState({header})}}
               blurOnSubmit={false}
               // onSubmitEditing={() => this.noteTextIn.focus()}
-              style={{fontSize: 18, fontWeight: '500', padding: 11, height: 'auto', paddingRight: 50, paddingBottom: 10}}
+              style={ styles.noteCaption }
               autoFocus={ this.data.view ? false : true } />
             <TextInput
               ref={ref => this.noteTextIn = ref}
@@ -399,22 +232,13 @@ export default class Note extends React.Component {
               underlineColorAndroid="#fff"
               onChangeText={(text) => {this.setState({text})}}
               blurOnSubmit={false}
-              style={{fontSize: 16, padding: 11, paddingTop: 5, height: 'auto', paddingRight: 50, paddingBottom: 80}}/>
-            { this.state.img[0] && <View style={{ maxWidth: screenWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                {/* { imageMap } */}
-                <RkGallery
-                  style={{height: screenHeight}}
-                  previewFooter={<View style={{height: 50, width: screenWidth, backgroundColor: 'rgba(0,0,0,0.5)'}} />}
-                  // onGridItemClick={() => StatusBar.setHidden(true)}
-                  spanCount={3}
-                  items={this.state.img}/>
-            </View> }
+              style={ styles.noteText }/>
           </KeyboardAvoidingView>
               { this.data.view && <View style={ styles.editNote }>
                 <RkButton style={ styles.editL }
                 onPress={async () => {await this.setState({editText: true}); this.noteTextIn.focus()}}>
                 <Icon.Ionicons
-                  style={[ styles.editBtn, {color: '#c43131'} ]}
+                  style={[ styles.editBtn, {color: '#444'} ]}
                   name="ios-create-outline" />
               </RkButton>
               <Text style={ styles.noteCreated }>
@@ -423,11 +247,10 @@ export default class Note extends React.Component {
               <RkButton style={ styles.editR }
               onPress={() => {this._delete(this.data.id); this.props.navigation.navigate('Notes')}}>
               <Icon.Ionicons
-                  style={[ styles.editBtn, {color: '#c43131'} ]}
+                  style={[ styles.editBtn, {color: '#444'} ]}
                   name="ios-trash-outline" />
               </RkButton>
           </View>}
-          
       </View>
     );
   }
@@ -534,8 +357,10 @@ const styles = StyleSheet.create({
     width: screenWidth,
     // paddingBottom: 7,
     bottom: 0,
-    height: 47,
-    backgroundColor: '#fff',
+    height: 45,
+    backgroundColor: 'rgba(250,250,253,0.95)',
+    borderTopWidth: 0.5,
+    borderTopColor: '#ddd'
   },
   attRow: {
     top: -5,
@@ -565,6 +390,7 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     right: 0,
+    top: 3,
     fontSize: 30,
     color: '#555'
   },
@@ -576,5 +402,27 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 'auto',
     paddingBottom: 80,
+  },
+  noteCaption: {
+    position: 'relative',
+    fontSize: 21, 
+    top: 10,
+    fontWeight: '700',
+    color: '#444',
+    padding: 0,
+    paddingLeft: 15,
+    height: 'auto',
+    minHeight: 40,
+    marginBottom: 12,
+  },
+  noteText: {
+    position: 'relative',
+    fontSize: 18,
+    padding: 11,
+    paddingLeft: 15,
+    height: 'auto', 
+    color: '#444',
+    paddingRight: 50, 
+    paddingBottom: 80
   }
 });
