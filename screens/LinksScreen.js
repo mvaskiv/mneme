@@ -481,7 +481,6 @@ class NoteItem extends React.Component {
                   hide={this._hideNote}
                   change={this._onChange} />}
               </View>
-            
           </TouchableHighlight>
           </Swipeable>
         </View>
